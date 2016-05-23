@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="TCP-01-Win8.1+">
+		<Project filename="TCP-01-Win8.1+.cbp" />
+		<Project filename="Client_Sample/Client_Sample-Win8.1+.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>

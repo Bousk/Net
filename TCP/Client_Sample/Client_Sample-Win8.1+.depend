@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1456016853 source:d:\projets\dvp cours network\sources\tcp\tcp01\client_sample\main.cpp
+	<iostream>
+	<WS2tcpip.h>
+	<WinSock2.h>
+	<sys/socket.h>
+
