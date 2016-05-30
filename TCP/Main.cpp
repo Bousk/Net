@@ -28,6 +28,7 @@ typedef int socklen_t;
 #include <string>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 namespace
 {
@@ -134,7 +135,7 @@ namespace
 		if ( parts.empty() )
 			return "";
 		std::string result = parts[0];
-		for ( int i = 1; i < parts.size(); ++i )
+		for ( size_t i = 1; i < parts.size(); ++i )
 			result += aggregator + parts[i];
 		return result;
 	}
