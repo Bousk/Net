@@ -25,3 +25,11 @@ bool TCPSocket::Connect(const std::string& ipaddress, unsigned short port)
 	server.sin_port = htons(port);
 	return connect(mSocket, (const sockaddr*)&server, sizeof(server)) == 0;
 }
+int TCPSocket::Send(const char* data, unsigned int len)
+{
+	return send(mSocket, data, len, 0);
+}
+int TCPSocket::Receive(char* buffer, unsigned int len)
+{
+	return recv(mSocket, buffer, len, 0);
+}
