@@ -14,6 +14,8 @@ class TCPSocket
 		~TCPSocket();
 
 		bool Connect(const std::string& ipaddress, unsigned short port);
+		int Send(const char* data, unsigned int len);
+		int Receive(char* buffer, unsigned int len);
 
 	private:
 		SOCKET mSocket;

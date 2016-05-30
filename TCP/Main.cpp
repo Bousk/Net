@@ -114,6 +114,36 @@ namespace
 			return false;
 		}
 	}
+
+
+	std::vector<std::string> Split(const std::string& str, const std::string& separator)
+	{
+		std::vector<std::string> parts;
+		int start = 0;
+		size_t end;
+		while ( (end = str.find(separator, start)) != std::string::npos )
+		{
+			parts.push_back(str.substr(start, end - start));
+			start = end + 1;
+		}
+		parts.push_back(str.substr(start));
+		return parts;
+	}
+	std::string Merge(const std::vector<std::string>& parts, const std::string& aggregator)
+	{
+		if ( parts.empty() )
+			return "";
+		std::string result = parts[0];
+		for ( int i = 1; i < parts.size(); ++i )
+			result += aggregator + parts[i];
+		return result;
+	}
+	std::string ShuffleSentence(const std::string& sentence)
+	{
+		std::vector<std::string> words = Split(sentence, " ");
+		std::random_shuffle(words.begin(), words.end());
+		return Merge(words, " ");
+	}
 }
 
 struct Client {
@@ -176,7 +206,12 @@ bool Server(int port)
 			if (Receive(client->socket, buffer))
 			{
 				if ( !buffer.empty() )
-					std::cout << "[" << client->ip.c_str() << ":" << client->port << "] " << buffer << std::endl;
+				{
+					std::cout << "Recu de [" << client->ip.c_str() << ":" << client->port << "] : " << buffer << std::endl;
+					std::string reply = ShuffleSentence(buffer);
+					std::cout << "Reponse a [" << client->ip.c_str() << ":" << client->port << "] > " << reply << std::endl;
+					send(client->socket, reply.c_str(), reply.length(), 0);
+				}
 				++client;
 			}
 			else
