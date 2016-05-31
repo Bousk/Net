@@ -27,6 +27,7 @@ typedef int socklen_t;
 #include <cerrno> // errno
 #define SOCKET int
 #define INVALID_SOCKET ((int)-1)
+#define SOCKET_ERROR (int(-1))
 #endif
 
 namespace Sockets
