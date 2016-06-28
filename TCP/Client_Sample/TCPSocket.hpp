@@ -5,6 +5,7 @@
 
 #include "Sockets.hpp"
 
+#include <vector>
 #include <string>
 
 class TCPSocket
@@ -14,8 +15,8 @@ class TCPSocket
 		~TCPSocket();
 
 		bool Connect(const std::string& ipaddress, unsigned short port);
-		int Send(const char* data, unsigned int len);
-		int Receive(char* buffer, unsigned int len);
+		int Send(const unsigned char* data, unsigned int len);
+		bool Receive(std::vector<unsigned char>& buffer);
 
 	private:
 		SOCKET mSocket;

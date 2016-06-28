@@ -96,31 +96,10 @@ namespace
 		};
 	}
 
-#define BUFFER_MAX 1024
-	bool Receive(SOCKET socket, std::string& _buffer)
-	{
-		char buffer[BUFFER_MAX + 1] = { 0 };
-		int iLastRecievedBufferLen = 0;
-		do {
-			iLastRecievedBufferLen = recv(socket, buffer, BUFFER_MAX, 0);
-			_buffer += buffer;
-		} while (iLastRecievedBufferLen == BUFFER_MAX);
-		if (iLastRecievedBufferLen > 0)
-			return true;
-		else
-		{
-			int error = GetError();
-			if ( error == Errors::WOULDBLOCK )
-				return true;
-			return false;
-		}
-	}
-
-
 	std::vector<std::string> Split(const std::string& str, const std::string& separator)
 	{
 		std::vector<std::string> parts;
-		int start = 0;
+		size_t start = 0;
 		size_t end;
 		while ( (end = str.find(separator, start)) != std::string::npos )
 		{
@@ -151,10 +130,74 @@ struct Client {
 	SOCKET socket;
 	std::string ip;
 	int port;
+	enum class ReceptionState {
+		ReceivingHeader,
+		ReceivingData
+	} receptionState;
+	unsigned short expectedDataLen;
+	unsigned short receivedDataLen;
+	std::vector<unsigned char> dataReceived;
+	enum class State {
+		Disconnected,
+		WaitingData,
+		Ready,
+	} state;
+	void Receive() {
+		if (state == State::Ready || state == State::Disconnected)
+			return;
+		int ret = recv(socket, (char*)(dataReceived.data() + receivedDataLen), expectedDataLen - receivedDataLen, 0);
+		if (ret < 0)
+		{
+			int error = GetLastError();
+			if (error != Errors::WOULDBLOCK)
+			{
+				std::cout << "[" << ip.c_str() << ":" << port << "] " << " erreur :" << error << std::endl;
+				state = State::Disconnected;
+			}
+			return;
+		}
+		receivedDataLen += ret;
+		if (receivedDataLen == expectedDataLen) {
+			switch (receptionState) {
+				case ReceptionState::ReceivingHeader:
+				{
+					receptionState = ReceptionState::ReceivingData;
+					memcpy(&expectedDataLen, dataReceived.data(), dataReceived.size() * sizeof(unsigned char));
+					expectedDataLen = ntohs(expectedDataLen);
+					receivedDataLen = 0;
+					dataReceived.resize(expectedDataLen, 0);
+				} break;
+				case ReceptionState::ReceivingData:
+				{
+					state = State::Ready;
+				} break;
+			}
+			return;
+		}
+	}
+	void Consume() {
+		if (state == State::Ready) {
+			state = State::WaitingData;
+			expectedDataLen = sizeof(short);
+			receivedDataLen = 0;
+			dataReceived.resize(expectedDataLen, 0);
+			receptionState = ReceptionState::ReceivingHeader;
+		}
+	}
+	bool Send(const unsigned char* data, unsigned int len) {
+		unsigned short networkLen = htons(len);
+		return send(socket, (const char*)&networkLen, sizeof(networkLen), 0) == sizeof(networkLen)
+			&& send(socket, (const char*)data, len, 0) == len;
+	}
 	Client(SOCKET _socket, const std::string& _ip, int _port)
 		: socket(_socket)
 		, ip(_ip)
 		, port(_port)
+		, receptionState(ReceptionState::ReceivingHeader)
+		, expectedDataLen(sizeof(unsigned short))
+		, receivedDataLen(0)
+		, dataReceived(expectedDataLen, 0)
+		, state(State::WaitingData)
 	{}
 	void Close() { CloseSocket(socket); socket = INVALID_SOCKET; }
 };
@@ -203,19 +246,18 @@ bool Server(int port)
 		std::vector<Client>::iterator client = clients.begin();
 		while (client != clients.end())
 		{
-			std::string buffer;
-			if (Receive(client->socket, buffer))
+			client->Receive();
+			if (client->state == Client::State::Ready)
 			{
-				if ( !buffer.empty() )
-				{
-					std::cout << "Recu de [" << client->ip.c_str() << ":" << client->port << "] : " << buffer << std::endl;
-					std::string reply = ShuffleSentence(buffer);
-					std::cout << "Reponse a [" << client->ip.c_str() << ":" << client->port << "] > " << reply << std::endl;
-					send(client->socket, reply.c_str(), reply.length(), 0);
-				}
+				std::string sentence((const char*)(client->dataReceived.data()), client->dataReceived.size());
+				client->Consume();
+				std::cout << "Recu de [" << client->ip.c_str() << ":" << client->port << "] : " << sentence << std::endl;
+				std::string reply = ShuffleSentence(sentence);
+				std::cout << "Reponse a [" << client->ip.c_str() << ":" << client->port << "] > " << reply << std::endl;
+				client->Send((unsigned char*)(reply.c_str()), (unsigned int)(reply.length()));
 				++client;
 			}
-			else
+			else if (client->state == Client::State::Disconnected)
 			{
 				client->Close();
 				std::cout << "[" << client->ip.c_str() << ":" << client->port << "] " << " Deconnexion" << std::endl;
