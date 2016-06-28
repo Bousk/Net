@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_workspace_file>
+	<Workspace title="CB-Win">
+		<Project filename="CB-Win.cbp" />
+		<Project filename="Client_Sample/Client_Sample-CB-Win.cbp" />
+	</Workspace>
+</CodeBlocks_workspace_file>
