@@ -148,7 +148,7 @@ struct Client {
 		int ret = recv(socket, (char*)(dataReceived.data() + receivedDataLen), expectedDataLen - receivedDataLen, 0);
 		if (ret < 0)
 		{
-			int error = GetLastError();
+			int error = GetError();
 			if (error != Errors::WOULDBLOCK)
 			{
 				std::cout << "[" << ip.c_str() << ":" << port << "] " << " erreur :" << error << std::endl;
