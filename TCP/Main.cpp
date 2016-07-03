@@ -21,6 +21,7 @@ typedef int socklen_t;
 #include <unistd.h>  // close
 #include <fcntl.h>
 #include <cerrno> // errno
+#include <cstring> // memcpy
 #define SOCKET int
 #define INVALID_SOCKET ((int)-1)
 #endif
