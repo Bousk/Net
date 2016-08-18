@@ -157,6 +157,11 @@ struct Client {
 			}
 			return;
 		}
+		else if (ret == 0)
+		{
+			state = State::Disconnected;
+			return;
+		}
 		receivedDataLen += ret;
 		if (receivedDataLen == expectedDataLen) {
 			switch (receptionState) {
