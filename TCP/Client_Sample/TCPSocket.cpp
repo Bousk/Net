@@ -35,7 +35,7 @@ bool TCPSocket::Receive(std::vector<unsigned char>& buffer)
 {
 	unsigned short expectedSize;
 	int pending = recv(mSocket, reinterpret_cast<char*>(&expectedSize), sizeof(expectedSize), 0);
-	if (pending < 0 || pending != sizeof(unsigned short))
+	if (pending <= 0 || pending != sizeof(unsigned short))
 	{
 		//!< Erreur
 		return false;
