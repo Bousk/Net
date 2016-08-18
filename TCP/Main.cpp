@@ -231,19 +231,11 @@ bool Server(int port)
 		for (;;)
 		{
 			SOCKET newClient;
-			sockaddr addr = { 0 };
-			socklen_t len = sizeof(addr);
-			newClient = accept(server, &addr, &len);
+			sockaddr_in from = { 0 };
+			socklen_t addrlen = sizeof(addr);
+			newClient = accept(server, (SOCKADDR*)(&from), &addrlen);
 			if (newClient == INVALID_SOCKET)
 				break;
-			sockaddr_in from;
-			socklen_t addrlen = sizeof(from);
-			if (getpeername(newClient, (sockaddr*)&from, &addrlen) != 0)
-			{
-				std::cout << "Nouveau client, Impossible de retrouver son IP : " << GetError() << " (deconnexion)" << std::endl;
-				CloseSocket(newClient);
-				continue;
-			}
 			Client client(newClient, ConvertAddr(from), ntohs(from.sin_port));
 			std::cout << "Connexion de " << client.ip.c_str() << ":"<< client.port << std::endl;
 			SetNonBlocking(newClient);
