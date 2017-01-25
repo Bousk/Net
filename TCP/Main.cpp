@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <thread>
 
 int main()
 {
@@ -49,8 +50,24 @@ int main()
 		SOCKET newClient = accept(server, (SOCKADDR*)(&from), &addrlen);
 		if (newClient != INVALID_SOCKET)
 		{
-			std::string clientAddress = Sockets::GetAddress(from);
-			std::cout << "Connexion de " << clientAddress.c_str() << ":" << ntohs(from.sin_port) << std::endl;
+			std::thread([newClient, from]() {
+				const std::string clientAddress = Sockets::GetAddress(from);
+				const unsigned short clientPort = ntohs(from.sin_port);
+				std::cout << "Connexion de " << clientAddress.c_str() << ":" << clientPort << std::endl;
+				bool connected = true;
+				for(;;)
+				{
+					char buffer[200] = { 0 };
+					int ret = recv(newClient, buffer, 199, 0);
+					if (ret == 0 || ret == SOCKET_ERROR)
+						break;
+					std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer;
+					ret = send(newClient, buffer, ret, 0);
+					if (ret == 0 || ret == SOCKET_ERROR)
+						break;
+				}
+				std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
+			}).detach();
 		}
 		else
 			break;
