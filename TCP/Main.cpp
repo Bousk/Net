@@ -61,7 +61,7 @@ int main()
 					int ret = recv(newClient, buffer, 199, 0);
 					if (ret == 0 || ret == SOCKET_ERROR)
 						break;
-					std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer;
+					std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer << std::endl;
 					ret = send(newClient, buffer, ret, 0);
 					if (ret == 0 || ret == SOCKET_ERROR)
 						break;
