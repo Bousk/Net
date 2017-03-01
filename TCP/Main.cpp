@@ -1,8 +1,14 @@
 #include "Sockets.hpp"
+#include "Errors.hpp"
 
 #include <iostream>
 #include <string>
-#include <thread>
+#include <vector>
+
+struct Client {
+	SOCKET sckt;
+	sockaddr_in addr;
+};
 
 int main()
 {
@@ -40,37 +46,58 @@ int main()
 		std::cout << "Erreur listen : " << Sockets::GetError();
 		return -4;
 	}
-
+	SO_SNDBUF;
 	std::cout << "Server demarre sur le port " << port << std::endl;
 
+	std::vector<Client> clients;
 	for (;;)
 	{
 		sockaddr_in from = { 0 };
 		socklen_t addrlen = sizeof(from);
-		SOCKET newClient = accept(server, (SOCKADDR*)(&from), &addrlen);
-		if (newClient != INVALID_SOCKET)
+		SOCKET newClientSocket = accept(server, (SOCKADDR*)(&from), &addrlen);
+		if (newClientSocket != INVALID_SOCKET)
 		{
-			std::thread([newClient, from]() {
+			Client newClient;
+			newClient.sckt = newClientSocket;
+			newClient.addr = from;
+			const std::string clientAddress = Sockets::GetAddress(from);
+			const unsigned short clientPort = ntohs(from.sin_port);
+			std::cout << "Connexion de " << clientAddress.c_str() << ":" << clientPort << std::endl;
+			clients.push_back(newClient);
+		}
+		{
+			auto itClient = clients.begin();
+			while ( itClient != clients.end() )
+			{
 				const std::string clientAddress = Sockets::GetAddress(from);
 				const unsigned short clientPort = ntohs(from.sin_port);
-				std::cout << "Connexion de " << clientAddress.c_str() << ":" << clientPort << std::endl;
-				bool connected = true;
-				for(;;)
+				char buffer[200] = { 0 };
+				int ret = recv(itClient->sckt, buffer, 199, 0);
+				if (ret == 0)
 				{
-					char buffer[200] = { 0 };
-					int ret = recv(newClient, buffer, 199, 0);
-					if (ret == 0 || ret == SOCKET_ERROR)
-						break;
-					std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer << std::endl;
-					ret = send(newClient, buffer, ret, 0);
-					if (ret == 0 || ret == SOCKET_ERROR)
-						break;
+					//!< Déconnecté
+					std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
+					itClient = clients.erase(itClient);
+					continue;
 				}
-				std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
-			}).detach();
+				if (ret == SOCKET_ERROR)
+				{
+					int error = Sockets::GetError();
+					if (error != static_cast<int>(Sockets::Errors::WOULDBLOCK))
+					{
+						std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
+						itClient = clients.erase(itClient);
+						continue;
+					}
+					//!< il n'y avait juste rien à recevoir, on passe au suivant
+					continue;
+				}
+				std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer << std::endl;
+				ret = send(itClient->sckt, buffer, ret, 0);
+				if (ret == 0 || ret == SOCKET_ERROR)
+					break;
+			}
 		}
-		else
-			break;
 	}
 	Sockets::CloseSocket(server);
 	Sockets::Release();

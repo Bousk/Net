@@ -41,7 +41,7 @@ namespace Sockets
 {
 	bool Start();
 	void Release();
-	int GetError();
+	bool SetNonBlocking(SOCKET socket);
 	void CloseSocket(SOCKET socket);
 	std::string GetAddress(const sockaddr_in& addr);
 }

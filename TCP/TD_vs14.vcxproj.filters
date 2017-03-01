@@ -4,9 +4,11 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Sockets.cpp" />
     <ClCompile Include="TCPServer.cpp" />
+    <ClCompile Include="Errors.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Sockets.hpp" />
     <ClInclude Include="TCPServer.hpp" />
+    <ClInclude Include="Errors.hpp" />
   </ItemGroup>
 </Project>

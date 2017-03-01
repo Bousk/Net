@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Errors.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Sockets.cpp" />
     <ClCompile Include="TCPServer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Errors.hpp" />
     <ClInclude Include="Sockets.hpp" />
     <ClInclude Include="TCPServer.hpp" />
   </ItemGroup>
