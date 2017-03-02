@@ -25,6 +25,12 @@ int main()
 		return -2;
 	}
 
+	if (!Sockets::SetNonBlocking(server))
+	{
+		std::cout << "Erreur settings non-bloquant : " << Sockets::GetError();
+		return -3;
+	}
+
 	unsigned short port;
 	std::cout << "Port ? ";
 	std::cin >> port;
@@ -46,7 +52,7 @@ int main()
 		std::cout << "Erreur listen : " << Sockets::GetError();
 		return -4;
 	}
-	SO_SNDBUF;
+
 	std::cout << "Server demarre sur le port " << port << std::endl;
 
 	std::vector<Client> clients;
@@ -57,6 +63,12 @@ int main()
 		SOCKET newClientSocket = accept(server, (SOCKADDR*)(&from), &addrlen);
 		if (newClientSocket != INVALID_SOCKET)
 		{
+			if (!Sockets::SetNonBlocking(newClientSocket))
+			{
+				std::cout << "Erreur settings nouveau socket non-bloquant : " << Sockets::GetError() << std::endl;
+				Sockets::CloseSocket(newClientSocket);
+				continue;
+			}
 			Client newClient;
 			newClient.sckt = newClientSocket;
 			newClient.addr = from;
