@@ -58,31 +58,33 @@ int main()
 	std::vector<Client> clients;
 	for (;;)
 	{
-		sockaddr_in from = { 0 };
-		socklen_t addrlen = sizeof(from);
-		SOCKET newClientSocket = accept(server, (SOCKADDR*)(&from), &addrlen);
-		if (newClientSocket != INVALID_SOCKET)
 		{
-			if (!Sockets::SetNonBlocking(newClientSocket))
+			sockaddr_in from = { 0 };
+			socklen_t addrlen = sizeof(from);
+			SOCKET newClientSocket = accept(server, (SOCKADDR*)(&from), &addrlen);
+			if (newClientSocket != INVALID_SOCKET)
 			{
-				std::cout << "Erreur settings nouveau socket non-bloquant : " << Sockets::GetError() << std::endl;
-				Sockets::CloseSocket(newClientSocket);
-				continue;
+				if (!Sockets::SetNonBlocking(newClientSocket))
+				{
+					std::cout << "Erreur settings nouveau socket non-bloquant : " << Sockets::GetError() << std::endl;
+					Sockets::CloseSocket(newClientSocket);
+					continue;
+				}
+				Client newClient;
+				newClient.sckt = newClientSocket;
+				newClient.addr = from;
+				const std::string clientAddress = Sockets::GetAddress(from);
+				const unsigned short clientPort = ntohs(from.sin_port);
+				std::cout << "Connexion de " << clientAddress.c_str() << ":" << clientPort << std::endl;
+				clients.push_back(newClient);
 			}
-			Client newClient;
-			newClient.sckt = newClientSocket;
-			newClient.addr = from;
-			const std::string clientAddress = Sockets::GetAddress(from);
-			const unsigned short clientPort = ntohs(from.sin_port);
-			std::cout << "Connexion de " << clientAddress.c_str() << ":" << clientPort << std::endl;
-			clients.push_back(newClient);
 		}
 		{
 			auto itClient = clients.begin();
 			while ( itClient != clients.end() )
 			{
-				const std::string clientAddress = Sockets::GetAddress(from);
-				const unsigned short clientPort = ntohs(from.sin_port);
+				const std::string clientAddress = Sockets::GetAddress(itClient->addr);
+				const unsigned short clientPort = ntohs(itClient->addr.sin_port);
 				char buffer[200] = { 0 };
 				int ret = recv(itClient->sckt, buffer, 199, 0);
 				if (ret == 0)
