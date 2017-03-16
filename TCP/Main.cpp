@@ -25,12 +25,6 @@ int main()
 		return -2;
 	}
 
-	//if (!Sockets::SetNonBlocking(server))
-	//{
-	//	std::cout << "Erreur settings non-bloquant : " << Sockets::GetError();
-	//	return -3;
-	//}
-
 	unsigned short port;
 	std::cout << "Port ? ";
 	std::cin >> port;
@@ -76,12 +70,6 @@ int main()
 				SOCKET newClientSocket = accept(server, (SOCKADDR*)(&from), &addrlen);
 				if (newClientSocket != INVALID_SOCKET)
 				{
-					//if (!Sockets::SetNonBlocking(newClientSocket))
-					//{
-					//	std::cout << "Erreur settings nouveau socket non-bloquant : " << Sockets::GetError() << std::endl;
-					//	Sockets::CloseSocket(newClientSocket);
-					//	continue;
-					//}
 					Client newClient;
 					newClient.sckt = newClientSocket;
 					newClient.addr = from;
@@ -127,7 +115,14 @@ int main()
 					bool hasError = false;
 					if (FD_ISSET(itClient->sckt, &setErrors))
 					{
-						std::cout << "Erreur" << std::endl;
+						int err;
+						int errsize = sizeof(err);
+						if (getsockopt(itClient->sckt, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&err), &errsize) != 0)
+						{
+							std::cout << "Impossible de determiner l'erreur : " << Sockets::GetError() << std::endl;
+							continue;
+						}
+						std::cout << "Erreur : " << err << std::endl;
 						hasError = true;
 					}
 					else if (FD_ISSET(itClient->sckt, &setReads))
