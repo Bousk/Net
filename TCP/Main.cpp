@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
 struct Client {
 	SOCKET sckt;
@@ -49,21 +50,21 @@ int main()
 
 	std::cout << "Server demarre sur le port " << port << std::endl;
 
-	std::vector<Client> clients;
+	std::map<SOCKET, Client> clients;
+	std::vector<WSAPOLLFD> clientsFds;
 	for (;;)
 	{
 		{
-			fd_set set;
-			timeval timeout = { 0 };
-			FD_ZERO(&set);
-			FD_SET(server, &set);
-			int selectReady = select(static_cast<int>(server) + 1, &set, nullptr, nullptr, &timeout);
-			if (selectReady == -1)
+			WSAPOLLFD pollServerFd;
+			pollServerFd.fd = server;
+			pollServerFd.events = POLLRDNORM;
+			int pollReady = WSAPoll(&pollServerFd, 1, 0);
+			if (pollReady == -1)
 			{
-				std::cout << "Erreur select pour accept : " << Sockets::GetError() << std::endl;
+				std::cout << "Erreur poll pour accept : " << Sockets::GetError() << std::endl;
 				break;
 			}
-			if (selectReady > 0)
+			if (pollReady > 0)
 			{
 				sockaddr_in from = { 0 };
 				socklen_t addrlen = sizeof(from);
@@ -76,92 +77,90 @@ int main()
 					const std::string clientAddress = Sockets::GetAddress(from);
 					const unsigned short clientPort = ntohs(from.sin_port);
 					std::cout << "Connexion de " << clientAddress.c_str() << ":" << clientPort << std::endl;
-					clients.push_back(newClient);
+					clients[newClientSocket] = newClient;
+					WSAPOLLFD newClientPollFd;
+					newClientPollFd.fd = newClientSocket;
+					newClientPollFd.events = POLLRDNORM | POLLWRNORM;
+					clientsFds.push_back(newClientPollFd);
 				}
 			}
 		}
 		if (!clients.empty())
 		{
-			fd_set setReads;
-			fd_set setWrite;
-			fd_set setErrors;
-			FD_ZERO(&setReads);
-			FD_ZERO(&setWrite);
-			FD_ZERO(&setErrors);
-			int highestFd = 0;
-			timeval timeout = { 0 };
-			for (auto& client : clients)
+			int pollResult = WSAPoll(clientsFds.data(), static_cast<unsigned long>(clientsFds.size()), 0);
+			if (pollResult == -1)
 			{
-				FD_SET(static_cast<int>(client.sckt), &setReads);
-				FD_SET(static_cast<int>(client.sckt), &setWrite);
-				FD_SET(static_cast<int>(client.sckt), &setErrors);
-				if (client.sckt > highestFd)
-					highestFd = static_cast<int>(client.sckt);
-			}
-			int selectResult = select(highestFd + 1, &setReads, &setWrite, &setErrors, &timeout);
-			if (selectResult == -1)
-			{
-				std::cout << "Erreur select pour clients : " << Sockets::GetError() << std::endl;
+				std::cout << "Erreur poll pour clients : " << Sockets::GetError() << std::endl;
 				break;
 			}
-			else if (selectResult > 0)
+			else if (pollResult > 0)
 			{
-				auto itClient = clients.begin();
-				while (itClient != clients.end())
+				auto itPollResult = clientsFds.cbegin();
+				while (itPollResult != clientsFds.cend())
 				{
-					const std::string clientAddress = Sockets::GetAddress(itClient->addr);
-					const unsigned short clientPort = ntohs(itClient->addr.sin_port);
-
-					bool hasError = false;
-					if (FD_ISSET(itClient->sckt, &setErrors))
+					const auto clientIt = clients.find(itPollResult->fd);
+					if (clientIt == clients.cend())
+					{
+						itPollResult = clientsFds.erase(itPollResult);
+						continue;
+					}
+					const auto& client = clientIt->second;
+					const std::string clientAddress = Sockets::GetAddress(client.addr);
+					const unsigned short clientPort = ntohs(client.addr.sin_port);
+					bool disconnect = false;
+					if (itPollResult->revents & POLLERR)
 					{
 						socklen_t err;
 						int errsize = sizeof(err);
-						if (getsockopt(itClient->sckt, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&err), &errsize) != 0)
+						if (getsockopt(client.sckt, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&err), &errsize) != 0)
 						{
 							std::cout << "Impossible de determiner l'erreur : " << Sockets::GetError() << std::endl;
-							continue;
 						}
-						std::cout << "Erreur : " << err << std::endl;
-						hasError = true;
+						if (err != 0)
+							std::cout << "Erreur : " << err << std::endl;
+						disconnect = true;
 					}
-					else if (FD_ISSET(itClient->sckt, &setReads))
+					else if (itPollResult->revents & POLLHUP)
+					{
+						disconnect = true;
+					}
+					else if (itPollResult->revents & POLLRDNORM)
 					{
 						char buffer[200] = { 0 };
-						int ret = recv(itClient->sckt, buffer, 199, 0);
+						int ret = recv(client.sckt, buffer, 199, 0);
 						if (ret == 0)
 						{
 							std::cout << "Connexion terminee" << std::endl;
-							hasError = true;
+							disconnect = true;
 						}
-						else if(ret == SOCKET_ERROR)
+						else if (ret == SOCKET_ERROR)
 						{
 							std::cout << "Erreur reception : " << Sockets::GetError() << std::endl;
-							hasError = true;
+							disconnect = true;
 						}
 						else
 						{
 							std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer << std::endl;
-							if (FD_ISSET(itClient->sckt, &setWrite))
+							if (itPollResult->revents & POLLWRNORM)
 							{
-								ret = send(itClient->sckt, buffer, ret, 0);
+								ret = send(client.sckt, buffer, ret, 0);
 								if (ret == 0 || ret == SOCKET_ERROR)
 								{
-									std::cout << "Erreur envoi" << Sockets::GetError() << std::endl;
-									hasError = true;
+									std::cout << "Erreur envoi : " << Sockets::GetError() << std::endl;
+									disconnect = true;
 								}
 							}
 						}
 					}
-					if (hasError)
+					if (disconnect)
 					{
-						//!< Déconnecté
-						std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
-						itClient = clients.erase(itClient);
+						std::cout << "Deconnexion de " << "[" << clientAddress << ":" << clientPort << "]" << std::endl;
+						itPollResult = clientsFds.erase(itPollResult);
+						clients.erase(clientIt);
 					}
 					else
 					{
-						++itClient;
+						++itPollResult;
 					}
 				}
 			}
