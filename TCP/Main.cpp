@@ -115,7 +115,7 @@ int main()
 					bool hasError = false;
 					if (FD_ISSET(itClient->sckt, &setErrors))
 					{
-						int err;
+						socklen_t err;
 						int errsize = sizeof(err);
 						if (getsockopt(itClient->sckt, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&err), &errsize) != 0)
 						{
