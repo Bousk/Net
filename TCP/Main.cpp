@@ -86,30 +86,35 @@ int main()
 				const std::string clientAddress = Sockets::GetAddress(itClient->addr);
 				const unsigned short clientPort = ntohs(itClient->addr.sin_port);
 				char buffer[200] = { 0 };
+				bool disconnect = false;
 				int ret = recv(itClient->sckt, buffer, 199, 0);
 				if (ret == 0)
 				{
 					//!< Déconnecté
-					std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
-					itClient = clients.erase(itClient);
-					continue;
+					disconnect = true;
 				}
 				if (ret == SOCKET_ERROR)
 				{
 					int error = Sockets::GetError();
 					if (error != static_cast<int>(Sockets::Errors::WOULDBLOCK))
 					{
-						std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
-						itClient = clients.erase(itClient);
-						continue;
+						disconnect = true;
 					}
-					//!< il n'y avait juste rien à recevoir, on passe au suivant
-					continue;
+					//!< il n'y avait juste rien à recevoir
 				}
 				std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer << std::endl;
 				ret = send(itClient->sckt, buffer, ret, 0);
 				if (ret == 0 || ret == SOCKET_ERROR)
-					break;
+				{
+					disconnect = true;
+				}
+				if (disconnect)
+				{
+					std::cout << "Deconnexion de [" << clientAddress << ":" << clientPort << "]" << std::endl;
+					itClient = clients.erase(itClient);
+				}
+				else
+					++itClient;
 			}
 		}
 	}
