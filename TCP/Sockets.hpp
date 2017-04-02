@@ -24,12 +24,15 @@
 			#pragma comment(lib, "wsock32.lib")
 		#endif
 	#endif
+	typedef unsigned long nfds_t;
+	#define poll WSAPoll
 #else
 	#include <sys/socket.h>
 	#include <netinet/in.h> // sockaddr_in, IPPROTO_TCP
 	#include <arpa/inet.h> // hton*, ntoh*, inet_addr
 	#include <unistd.h>  // close
 	#include <cerrno> // errno
+	#include <poll.h> // poll
 	#define SOCKET int
 	#define INVALID_SOCKET ((int)-1)
 	#define SOCKET_ERROR (int(-1))
