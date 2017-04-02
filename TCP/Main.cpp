@@ -51,14 +51,14 @@ int main()
 	std::cout << "Server demarre sur le port " << port << std::endl;
 
 	std::map<SOCKET, Client> clients;
-	std::vector<WSAPOLLFD> clientsFds;
+	std::vector<pollfd> clientsFds;
 	for (;;)
 	{
 		{
-			WSAPOLLFD pollServerFd;
+			pollfd pollServerFd;
 			pollServerFd.fd = server;
-			pollServerFd.events = POLLRDNORM;
-			int pollReady = WSAPoll(&pollServerFd, 1, 0);
+			pollServerFd.events = POLLIN;
+			int pollReady = poll(&pollServerFd, 1, 0);
 			if (pollReady == -1)
 			{
 				std::cout << "Erreur poll pour accept : " << Sockets::GetError() << std::endl;
@@ -78,16 +78,16 @@ int main()
 					const unsigned short clientPort = ntohs(from.sin_port);
 					std::cout << "Connexion de " << clientAddress.c_str() << ":" << clientPort << std::endl;
 					clients[newClientSocket] = newClient;
-					WSAPOLLFD newClientPollFd;
+					pollfd newClientPollFd;
 					newClientPollFd.fd = newClientSocket;
-					newClientPollFd.events = POLLRDNORM | POLLWRNORM;
+					newClientPollFd.events = POLLIN | POLLOUT;
 					clientsFds.push_back(newClientPollFd);
 				}
 			}
 		}
 		if (!clients.empty())
 		{
-			int pollResult = WSAPoll(clientsFds.data(), static_cast<unsigned long>(clientsFds.size()), 0);
+			int pollResult = poll(clientsFds.data(), static_cast<nfds_t>(clientsFds.size()), 0);
 			if (pollResult == -1)
 			{
 				std::cout << "Erreur poll pour clients : " << Sockets::GetError() << std::endl;
@@ -120,11 +120,11 @@ int main()
 							std::cout << "Erreur : " << err << std::endl;
 						disconnect = true;
 					}
-					else if (itPollResult->revents & POLLHUP)
+					else if (itPollResult->revents & (POLLHUP | POLLNVAL))
 					{
 						disconnect = true;
 					}
-					else if (itPollResult->revents & POLLRDNORM)
+					else if (itPollResult->revents & POLLIN)
 					{
 						char buffer[200] = { 0 };
 						int ret = recv(client.sckt, buffer, 199, 0);
@@ -141,7 +141,7 @@ int main()
 						else
 						{
 							std::cout << "[" << clientAddress << ":" << clientPort << "]" << buffer << std::endl;
-							if (itPollResult->revents & POLLWRNORM)
+							if (itPollResult->revents & POLLOUT)
 							{
 								ret = send(client.sckt, buffer, ret, 0);
 								if (ret == 0 || ret == SOCKET_ERROR)
