@@ -80,8 +80,8 @@ int main()
 			}
 		}
 		{
-			auto itClient = clients.begin();
-			while ( itClient != clients.end() )
+			auto itClient = clients.cbegin();
+			while ( itClient != clients.cend() )
 			{
 				const std::string clientAddress = Sockets::GetAddress(itClient->addr);
 				const unsigned short clientPort = ntohs(itClient->addr.sin_port);
