@@ -34,11 +34,14 @@
 		<Linker>
 			<Add library="wsock32" />
 		</Linker>
+		<Unit filename="Errors.cpp" />
+		<Unit filename="Errors.hpp" />
 		<Unit filename="Main.cpp" />
+		<Unit filename="Messages.hpp" />
 		<Unit filename="Sockets.cpp" />
 		<Unit filename="Sockets.hpp" />
-		<Unit filename="TCPSocket.cpp" />
-		<Unit filename="TCPSocket.hpp" />
+		<Unit filename="TCP/Client.cpp" />
+		<Unit filename="TCP/Client.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
