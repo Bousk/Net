@@ -1,6 +1,6 @@
 #include "Sockets.hpp"
 
-namespace Sockets
+namespace Network
 {
 	bool Start()
 	{
@@ -17,12 +17,13 @@ namespace Sockets
 		WSACleanup();
 #endif
 	}
-	int GetError()
+	bool SetNonBlocking(SOCKET socket)
 	{
 #ifdef _WIN32
-		return WSAGetLastError();
+		u_long mode = 1;
+		return ioctlsocket(socket, FIONBIO, &mode) == 0;
 #else
-		return errno;
+		return fcntl(socket, F_SETFL, O_NONBLOCK) != -1;
 #endif
 	}
 	void CloseSocket(SOCKET s)
@@ -32,5 +33,10 @@ namespace Sockets
 #else
 		close(s);
 #endif
+	}
+	std::string GetAddress(const sockaddr_in& addr)
+	{
+		char buff[INET6_ADDRSTRLEN] = { 0 };
+		return inet_ntop(addr.sin_family, (void*)&(addr.sin_addr), buff, INET6_ADDRSTRLEN);
 	}
 }

@@ -12,18 +12,24 @@
 	#define SOCKET_ERROR (int(-1))
 #endif
 
-namespace Sockets
+namespace Network
 {
-	int GetError();
-	enum class Errors : int {
+	namespace Errors
+	{
+		int Get();
+		enum {
 #ifdef _WIN32
-		WOULDBLOCK = WSAEWOULDBLOCK,
-		INPROGRESS = WSAEINPROGRESS,
+			AGAIN = WSATRY_AGAIN,
+			WOULDBLOCK = WSAEWOULDBLOCK,
+			INPROGRESS = WSAEINPROGRESS,
+			INTR = WSAEINTR,
 #else
-		WOULDBLOCK = EWOULDBLOCK,
-		INPROGRESS = EINPROGRESS,
+			AGAIN = EAGAIN,
+			WOULDBLOCK = EWOULDBLOCK,
+			INPROGRESS = EINPROGRESS,
+			INTR = EINTR,
 #endif
-	};
+		};
+	}
 }
-
 #endif // BOUSK_DVP_COURS_ERRORS_HPP
