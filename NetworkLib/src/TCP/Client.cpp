@@ -304,10 +304,14 @@ namespace Network
 				ClientImpl();
 				~ClientImpl();
 
+				bool init(SOCKET sckt);
 				bool connect(const std::string& ipaddress, unsigned short port);
 				void disconnect();
 				bool send(const unsigned char* data, unsigned int len);
 				std::unique_ptr<Messages::Base> poll();
+
+			private:
+				void onConnected();
 
 			private:
 				ConnectionHandler mConnectionHandler;
@@ -322,8 +326,19 @@ namespace Network
 		{
 			disconnect();
 		}
+		bool ClientImpl::init(SOCKET sckt)
+		{
+			assert(sckt != INVALID_SOCKET);
+			if (sckt == INVALID_SOCKET)
+				return false;
+
+			mSocket = sckt;
+			onConnected();
+			return true;
+		}
 		bool ClientImpl::connect(const std::string& ipaddress, unsigned short port)
 		{
+			assert(mSocket == INVALID_SOCKET);
 			mSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 			if (mSocket == INVALID_SOCKET)
 			{
@@ -360,12 +375,12 @@ namespace Network
 					{
 						if (msg->result == Messages::Connection::Result::Success)
 						{
-							mSendingHandler.init(mSocket);
-							mReceivingHandler.init(mSocket);
-							mState = State::Connected;
+							onConnected();
 						}
 						else
+						{
 							disconnect();
+						}
 					}
 					return msg;
 				} break;
@@ -385,6 +400,12 @@ namespace Network
 			}
 			return nullptr;
 		}
+		void ClientImpl::onConnected()
+		{
+			mSendingHandler.init(mSocket);
+			mReceivingHandler.init(mSocket);
+			mState = State::Connected;
+		}
 		////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////////////////////
@@ -394,6 +415,7 @@ namespace Network
 			: mImpl(std::make_unique<ClientImpl>())
 		{}
 		Client::~Client() {}
+		bool Client::init(SOCKET sckt) { return mImpl && mImpl->init(sckt); }
 		bool Client::connect(const std::string& ipaddress, unsigned short port) { return mImpl && mImpl->connect(ipaddress, port); }
 		void Client::disconnect() { if (mImpl) mImpl->disconnect(); }
 		bool Client::send(const unsigned char* data, unsigned int len) { return mImpl && mImpl->send(data, len); }
