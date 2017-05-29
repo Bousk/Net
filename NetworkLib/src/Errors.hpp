@@ -1,5 +1,4 @@
-#ifndef BOUSK_DVP_COURS_ERRORS_HPP
-#define BOUSK_DVP_COURS_ERRORS_HPP
+#pragma once
 
 #pragma once
 
@@ -32,4 +31,3 @@ namespace Network
 		};
 	}
 }
-#endif // BOUSK_DVP_COURS_ERRORS_HPP

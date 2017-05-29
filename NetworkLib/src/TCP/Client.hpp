@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Sockets.hpp"
+
 #include <string>
 #include <memory>
 
@@ -23,6 +25,7 @@ namespace Network
 				Client& operator=(Client&&) = default;
 				~Client();
 
+				bool init(SOCKET sckt);
 				bool connect(const std::string& ipaddress, unsigned short port);
 				void disconnect();
 				bool send(const unsigned char* data, unsigned int len);
