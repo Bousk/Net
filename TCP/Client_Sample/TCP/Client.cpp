@@ -1,4 +1,4 @@
-#include "Client.hpp"
+#include "TCP/Client.hpp"
 
 #include "Sockets.hpp"
 #include "Messages.hpp"
@@ -59,7 +59,7 @@ namespace Network
 				{
 					return std::make_unique<Messages::Connection>(Messages::Connection::Result::Failed);
 				}
-				else if(mFd.revents & POLLERR)
+				else if (mFd.revents & POLLERR)
 				{
 					return std::make_unique<Messages::Connection>(Messages::Connection::Result::Failed);
 				}
@@ -192,7 +192,7 @@ namespace Network
 				std::list<std::vector<unsigned char>> mQueueingBuffers;
 				std::vector<unsigned char> mSendingBuffer;
 				SOCKET mSocket{ INVALID_SOCKET };
-				State mState{ State::Idle } ;
+				State mState{ State::Idle };
 		};
 		void SendingHandler::init(SOCKET sckt)
 		{
@@ -240,7 +240,7 @@ namespace Network
 		{
 			if (mSendingBuffer.empty())
 				return true;
-			
+
 			//!< envoi des données restantes du dernier envoi
 			int sent = ::send(mSocket, reinterpret_cast<char*>(mSendingBuffer.data()), static_cast<int>(mSendingBuffer.size()), 0);
 			if (sent > 0)
@@ -294,14 +294,13 @@ namespace Network
 		class ClientImpl
 		{
 			enum class State {
-				None,
 				Connecting,
 				Connected,
 				Disconnected,
 			};
 
 			public:
-				ClientImpl();
+				ClientImpl() = default;
 				~ClientImpl();
 
 				bool connect(const std::string& ipaddress, unsigned short port);
@@ -313,17 +312,19 @@ namespace Network
 				ConnectionHandler mConnectionHandler;
 				SendingHandler mSendingHandler;
 				ReceptionHandler mReceivingHandler;
-				SOCKET mSocket;
-				State mState;
+				SOCKET mSocket{ INVALID_SOCKET };
+				State mState{ State::Disconnected };
 		};
-		ClientImpl::ClientImpl()
-		{}
 		ClientImpl::~ClientImpl()
 		{
 			disconnect();
 		}
 		bool ClientImpl::connect(const std::string& ipaddress, unsigned short port)
 		{
+			assert(mState == State::Disconnected);
+			assert(mSocket == INVALID_SOCKET);
+			if (mSocket != INVALID_SOCKET)
+				disconnect();
 			mSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 			if (mSocket == INVALID_SOCKET)
 			{
@@ -331,6 +332,7 @@ namespace Network
 			}
 			else if (!SetNonBlocking(mSocket))
 			{
+				disconnect();
 				return false;
 			}
 			if (mConnectionHandler.connect(mSocket, ipaddress, port))
@@ -342,7 +344,11 @@ namespace Network
 		}
 		void ClientImpl::disconnect()
 		{
-			CloseSocket(mSocket);
+			if (mSocket != INVALID_SOCKET)
+			{
+				CloseSocket(mSocket);
+			}
+			mSocket = INVALID_SOCKET;
 			mState = State::Disconnected;
 		}
 		bool ClientImpl::send(const unsigned char* data, unsigned int len)
@@ -365,7 +371,9 @@ namespace Network
 							mState = State::Connected;
 						}
 						else
+						{
 							disconnect();
+						}
 					}
 					return msg;
 				} break;
@@ -390,11 +398,14 @@ namespace Network
 		////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////////////////////
-		Client::Client()
-			: mImpl(std::make_unique<ClientImpl>())
-		{}
+		Client::Client() {}
 		Client::~Client() {}
-		bool Client::connect(const std::string& ipaddress, unsigned short port) { return mImpl && mImpl->connect(ipaddress, port); }
+		bool Client::connect(const std::string& ipaddress, unsigned short port)
+		{
+			if (!mImpl)
+				mImpl = std::make_unique<ClientImpl>();
+			return mImpl && mImpl->connect(ipaddress, port);
+		}
 		void Client::disconnect() { if (mImpl) mImpl->disconnect(); }
 		bool Client::send(const unsigned char* data, unsigned int len) { return mImpl && mImpl->send(data, len); }
 		std::unique_ptr<Messages::Base> Client::poll() { return mImpl ? mImpl->poll() : nullptr; }
