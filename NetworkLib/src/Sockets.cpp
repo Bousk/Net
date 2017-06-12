@@ -26,6 +26,17 @@ namespace Network
 		return fcntl(socket, F_SETFL, O_NONBLOCK) != -1;
 #endif
 	}
+	bool SetReuseAddr(SOCKET socket)
+	{
+#ifdef _WIN32
+		//int optval = 1;
+		//return setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == 0;
+		return true;
+#else
+		int optval = 1;
+		return setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == 0;
+#endif
+	}
 	void CloseSocket(SOCKET s)
 	{
 #ifdef _WIN32
@@ -38,5 +49,9 @@ namespace Network
 	{
 		char buff[INET6_ADDRSTRLEN] = { 0 };
 		return inet_ntop(addr.sin_family, (void*)&(addr.sin_addr), buff, INET6_ADDRSTRLEN);
+	}
+	unsigned short GetPort(const sockaddr_in& addr)
+	{
+		return ntohs(addr.sin_port);
 	}
 }

@@ -21,15 +21,18 @@ namespace Network
 				Client();
 				Client(const Client&) = delete;
 				Client& operator=(const Client&) = delete;
-				Client(Client&&) = default;
-				Client& operator=(Client&&) = default;
+				Client(Client&&);
+				Client& operator=(Client&&);
 				~Client();
 
-				bool init(SOCKET sckt);
+				bool init(SOCKET&& sckt, const sockaddr_in& addr);
 				bool connect(const std::string& ipaddress, unsigned short port);
 				void disconnect();
 				bool send(const unsigned char* data, unsigned int len);
 				std::unique_ptr<Messages::Base> poll();
+
+				uint64_t id() const;
+				const sockaddr_in& destinationAddress() const;
 
 			private:
 				std::unique_ptr<ClientImpl> mImpl;
