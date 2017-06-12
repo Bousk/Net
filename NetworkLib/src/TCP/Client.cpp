@@ -19,9 +19,11 @@ namespace Network
 				ConnectionHandler() = default;
 				bool connect(SOCKET sckt, const std::string& address, unsigned short port);
 				std::unique_ptr<Messages::Connection> poll();
+				const sockaddr_in& connectedAddress() const { return mConnectedAddress; }
 
 			private:
 				pollfd mFd{ 0 };
+				sockaddr_in mConnectedAddress;
 				std::string mAddress;
 				unsigned short mPort;
 		};
@@ -32,11 +34,10 @@ namespace Network
 			mPort = port;
 			mFd.fd = sckt;
 			mFd.events = POLLOUT;
-			sockaddr_in server;
-			inet_pton(AF_INET, mAddress.c_str(), &server.sin_addr.s_addr);
-			server.sin_family = AF_INET;
-			server.sin_port = htons(mPort);
-			if (::connect(sckt, (const sockaddr*)&server, sizeof(server)) != 0)
+			inet_pton(AF_INET, mAddress.c_str(), &mConnectedAddress.sin_addr.s_addr);
+			mConnectedAddress.sin_family = AF_INET;
+			mConnectedAddress.sin_port = htons(mPort);
+			if (::connect(sckt, (const sockaddr*)&mConnectedAddress, sizeof(mConnectedAddress)) != 0)
 			{
 				int err = Errors::Get();
 				if (err != Errors::INPROGRESS && err != Errors::WOULDBLOCK)
@@ -263,7 +264,7 @@ namespace Network
 		void SendingHandler::prepareNextHeader()
 		{
 			assert(!mQueueingBuffers.empty());
-			auto header = static_cast<HeaderType>(mQueueingBuffers.front().size());
+			const auto header = static_cast<HeaderType>(mQueueingBuffers.front().size());
 			const auto networkHeader = htons(header);
 			mSendingBuffer.clear();
 			mSendingBuffer.resize(HeaderSize);
@@ -303,19 +304,23 @@ namespace Network
 				ClientImpl() = default;
 				~ClientImpl();
 
-				bool init(SOCKET sckt);
+				bool init(SOCKET&& sckt, const sockaddr_in& addr);
 				bool connect(const std::string& ipaddress, unsigned short port);
 				void disconnect();
 				bool send(const unsigned char* data, unsigned int len);
 				std::unique_ptr<Messages::Base> poll();
 
+				uint64_t id() const { return static_cast<uint64_t>(mSocket); }
+				const sockaddr_in& destinationAddress() const { return mAddress; }
+
 			private:
-				void onConnected();
+				void onConnected(const sockaddr_in& addr);
 
 			private:
 				ConnectionHandler mConnectionHandler;
 				SendingHandler mSendingHandler;
 				ReceptionHandler mReceivingHandler;
+				sockaddr_in mAddress{ 0 };
 				SOCKET mSocket{ INVALID_SOCKET };
 				State mState{ State::Disconnected };
 		};
@@ -323,14 +328,19 @@ namespace Network
 		{
 			disconnect();
 		}
-		bool ClientImpl::init(SOCKET sckt)
+		bool ClientImpl::init(SOCKET&& sckt, const sockaddr_in& addr)
 		{
 			assert(sckt != INVALID_SOCKET);
 			if (sckt == INVALID_SOCKET)
 				return false;
 
 			mSocket = sckt;
-			onConnected();
+			if (!SetNonBlocking(mSocket))
+			{
+				disconnect();
+				return false;
+			}
+			onConnected(addr);
 			return true;
 		}
 		bool ClientImpl::connect(const std::string& ipaddress, unsigned short port)
@@ -363,6 +373,7 @@ namespace Network
 				CloseSocket(mSocket);
 			}
 			mSocket = INVALID_SOCKET;
+			memset(&mAddress, 0, sizeof(mAddress));
 			mState = State::Disconnected;
 		}
 		bool ClientImpl::send(const unsigned char* data, unsigned int len)
@@ -380,7 +391,7 @@ namespace Network
 					{
 						if (msg->result == Messages::Connection::Result::Success)
 						{
-							onConnected();
+							onConnected(mConnectionHandler.connectedAddress());
 						}
 						else
 						{
@@ -393,9 +404,12 @@ namespace Network
 				{
 					mSendingHandler.update();
 					auto msg = mReceivingHandler.recv();
-					if (msg && msg->is<Messages::Disconnection>())
+					if (msg)
 					{
-						disconnect();
+						if (msg->is<Messages::Disconnection>())
+						{
+							disconnect();
+						}
 					}
 					return msg;
 				} break;
@@ -405,8 +419,9 @@ namespace Network
 			}
 			return nullptr;
 		}
-		void ClientImpl::onConnected()
+		void ClientImpl::onConnected(const sockaddr_in& addr)
 		{
+			mAddress = addr;
 			mSendingHandler.init(mSocket);
 			mReceivingHandler.init(mSocket);
 			mState = State::Connected;
@@ -418,11 +433,19 @@ namespace Network
 		////////////////////////////////////////////////////////////////////////////////////
 		Client::Client() {}
 		Client::~Client() {}
-		bool Client::init(SOCKET sckt)
+		Client::Client(Client&& other)
+			: mImpl(std::move(other.mImpl))
+		{}
+		Client& Client::operator=(Client&& other)
+		{
+			mImpl = std::move(other.mImpl);
+			return *this;
+		}
+		bool Client::init(SOCKET&& sckt, const sockaddr_in& addr)
 		{
 			if (!mImpl)
 				mImpl = std::make_unique<ClientImpl>();
-			return mImpl && mImpl->init(sckt);
+			return mImpl && mImpl->init(std::move(sckt), addr);
 		}
 		bool Client::connect(const std::string& ipaddress, unsigned short port)
 		{
@@ -433,5 +456,7 @@ namespace Network
 		void Client::disconnect() { if (mImpl) mImpl->disconnect(); }
 		bool Client::send(const unsigned char* data, unsigned int len) { return mImpl && mImpl->send(data, len); }
 		std::unique_ptr<Messages::Base> Client::poll() { return mImpl ? mImpl->poll() : nullptr; }
+		uint64_t Client::id() const { return mImpl ? mImpl->id() : 0xffffffffffffffff; }
+		const sockaddr_in& Client::destinationAddress() const { static sockaddr_in empty{ 0 }; return mImpl ? mImpl->destinationAddress() : empty; }
 	}
 }

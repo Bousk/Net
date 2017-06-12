@@ -16,13 +16,15 @@ namespace Network
 				Server();
 				Server(const Server&) = delete;
 				Server& operator=(const Server&) = delete;
-				Server(Server&&) = default;
-				Server& operator=(Server&&) = default;
+				Server(Server&&);
+				Server& operator=(Server&&);
 				~Server();
 
 				bool start(unsigned short _port);
 				void stop();
 				void update();
+				bool sendTo(uint64_t clientid, const unsigned char* data, unsigned int len);
+				bool sendToAll(const unsigned char* data, unsigned int len);
 				std::unique_ptr<Messages::Base> poll();
 
 			private:

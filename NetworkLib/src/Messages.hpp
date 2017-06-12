@@ -14,6 +14,9 @@ namespace Network
 				template<class M>
 				const M* as() const { return static_cast<const M*>(this); }
 
+				sockaddr_in from;
+				uint64_t idFrom;
+
 			protected:
 				enum class Type {
 					Connection,
