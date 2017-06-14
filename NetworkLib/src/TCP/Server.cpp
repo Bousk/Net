@@ -38,6 +38,8 @@ namespace Network
 		bool ServerImpl::start(unsigned short _port)
 		{
 			assert(mSocket == INVALID_SOCKET);
+			if (mSocket != INVALID_SOCKET)
+				stop();
 			mSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 			if (mSocket == INVALID_SOCKET)
 				return false;

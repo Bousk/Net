@@ -334,6 +334,11 @@ namespace Network
 			if (sckt == INVALID_SOCKET)
 				return false;
 
+			assert(mState == State::Disconnected);
+			assert(mSocket == INVALID_SOCKET);
+			if (mSocket != INVALID_SOCKET)
+				disconnect();
+
 			mSocket = sckt;
 			if (!SetNonBlocking(mSocket))
 			{
