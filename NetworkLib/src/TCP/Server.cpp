@@ -89,6 +89,10 @@ namespace Network
 				Client newClient;
 				if (newClient.init(std::move(newClientSocket), addr))
 				{
+					auto message = std::make_unique<Messages::Connection>(Messages::Connection::Result::Success);
+					message->idFrom = newClient.id();
+					message->from = newClient.destinationAddress();
+					mMessages.push_back(std::move(message));
 					mClients[newClient.id()] = std::move(newClient);
 				}
 			}
