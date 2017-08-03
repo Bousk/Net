@@ -1,4 +1,5 @@
 #include "Sockets.hpp"
+#include "Utils.hpp"
 
 namespace Network
 {
@@ -29,6 +30,7 @@ namespace Network
 	bool SetReuseAddr(SOCKET socket)
 	{
 #ifdef _WIN32
+		UNUSED(socket);
 		//int optval = 1;
 		//return setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&optval), sizeof(optval)) == 0;
 		return true;
