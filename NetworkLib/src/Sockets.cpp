@@ -50,7 +50,11 @@ namespace Network
 	std::string GetAddress(const sockaddr_in& addr)
 	{
 		char buff[INET6_ADDRSTRLEN] = { 0 };
-		return inet_ntop(addr.sin_family, (void*)&(addr.sin_addr), buff, INET6_ADDRSTRLEN);
+		if (auto ret = inet_ntop(addr.sin_family, (void*)&(addr.sin_addr), buff, INET6_ADDRSTRLEN))
+		{
+			return ret;
+		}
+		return "";
 	}
 	unsigned short GetPort(const sockaddr_in& addr)
 	{

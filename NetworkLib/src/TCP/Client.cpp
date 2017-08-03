@@ -378,7 +378,6 @@ namespace Network
 				CloseSocket(mSocket);
 			}
 			mSocket = INVALID_SOCKET;
-			memset(&mAddress, 0, sizeof(mAddress));
 			mState = State::Disconnected;
 		}
 		bool ClientImpl::send(const unsigned char* data, unsigned int len)
@@ -458,7 +457,7 @@ namespace Network
 				mImpl = std::make_unique<ClientImpl>();
 			return mImpl && mImpl->connect(ipaddress, port);
 		}
-		void Client::disconnect() { if (mImpl) mImpl->disconnect(); }
+		void Client::disconnect() { if (mImpl) mImpl->disconnect(); mImpl = nullptr; }
 		bool Client::send(const unsigned char* data, unsigned int len) { return mImpl && mImpl->send(data, len); }
 		std::unique_ptr<Messages::Base> Client::poll() { return mImpl ? mImpl->poll() : nullptr; }
 		uint64_t Client::id() const { return mImpl ? mImpl->id() : -1; }
