@@ -461,7 +461,7 @@ namespace Network
 		void Client::disconnect() { if (mImpl) mImpl->disconnect(); }
 		bool Client::send(const unsigned char* data, unsigned int len) { return mImpl && mImpl->send(data, len); }
 		std::unique_ptr<Messages::Base> Client::poll() { return mImpl ? mImpl->poll() : nullptr; }
-		uint64_t Client::id() const { return mImpl ? mImpl->id() : 0xffffffffffffffff; }
+		uint64_t Client::id() const { return mImpl ? mImpl->id() : -1; }
 		const sockaddr_in& Client::destinationAddress() const { static sockaddr_in empty{ 0 }; return mImpl ? mImpl->destinationAddress() : empty; }
 	}
 }
