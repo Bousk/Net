@@ -21,6 +21,24 @@ project "NetworkLib"
       defines { "NDEBUG" }
       optimize "On"
 
+
+function CreateProject(path)
+	local prettypath = string.replace(path, "/", "_")
+	prettypath = string.replace(prettypath, "\\", "_")
+	project{prettypath}
+		kind "ConsoleApp"
+		language "C++"
+		targetdir {path .. "/%{cfg.buildcfg}"}
+		files { "**.hpp", "**.cpp" }
+		includedirs { "src" }
+		links { "Network" }
+		filter "configurations:Debug"
+			defines { "DEBUG" }
+			symbols "On"
+		filter "configurations:Release"
+			defines { "NDEBUG" }
+			optimize "On"
+end
 if isModuleAvailable("lfs") then
 	local lfs = require"lfs"
 	function GetDirs(path)
@@ -43,24 +61,6 @@ if isModuleAvailable("lfs") then
 		return lfs.attributes(fullpath) ~= nil
 	end
 
-	function CreateProject(path)
-		local prettypath = string.replace(path, "/", "_")
-		prettypath = string.replace(prettypath, "\\", "_")
-		project{prettypath}
-			kind "ConsoleApp"
-			language "C++"
-			targetdir {path .. "/%{cfg.buildcfg}"}
-			files { "**.hpp", "**.cpp" }
-			includedirs { "src" }
-			links { "Network" }
-			filter "configurations:Debug"
-				defines { "DEBUG" }
-				symbols "On"
-			filter "configurations:Release"
-				defines { "NDEBUG" }
-				optimize "On"
-	end
-
 	function CreateSamples(basepath)
 		for path in basepath do
 			local fullpath = basepath .. "/" .. path
@@ -76,5 +76,9 @@ if isModuleAvailable("lfs") then
 	local SamplesPaths = GetDirs(SamplesDirectory)
 	CreateSamples(SamplesPaths)
 else
-	print("lfs not found. Unable to create UT projects.")
+	print("lfs not found. Unable to create all UT projects.")
+	print("Creating default sample projects...")
+	CreateProject("Samples/TCP/Client")
+	CreateProject("Samples/TCP/Server")
+	CreateProject("Samples/UDP/Hello World")
 end
