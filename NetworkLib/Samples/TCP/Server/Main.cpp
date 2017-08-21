@@ -7,9 +7,9 @@
 
 int main()
 {
-	if (!Network::Start())
+	if (!Bousk::Network::Start())
 	{
-		std::cout << "Erreur initialisation WinSock : " << Network::Errors::Get();
+		std::cout << "Erreur initialisation WinSock : " << Bousk::Network::Errors::Get();
 		return -1;
 	}
 	
@@ -17,10 +17,10 @@ int main()
 	std::cout << "Port ? ";
 	std::cin >> port;
 
-	Network::TCP::Server server;
+	Bousk::Network::TCP::Server server;
 	if (!server.start(port))
 	{
-		std::cout << "Erreur initialisation serveur : " << Network::Errors::Get();
+		std::cout << "Erreur initialisation serveur : " << Bousk::Network::Errors::Get();
 		return -2;
 	}
 
@@ -29,22 +29,22 @@ int main()
 		server.update();
 		while (auto msg = server.poll())
 		{
-			if (msg->is<Network::Messages::Connection>())
+			if (msg->is<Bousk::Network::Messages::Connection>())
 			{
-				std::cout << "Connexion de [" << Network::GetAddress(msg->from) << ":" << Network::GetPort(msg->from) << "]" << std::endl;
+				std::cout << "Connexion de [" << Bousk::Network::GetAddress(msg->from) << ":" << Bousk::Network::GetPort(msg->from) << "]" << std::endl;
 			}
-			else if (msg->is<Network::Messages::Disconnection>())
+			else if (msg->is<Bousk::Network::Messages::Disconnection>())
 			{
-				std::cout << "Deconnexion de [" << Network::GetAddress(msg->from) << ":" << Network::GetPort(msg->from) << "]" << std::endl;
+				std::cout << "Deconnexion de [" << Bousk::Network::GetAddress(msg->from) << ":" << Bousk::Network::GetPort(msg->from) << "]" << std::endl;
 			}
-			else if (msg->is<Network::Messages::UserData>())
+			else if (msg->is<Bousk::Network::Messages::UserData>())
 			{
-				auto userdata = msg->as<Network::Messages::UserData>();
+				auto userdata = msg->as<Bousk::Network::Messages::UserData>();
 				server.sendToAll(userdata->data.data(), static_cast<unsigned int>(userdata->data.size()));
 			}
 		}
 	}
 	server.stop();
-	Network::Release();
+	Bousk::Network::Release();
 	return 0;
 }

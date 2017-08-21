@@ -7,9 +7,9 @@
 
 int main()
 {
-	if (!Network::Start())
+	if (!Bousk::Network::Start())
 	{
-		std::cout << "Erreur initialisation WinSock : " << Network::Errors::Get();
+		std::cout << "Erreur initialisation WinSock : " << Bousk::Network::Errors::Get();
 		return -1;
 	}
 
@@ -20,7 +20,7 @@ int main()
 	SOCKET myFirstUdpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (myFirstUdpSocket == SOCKET_ERROR)
 	{
-		std::cout << "Erreur création socket : " << Network::Errors::Get();
+		std::cout << "Erreur création socket : " << Bousk::Network::Errors::Get();
 		return -2;
 	}
 
@@ -39,12 +39,12 @@ int main()
 		int ret = sendto(myFirstUdpSocket, data.data(), static_cast<int>(data.length()), 0, reinterpret_cast<const sockaddr*>(&to), sizeof(to));
 		if (ret <= 0)
 		{
-			std::cout << "Erreur envoi de données : " << Network::Errors::Get() << ". Fermeture du programme.";
+			std::cout << "Erreur envoi de données : " << Bousk::Network::Errors::Get() << ". Fermeture du programme.";
 			break;
 		}
 	}
 
-	Network::CloseSocket(myFirstUdpSocket);
-	Network::Release();
+	Bousk::Network::CloseSocket(myFirstUdpSocket);
+	Bousk::Network::Release();
 	return 0;
 }

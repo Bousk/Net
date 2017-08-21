@@ -11,23 +11,26 @@
 	#define SOCKET_ERROR (int(-1))
 #endif
 
-namespace Network
+namespace Bousk
 {
-	namespace Errors
+	namespace Network
 	{
-		int Get();
-		enum {
-#ifdef _WIN32
-			AGAIN = WSATRY_AGAIN,
-			WOULDBLOCK = WSAEWOULDBLOCK,
-			INPROGRESS = WSAEINPROGRESS,
-			INTR = WSAEINTR,
-#else
-			AGAIN = EAGAIN,
-			WOULDBLOCK = EWOULDBLOCK,
-			INPROGRESS = EINPROGRESS,
-			INTR = EINTR,
-#endif
-		};
+		namespace Errors
+		{
+			int Get();
+			enum {
+			#ifdef _WIN32
+				AGAIN = WSATRY_AGAIN,
+				WOULDBLOCK = WSAEWOULDBLOCK,
+				INPROGRESS = WSAEINPROGRESS,
+				INTR = WSAEINTR,
+			#else
+				AGAIN = EAGAIN,
+				WOULDBLOCK = EWOULDBLOCK,
+				INPROGRESS = EINPROGRESS,
+				INTR = EINTR,
+			#endif
+			};
+		}
 	}
 }

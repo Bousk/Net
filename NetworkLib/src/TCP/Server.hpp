@@ -2,16 +2,18 @@
 
 #include <memory>
 
-namespace Network
+namespace Bousk
 {
-	namespace Messages {
-		class Base;
-	}
-	namespace TCP
+	namespace Network
 	{
-		class ServerImpl;
-		class Server
+		namespace Messages {
+			class Base;
+		}
+		namespace TCP
 		{
+			class ServerImpl;
+			class Server
+			{
 			public:
 				Server();
 				Server(const Server&) = delete;
@@ -29,6 +31,7 @@ namespace Network
 
 			private:
 				std::unique_ptr<ServerImpl> mImpl;
-		};
+			};
+		}
 	}
 }

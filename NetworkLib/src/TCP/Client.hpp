@@ -5,18 +5,20 @@
 #include <string>
 #include <memory>
 
-namespace Network
+namespace Bousk
 {
-	namespace Messages {
-		class Base;
-	}
-	namespace TCP
+	namespace Network
 	{
-		using HeaderType = uint16_t;
-		static const unsigned int HeaderSize = sizeof(HeaderType);
-		class ClientImpl;
-		class Client
+		namespace Messages {
+			class Base;
+		}
+		namespace TCP
 		{
+			using HeaderType = uint16_t;
+			static const unsigned int HeaderSize = sizeof(HeaderType);
+			class ClientImpl;
+			class Client
+			{
 			public:
 				Client();
 				Client(const Client&) = delete;
@@ -36,6 +38,7 @@ namespace Network
 
 			private:
 				std::unique_ptr<ClientImpl> mImpl;
-		};
+			};
+		}
 	}
 }
