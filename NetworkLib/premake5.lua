@@ -23,15 +23,16 @@ project "NetworkLib"
 
 
 function CreateProject(path)
-	local prettypath = string.replace(path, "/", "_")
-	prettypath = string.replace(prettypath, "\\", "_")
-	project{prettypath}
+	local prettypath = string.gsub(path, "/", "_")
+	prettypath = string.gsub(prettypath, "\\", "_")
+	project(prettypath)
 		kind "ConsoleApp"
 		language "C++"
-		targetdir {path .. "/%{cfg.buildcfg}"}
-		files { "**.hpp", "**.cpp" }
+		location(path)
+		targetdir (path .. "/%{cfg.buildcfg}")
+		files { path.."/*.hpp", path.."/*.cpp" }
+		links { "NetworkLib" }
 		includedirs { "src" }
-		links { "Network" }
 		filter "configurations:Debug"
 			defines { "DEBUG" }
 			symbols "On"
@@ -62,6 +63,7 @@ if isModuleAvailable("lfs") then
 	end
 
 	function CreateSamples(basepath)
+		group("Samples")
 		for path in basepath do
 			local fullpath = basepath .. "/" .. path
 			if HasMain(fullpath) then
@@ -70,6 +72,7 @@ if isModuleAvailable("lfs") then
 				CreateSamples(fullpath)
 			end
 		end
+		group("")
 	end
 
 	local SamplesDirectory = "Samples"
@@ -78,6 +81,7 @@ if isModuleAvailable("lfs") then
 else
 	print("lfs not found. Unable to create all UT projects.")
 	print("Creating default sample projects...")
+	group("Samples")
 	CreateProject("Samples/TCP/Client")
 	CreateProject("Samples/TCP/Server")
 	CreateProject("Samples/UDP/Hello World")
