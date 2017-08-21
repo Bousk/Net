@@ -38,13 +38,16 @@
 
 #include <string>
 
-namespace Network
+namespace Bousk
 {
-	bool Start();
-	void Release();
-	bool SetNonBlocking(SOCKET socket);
-	bool SetReuseAddr(SOCKET socket);
-	void CloseSocket(SOCKET socket);
-	std::string GetAddress(const sockaddr_in& addr);
-	unsigned short GetPort(const sockaddr_in& addr);
+	namespace Network
+	{
+		bool Start();
+		void Release();
+		bool SetNonBlocking(SOCKET socket);
+		bool SetReuseAddr(SOCKET socket);
+		void CloseSocket(SOCKET socket);
+		std::string GetAddress(const sockaddr_in& addr);
+		unsigned short GetPort(const sockaddr_in& addr);
+	}
 }

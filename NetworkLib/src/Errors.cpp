@@ -1,16 +1,19 @@
 #include "Errors.hpp"
 
-namespace Network
+namespace Bousk
 {
-	namespace Errors
+	namespace Network
 	{
-		int Get()
+		namespace Errors
 		{
-#ifdef _WIN32
-			return WSAGetLastError();
-#else
-			return errno;
-#endif
+			int Get()
+			{
+			#ifdef _WIN32
+				return WSAGetLastError();
+			#else
+				return errno;
+			#endif
+			}
 		}
 	}
 }

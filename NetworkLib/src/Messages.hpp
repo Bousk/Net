@@ -1,13 +1,15 @@
 #pragma once
 #include <vector>
 
-namespace Network
+namespace Bousk
 {
-	namespace Messages
+	namespace Network
 	{
-#define DECLARE_MESSAGE(name) friend class Base; static const Base::Type StaticType = Base::Type::name
-		class Base
+		namespace Messages
 		{
+			#define DECLARE_MESSAGE(name) friend class Base; static const Base::Type StaticType = Base::Type::name
+			class Base
+			{
 			public:
 				template<class M>
 				bool is() const { return mType == M::StaticType; }
@@ -28,10 +30,10 @@ namespace Network
 				{}
 			private:
 				Type mType;
-		};
-		class Connection : public Base
-		{
-			DECLARE_MESSAGE(Connection);
+			};
+			class Connection : public Base
+			{
+				DECLARE_MESSAGE(Connection);
 			public:
 				enum class Result {
 					Success,
@@ -42,10 +44,10 @@ namespace Network
 					, result(r)
 				{}
 				Result result;
-		};
-		class Disconnection : public Base
-		{
-			DECLARE_MESSAGE(Disconnection);
+			};
+			class Disconnection : public Base
+			{
+				DECLARE_MESSAGE(Disconnection);
 			public:
 				enum class Reason {
 					Disconnected,
@@ -56,17 +58,18 @@ namespace Network
 					, reason(r)
 				{}
 				Reason reason;
-		};
-		class UserData : public Base
-		{
-			DECLARE_MESSAGE(UserData);
+			};
+			class UserData : public Base
+			{
+				DECLARE_MESSAGE(UserData);
 			public:
 				UserData(std::vector<unsigned char>&& d)
 					: Base(Type::UserData)
 					, data(std::move(d))
 				{}
 				std::vector<unsigned char> data;
-		};
-#undef DECLARE_MESSAGE
+			};
+			#undef DECLARE_MESSAGE
+		}
 	}
 }
