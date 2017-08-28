@@ -13,10 +13,6 @@ int main()
 		return -1;
 	}
 
-	unsigned short port;
-	std::cout << "Port ? ";
-	std::cin >> port;
-
 	SOCKET myFirstUdpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (myFirstUdpSocket == SOCKET_ERROR)
 	{
@@ -24,10 +20,27 @@ int main()
 		return -2;
 	}
 
+	unsigned short port;
+	std::cout << "Port local ? ";
+	std::cin >> port;
+
+	sockaddr_in addr;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(port);
+	addr.sin_family = AF_INET;
+	if (bind(myFirstUdpSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
+	{
+		std::cout << "Erreur bind socket : " << Bousk::Network::Errors::Get();
+		return -3;
+	}
+
+	unsigned short portDst;
+	std::cout << "Port du destinataire ? ";
+	std::cin >> portDst;
 	sockaddr_in to = { 0 };
 	inet_pton(AF_INET, "127.0.0.1", &to.sin_addr.s_addr);
 	to.sin_family = AF_INET;
-	to.sin_port = htons(port);
+	to.sin_port = htons(portDst);
 
 	std::cout << "Entrez le texte a envoyer (vide pour quitter)> ";
 	while (1)
