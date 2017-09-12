@@ -45,6 +45,8 @@ int main()
 	std::cout << "Entrez le texte a envoyer (vide pour quitter)> ";
 	while (1)
 	{
+		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		std::string data;
 		std::getline(std::cin, data);
 		if (data.empty())
@@ -55,6 +57,16 @@ int main()
 			std::cout << "Erreur envoi de données : " << Bousk::Network::Errors::Get() << ". Fermeture du programme.";
 			break;
 		}
+		char buff[1500] = { 0 };
+		sockaddr_in from;
+		socklen_t fromlen = sizeof(from);
+		ret = recvfrom(myFirstUdpSocket, buff, 1499, 0, reinterpret_cast<sockaddr*>(&from), &fromlen);
+		if (ret <= 0)
+		{
+			std::cout << "Erreur réception de données : " << Bousk::Network::Errors::Get() << ". Fermeture du programme.";
+			break;
+		}
+		std::cout << "Recu : " << buff << " de " << Bousk::Network::GetAddress(from) << ":" << Bousk::Network::GetPort(from) << std::endl;
 	}
 
 	Bousk::Network::CloseSocket(myFirstUdpSocket);
