@@ -14,6 +14,8 @@ namespace Bousk
 			static constexpr uint8_t DataMaxSize = BufferMaxSize - sizeof(ID);
 
 			ID id;
+			ID ack;
+			uint64_t previousAcks;
 			std::array<uint8_t, DataMaxSize> data;
 		};
 	}
