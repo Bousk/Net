@@ -10,12 +10,16 @@ namespace Bousk
 		struct Datagram
 		{
 			using ID = uint16_t;
-			static constexpr uint8_t BufferMaxSize = 1400;
-			static constexpr uint8_t DataMaxSize = BufferMaxSize - sizeof(ID);
+			struct Header
+			{
+				ID id;
+				ID ack;
+				uint64_t previousAcks;
+			};
+			static constexpr size_t BufferMaxSize = 1400;
+			static constexpr size_t DataMaxSize = BufferMaxSize - sizeof(Header);
 
-			ID id;
-			ID ack;
-			uint64_t previousAcks;
+			Header header;
 			std::array<uint8_t, DataMaxSize> data;
 		};
 	}
