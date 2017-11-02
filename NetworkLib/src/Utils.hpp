@@ -9,9 +9,15 @@ namespace Bousk
 {
 	namespace Utils
 	{
-		std::chrono::milliseconds Now();
+		inline std::chrono::milliseconds Now();
 
-		bool IsSequenceNewer(uint32_t sNew, uint32_t sLast);
-		uint32_t SequenceDiff(uint32_t sNew, uint32_t sLast);
+		inline bool IsSequenceNewer(const uint32_t sNew, const uint32_t sLast);
+		inline uint32_t SequenceDiff(const uint32_t sNew, const uint32_t sLast);
+
+		inline void SetBit(uint64_t& bitfield, const uint8_t n);
+		inline void UnsetBit(uint64_t& bitfield, const uint8_t n);
+		inline bool HasBit(uint64_t bitfield, const uint8_t n);
 	}
 }
+
+#include "Utils.inl"
