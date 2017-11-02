@@ -20,6 +20,8 @@ namespace Bousk
 		{
 			if (sNew == sLast)
 				return 0;
+			//!< Please order the parameters or diff can't proceed
+			assert(IsSequenceNewer(sNew, sLast));
 			if (sNew > sLast && sNew - sLast <= std::numeric_limits<uint16_t>::max() / 2)
 				return sNew - sLast;
 			//!< overflow handling
