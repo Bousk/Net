@@ -91,16 +91,20 @@ namespace Bousk
 			const auto diff = Utils::SequenceDiff(mLastAck, ack);
 			if (diff > 64)
 				return false;
-			return Utils::HasBit(mPreviousAcks, static_cast<uint8_t>(diff));
+			const uint8_t bitPosition = static_cast<uint8_t>(diff - 1);
+			return Utils::HasBit(mPreviousAcks, bitPosition);
 		}
 		bool AckHandler::isNewlyAcked(uint16_t ack) const
 		{
 			if (ack == mLastAck)
 				return mLastAckIsNew;
+			if (Utils::IsSequenceNewer(ack, mLastAck))
+				return false;
 			const auto diff = Utils::SequenceDiff(mLastAck, ack);
 			if (diff > 64)
 				return false;
-			return Utils::HasBit(mNewAcks, static_cast<uint8_t>(diff));
+			const uint8_t bitPosition = static_cast<uint8_t>(diff - 1);
+			return Utils::HasBit(mNewAcks, bitPosition);
 		}
 
 		std::vector<uint16_t>&& AckHandler::loss()
