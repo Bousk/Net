@@ -24,7 +24,7 @@ namespace Bousk
 
 			uint16_t lastAck() const { return mLastAck; }
 			uint64_t previousAcksMask() const { return mPreviousAcks; }
-			std::vector<uint16_t>&& loss();
+			std::vector<uint16_t>&& loss() { return std::move(mLoss); }
 
 		private:
 			uint64_t mPreviousAcks{ (uint64_t)-1 };

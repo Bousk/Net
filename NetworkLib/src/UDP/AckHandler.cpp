@@ -106,10 +106,5 @@ namespace Bousk
 			const uint8_t bitPosition = static_cast<uint8_t>(diff - 1);
 			return Utils::HasBit(mNewAcks, bitPosition);
 		}
-
-		std::vector<uint16_t>&& AckHandler::loss()
-		{
-			return std::move(mLoss);
-		}
 	}
 }
