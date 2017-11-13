@@ -12,7 +12,7 @@ namespace Bousk
 			if (newAck == mLastAck)
 			{
 				//!< Last ack is the same but some previous may be new
-				mNewAcks = (mPreviousAcks | previousAcks) ^ previousAcks;
+				mNewAcks = (mPreviousAcks & previousAcks) ^ previousAcks;
 				mPreviousAcks |= previousAcks;
 			}
 			else if (Utils::IsSequenceNewer(newAck, mLastAck))
@@ -59,7 +59,7 @@ namespace Bousk
 				}
 				mLastAck = newAck;
 				mLastAckIsNew = true;
-				mNewAcks = (mPreviousAcks | previousAcks) ^ previousAcks;
+				mNewAcks = (mPreviousAcks & previousAcks) ^ previousAcks;
 				mPreviousAcks |= previousAcks;
 			}
 			else
@@ -105,6 +105,23 @@ namespace Bousk
 				return false;
 			const uint8_t bitPosition = static_cast<uint8_t>(diff - 1);
 			return Utils::HasBit(mNewAcks, bitPosition);
+		}
+		std::vector<uint16_t> AckHandler::getNewAcks() const
+		{
+			std::vector<uint16_t> newAcks;
+			newAcks.reserve(65);
+			for (uint8_t i = 64; i != 0; --i)
+			{
+				const uint8_t bitToCheck = i - 1;
+				if (Utils::HasBit(mNewAcks, bitToCheck))
+				{
+					const uint16_t id = mLastAck - i;
+					newAcks.push_back(id);
+				}
+			}
+			if (mLastAckIsNew)
+				newAcks.push_back(mLastAck);
+			return newAcks;
 		}
 	}
 }
