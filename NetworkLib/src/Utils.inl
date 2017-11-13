@@ -30,17 +30,17 @@ namespace Bousk
 		void SetBit(uint64_t& bitfield, const uint8_t n)
 		{
 			assert(n < 64);
-			bitfield |= (static_cast<uint64_t>(0b1) << n);
+			bitfield |= (Bit<uint64_t>::Right << n);
 		}
 		void UnsetBit(uint64_t& bitfield, const uint8_t n)
 		{
 			assert(n < 64);
-			bitfield &= (~(static_cast<uint64_t>(0b1) << n));
+			bitfield &= (~(Bit<uint64_t>::Right << n));
 		}
 		bool HasBit(uint64_t bitfield, const uint8_t n)
 		{
 			assert(n < 64);
-			return (bitfield & (static_cast<uint64_t>(0b1) << n)) != 0;
+			return (bitfield & (Bit<uint64_t>::Right << n)) != 0;
 		}
 	}
 }
