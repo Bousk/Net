@@ -66,7 +66,7 @@ namespace Bousk
 			{
 				//!< This is an old ack, if it's not too old it may contain interesting information on acks
 				const auto diff = Utils::SequenceDiff(mLastAck, newAck);
-				if (diff < 64)
+				if (diff <= 64)
 				{
 					//!< Align previous mask to our sequence
 					previousAcks <<= diff;
