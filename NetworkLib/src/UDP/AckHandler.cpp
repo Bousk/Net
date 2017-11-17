@@ -38,14 +38,14 @@ namespace Bousk
 				}
 				//!< Remove bits from the mask to the left : remove oldest packets
 				mPreviousAcks <<= bitsToShift;
-				if (diff > 64)
+				if (gap >= 64)
 				{
 					//!< Whole new mask
 					mPreviousAcks = mNewAcks = 0;
 					//!< Catchup last packet in actual mask and notify loss for every missing one
 					if (trackLoss)
 					{
-						for (uint32_t p = 64; p < diff; ++p)
+						for (uint32_t p = 64; p < gap; ++p)
 						{
 							const uint16_t packetid = mLastAck + (p - 64) + 1;
 							mLoss.push_back(packetid);
