@@ -77,6 +77,11 @@ void AckHandler_Test::Test()
 	{
 		CHECK(ackhandler.isNewlyAcked(i));
 	}
+	//!< Receive too old ack
+	ackhandler.update(0, 0, true);
+	CHECK(ackhandler.lastAck() == 68);
+	CHECK(!ackhandler.isNewlyAcked(68));
+	CHECK(ackhandler.previousAcksMask() == MASK_COMPLETE);
 	//!< Jump 65 ahead with all missing in between
 	ackhandler.update(133, 0, true);
 	CHECK(ackhandler.lastAck() == 133);
