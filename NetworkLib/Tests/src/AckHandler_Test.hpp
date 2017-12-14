@@ -2,6 +2,7 @@
 
 #include "Tester.hpp"
 #include "UDP/AckHandler.hpp"
+#include "Utils.hpp"
 
 class AckHandler_Test
 {
@@ -12,9 +13,9 @@ public:
 void AckHandler_Test::Test()
 {
 	static constexpr uint64_t MASK_COMPLETE = std::numeric_limits<uint64_t>::max();
-	static constexpr uint64_t MASK_FIRST_MISSING = 0b1111111111111111111111111111111111111111111111111111111111111110;
-	static constexpr uint64_t MASK_LAST_ACKED = 0b1000000000000000000000000000000000000000000000000000000000000000;
-	static constexpr uint64_t MASK_FIRST_ACKED = 0b0000000000000000000000000000000000000000000000000000000000000001;
+	static constexpr uint64_t MASK_FIRST_ACKED = Bousk::Utils::Bit<uint64_t>::Right;
+	static constexpr uint64_t MASK_FIRST_MISSING = ~MASK_FIRST_ACKED;;
+	static constexpr uint64_t MASK_LAST_ACKED = (MASK_FIRST_ACKED << 63);
 	Bousk::UDP::AckHandler ackhandler;
 	CHECK(ackhandler.lastAck() == std::numeric_limits<uint16_t>::max());
 	CHECK(ackhandler.previousAcksMask() == MASK_COMPLETE);
