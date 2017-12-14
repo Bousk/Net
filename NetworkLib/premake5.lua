@@ -1,26 +1,10 @@
 local utils = require"utils"
+require "NetworkLib"
 
 workspace "NetworkLib"
    configurations { "Debug", "Release" }
 
-project "NetworkLib"
-   kind "StaticLib"
-   language "C++"
-   targetdir "builds/%{cfg.buildcfg}"
-   targetprefix ""
-   targetname "Network"
-
-   files { "src/**.hpp", "src/**.cpp" }
-   includedirs { "src" }
-
-   filter "configurations:Debug"
-      defines { "DEBUG" }
-      symbols "On"
-
-   filter "configurations:Release"
-      defines { "NDEBUG" }
-      optimize "On"
-
+CreateNetworkLib("./")
 
 function CreateProject(path)
 	local prettypath = string.gsub(path, "/", "_")
@@ -30,7 +14,7 @@ function CreateProject(path)
 		language "C++"
 		location(path)
 		targetdir (path .. "/%{cfg.buildcfg}")
-		files { path.."/*.hpp", path.."/*.cpp" }
+		files { path.."/*.hpp", path.."/*.cpp", path.."/*.inl" }
 		links { "NetworkLib" }
 		includedirs { "src" }
 		filter "configurations:Debug"
