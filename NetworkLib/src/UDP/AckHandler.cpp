@@ -45,7 +45,7 @@ namespace Bousk
 					//!< Catchup last packet in actual mask and notify loss for every missing one
 					if (trackLoss)
 					{
-						for (uint32_t p = 64; p < gap; ++p)
+						for (uint32_t p = 64; p < static_cast<uint32_t>(gap); ++p)
 						{
 							const uint16_t packetid = mLastAck + (p - 64) + 1;
 							mLoss.push_back(packetid);

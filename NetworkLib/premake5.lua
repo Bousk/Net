@@ -2,7 +2,10 @@ local utils = require"utils"
 require "NetworkLib"
 
 workspace "NetworkLib"
-   configurations { "Debug", "Release" }
+	configurations { "Debug", "Release" }
+	architecture "x64"
+	filter "system:windows"
+		systemversion "10.0.15063.0"
 
 CreateNetworkLib("./")
 
