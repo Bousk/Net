@@ -16,7 +16,7 @@ void AckHandler_Test::Test()
 	static constexpr uint64_t MASK_FIRST_ACKED = Bousk::Utils::Bit<uint64_t>::Right;
 	static constexpr uint64_t MASK_FIRST_MISSING = ~MASK_FIRST_ACKED;;
 	static constexpr uint64_t MASK_LAST_ACKED = (MASK_FIRST_ACKED << 63);
-	Bousk::UDP::AckHandler ackhandler;
+	Bousk::Network::UDP::AckHandler ackhandler;
 	CHECK(ackhandler.lastAck() == std::numeric_limits<uint16_t>::max());
 	CHECK(ackhandler.previousAcksMask() == MASK_COMPLETE);
 	CHECK(!ackhandler.isAcked(0));
