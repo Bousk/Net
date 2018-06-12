@@ -39,7 +39,15 @@ namespace Bousk
 						}
 					}
 					//!< Remove bits from the mask to the left : remove oldest packets
-					mPreviousAcks <<= bitsToShift;
+					if (bitsToShift == 64)
+					{
+						//!< If we're removing all of them, shifting by 64 does nothing on Windows when compiling x64, so let's clearly erase them !
+						mPreviousAcks = 0;
+					}
+					else
+					{
+						mPreviousAcks <<= bitsToShift;
+					}
 					if (gap >= 64)
 					{
 						//!< Whole new mask

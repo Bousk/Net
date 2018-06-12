@@ -33,7 +33,7 @@ namespace Bousk
 				uint64_t mPreviousAcks{ std::numeric_limits<uint64_t>::max() };
 				uint64_t mNewAcks{ 0 };
 				std::vector<uint16_t> mLoss;
-				uint16_t mLastAck{ (uint16_t)-1 };
+				uint16_t mLastAck{ std::numeric_limits<uint16_t>::max() };
 				bool mLastAckIsNew{ false };
 			};
 		}
