@@ -6,3 +6,11 @@
 .idb
 .obj
 .log
+.tmp
+.zip
+.sln
+.vcxproj
+.filters
+.user
+syntax: glob
+.vs
