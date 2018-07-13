@@ -39,7 +39,7 @@ namespace Bousk
 						}
 					}
 					//!< Remove bits from the mask to the left : remove oldest packets
-					if (bitsToShift == 64)
+					if (bitsToShift >= 64)
 					{
 						//!< If we're removing all of them, shifting by 64 does nothing on Windows when compiling x64, so let's clearly erase them !
 						mPreviousAcks = 0;
@@ -79,7 +79,15 @@ namespace Bousk
 					if (diff <= 64)
 					{
 						//!< Align previous mask to our sequence
-						previousAcks <<= diff;
+						if (diff == 64)
+						{
+							//!< Special case as shifting by 64 does nothing on Win64
+							previousAcks = 0;
+						}
+						else
+						{
+							previousAcks <<= diff;
+						}
 						//!< Set ack bit in the shifted mask
 						const auto ackBitInMask = diff - 1;
 						Utils::SetBit(previousAcks, ackBitInMask);
