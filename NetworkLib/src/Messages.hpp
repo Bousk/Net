@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <cassert>
 
 namespace Bousk
 {
@@ -14,7 +15,7 @@ namespace Bousk
 				template<class M>
 				bool is() const { return mType == M::StaticType; }
 				template<class M>
-				const M* as() const { return static_cast<const M*>(this); }
+				const M* as() const { assert(is<M>()); return static_cast<const M*>(this); }
 
 				sockaddr_in from;
 				uint64_t idFrom;
