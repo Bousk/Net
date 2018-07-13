@@ -2,6 +2,7 @@
 #include "UDP/UDPClient.hpp"
 #include "UDP/Datagram.hpp"
 #include "Messages.hpp"
+#include <cassert>
 
 namespace Bousk
 {
@@ -27,6 +28,7 @@ namespace Bousk
 			}
 			void DistantClient::onDatagramReceived(Datagram&& datagram)
 			{
+				assert(datagram.datasize > 0);
 				const auto datagramid = ntohs(datagram.header.id);
 				//!< Update the received acks tracking
 				mReceivedAcks.update(datagramid, 0, true);
@@ -65,11 +67,12 @@ namespace Bousk
 			{}
 			void DistantClient::onDataReceived(std::vector<uint8_t>&& data)
 			{
-				onMessageReady(std::make_unique<Messages::UserData>(std::move(data)));
+				auto msg = std::make_unique<Messages::UserData>(std::move(data));
+				onMessageReady(std::move(msg));
 			}
 			void DistantClient::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{
-				memcpy(&(msg->from), &mAddress, sizeof(mAddress));
+				memcpy(&(msg->from), &mAddress, sizeof(msg->from));
 				mClient.onMessageReady(std::move(msg));
 			}
 		}
