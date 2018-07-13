@@ -17,7 +17,7 @@ namespace Bousk
 				template<class M>
 				const M* as() const { assert(is<M>()); return static_cast<const M*>(this); }
 
-				sockaddr_in from;
+				sockaddr_storage from;
 				uint64_t idFrom;
 
 			protected:

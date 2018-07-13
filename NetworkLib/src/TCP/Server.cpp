@@ -95,7 +95,8 @@ namespace Bousk
 					{
 						auto message = std::make_unique<Messages::Connection>(Messages::Connection::Result::Success);
 						message->idFrom = newClient.id();
-						message->from = newClient.destinationAddress();
+						const auto& from = newClient.destinationAddress();
+						memcpy(&(message->from), &from, sizeof(from));
 						mMessages.push_back(std::move(message));
 						mClients[newClient.id()] = std::move(newClient);
 					}
@@ -110,7 +111,8 @@ namespace Bousk
 					auto msg = client.poll();
 					if (msg)
 					{
-						msg->from = itClient->second.destinationAddress();
+						const auto& from = itClient->second.destinationAddress();
+						memcpy(&(msg->from), &from, sizeof(from));
 						msg->idFrom = itClient->second.id();
 						if (msg->is<Messages::Disconnection>())
 						{
