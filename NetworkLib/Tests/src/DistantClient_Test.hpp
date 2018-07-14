@@ -99,7 +99,7 @@ void DistantClient_Test::Test()
 		CHECK(memcmp(TestString, dataMsg->data.data(), TestStringLength) == 0);
 	}
 
-	//!< Jump 64 packets ahead, all missed in between, but not lost yet
+	//!< Jump 64 packets ahead, all missed in between
 	datagram.header.id = htons(66);
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
