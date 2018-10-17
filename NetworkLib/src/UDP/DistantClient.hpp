@@ -26,7 +26,7 @@ namespace Bousk
 			public:
 				DistantClient(Client& client, const sockaddr_storage& addr);
 				DistantClient(const DistantClient&) = delete;
-				DistantClient(DistantClient&&) = default;
+				DistantClient(DistantClient&&) = delete;
 				DistantClient& operator=(const DistantClient&) = delete;
 				DistantClient& operator=(DistantClient&&) = delete;
 				~DistantClient() = default;

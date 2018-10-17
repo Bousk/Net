@@ -40,7 +40,7 @@ namespace Bousk
 
 			private:
 				SOCKET mSocket{ INVALID_SOCKET };
-				std::vector<DistantClient> mClients;
+				std::vector<std::unique_ptr<DistantClient>> mClients;
 				std::vector<std::unique_ptr<Messages::Base>> mMessages;
 			};
 		}

@@ -90,12 +90,12 @@ namespace Bousk
 
 			DistantClient& Client::getClient(const sockaddr_storage& clientAddr)
 			{
-				auto itClient = std::find_if(mClients.begin(), mClients.end(), [&](DistantClient& client) { return memcmp(&(client.address()), &clientAddr, sizeof(sockaddr_storage)); });
+				auto itClient = std::find_if(mClients.begin(), mClients.end(), [&](const std::unique_ptr<DistantClient>& client) { return memcmp(&(client->address()), &clientAddr, sizeof(sockaddr_storage)); });
 				if (itClient != mClients.end())
-					return *itClient;
+					return *(itClient->get());
 
-				mClients.emplace_back(*this, clientAddr);
-				return mClients.back();
+				mClients.emplace_back(std::make_unique<DistantClient>(*this, clientAddr));
+				return *(mClients.back());
 			}
 			void Client::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{
