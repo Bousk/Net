@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <limits>
 
 namespace Bousk
 {

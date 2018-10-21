@@ -22,7 +22,7 @@ namespace Bousk
 			struct Datagram;
 			class DistantClient
 			{
-				friend class DistantClient_Test;
+				friend class ::DistantClient_Test;
 			public:
 				DistantClient(Client& client, const sockaddr_storage& addr);
 				DistantClient(const DistantClient&) = delete;

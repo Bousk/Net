@@ -15,6 +15,7 @@ namespace Bousk
 		}
 		namespace UDP
 		{
+            class DistantClient;
 			class Client
 			{
 				friend class DistantClient;
