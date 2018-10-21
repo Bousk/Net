@@ -4,6 +4,7 @@
 #include "Errors.hpp"
 
 #include <algorithm>
+#include <cstring>
 
 namespace Bousk
 {
