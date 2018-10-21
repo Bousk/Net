@@ -8,6 +8,8 @@
 #include <list>
 #include <cassert>
 #include <numeric>
+#include <cstring>
+#include <limits>
 
 namespace Bousk
 {

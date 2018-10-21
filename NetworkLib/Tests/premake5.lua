@@ -28,7 +28,7 @@ function CreateNetworkLib_Test(baseLibFolder)
 			optimize "On"
 
 		configuration {"*"}
-			links { "NetworkLib" }
+			links { "Network" }
 end
 
 workspace "NetworkLib_Test"

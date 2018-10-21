@@ -2,7 +2,9 @@
 #include "UDP/UDPClient.hpp"
 #include "UDP/Datagram.hpp"
 #include "Messages.hpp"
+
 #include <cassert>
+#include <cstring>
 
 namespace Bousk
 {
