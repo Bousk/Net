@@ -32,6 +32,6 @@ function CreateNetworkLib_Test(baseLibFolder)
 end
 
 workspace "NetworkLib_Test"
-   configurations { "Debug", "Release" }
+	configurations { "Debug", "Release" }
 CreateNetworkLib_Test("../")
 CreateNetworkLib("../")

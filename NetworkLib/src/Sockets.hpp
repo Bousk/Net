@@ -50,5 +50,8 @@ namespace Bousk
 		void CloseSocket(SOCKET socket);
 		std::string GetAddress(const sockaddr_in& addr);
 		unsigned short GetPort(const sockaddr_in& addr);
+
+		inline std::string GetAddress(const sockaddr_storage& addr) { return GetAddress(reinterpret_cast<const sockaddr_in&>(addr)); }
+		inline unsigned short GetPort(const sockaddr_storage& addr) { return GetPort(reinterpret_cast<const sockaddr_in&>(addr)); }
 	}
 }
