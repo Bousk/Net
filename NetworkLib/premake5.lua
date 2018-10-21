@@ -18,7 +18,7 @@ function CreateProject(path)
 		location(path)
 		targetdir (path .. "/%{cfg.buildcfg}")
 		files { path.."/*.hpp", path.."/*.cpp", path.."/*.inl" }
-		links { "NetworkLib" }
+		links { "Network" }
 		includedirs { "src" }
 		filter "configurations:Debug"
 			defines { "DEBUG" }

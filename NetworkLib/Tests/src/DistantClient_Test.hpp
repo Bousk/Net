@@ -5,6 +5,8 @@
 #include "UDP/UDPClient.hpp"
 #include "Messages.hpp"
 
+#include <cstring>
+
 class DistantClient_Test
 {
 public:
@@ -29,7 +31,7 @@ void DistantClient_Test::Test()
 	CHECK(distantClient.mNextDatagramIdToSend == 0);
 	CHECK(distantClient.mReceivedAcks.lastAck() == std::numeric_limits<uint16_t>::max());
 
-	constexpr char* TestString = "Test data";
+	constexpr const char* TestString = "Test data";
 	constexpr size_t TestStringLength = sizeof(TestString);
 	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength));
 	CHECK(distantClient.mNextDatagramIdToSend == 1);
