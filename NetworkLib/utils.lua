@@ -12,3 +12,11 @@ function isModuleAvailable(name)
     return false
   end
 end
+
+function buildPathName(path)
+	local chars = {"/", "\\", " "}
+	for _,c in pairs(chars) do
+		path = string.gsub(path, c, "_")
+	end
+	return path
+end

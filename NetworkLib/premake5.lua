@@ -1,4 +1,4 @@
-local utils = require"utils"
+require "utils"
 require "NetworkLib"
 
 workspace "NetworkLib"
@@ -12,8 +12,7 @@ workspace "NetworkLib"
 CreateNetworkLib("./")
 
 function CreateProject(path)
-	local prettypath = string.gsub(path, "/", "_")
-	prettypath = string.gsub(prettypath, "\\", "_")
+	local prettypath = buildPathName(path)
 	print("Creating project " .. prettypath .. " from " .. path)
 	project(prettypath)
 		kind "ConsoleApp"
