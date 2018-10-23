@@ -1,10 +1,13 @@
 function CreateNetworkLib(baseLibFolder)
+	print("network lib : " .. baseLibFolder)
 	project "Network"
 		kind "StaticLib"
 		language "C++"
+		-- architecture "x64"
 		targetdir ( baseLibFolder .. "builds/%{cfg.buildcfg}" )
 		filter "toolset:codeblocks"
 			targetprefix "lib"
+		filter {}
 		targetname "Network"
 		
 		files {
@@ -21,4 +24,5 @@ function CreateNetworkLib(baseLibFolder)
 		filter "configurations:Release"
 			defines { "NDEBUG" }
 			optimize "On"
+		filter {}
 end

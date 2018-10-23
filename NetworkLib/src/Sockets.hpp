@@ -15,7 +15,7 @@
 		using socklen_t = int;
 	#endif
 	#ifdef _MSC_VER
-		#if _WIN32_WINNT == _WIN32_WINNT_WINBLUE
+		#if _WIN32_WINNT >= _WIN32_WINNT_WINBLUE
 			//!< Win8.1 & higher
 			#pragma comment(lib, "Ws2_32.lib")
 		#else
