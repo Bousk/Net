@@ -5,6 +5,7 @@ function CreateNetworkLib_Test(baseLibFolder)
 	project( "NetworkLib_Test" )
 		kind "ConsoleApp"
 		language "C++"
+		-- architecture "x64"
 		targetdir ( baseTestFolder .. "builds/%{cfg.buildcfg}" )
 		targetprefix ""
 		targetname "NetworkLib_Test"
@@ -26,12 +27,14 @@ function CreateNetworkLib_Test(baseLibFolder)
 		filter "configurations:Release"
 			defines { "NDEBUG" }
 			optimize "On"
+		filter {}
 
-		configuration {"*"}
-			links { "Network" }
+		links { "Network" }
 end
 
 workspace "NetworkLib_Test"
 	configurations { "Debug", "Release" }
+	architecture "x64"
+	location("./Projects/" .. _ACTION)
 CreateNetworkLib_Test("../")
 CreateNetworkLib("../")
