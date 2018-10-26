@@ -74,5 +74,5 @@ else
 	group("Samples")
 	CreateProject("Samples/TCP/Client")
 	CreateProject("Samples/TCP/Server")
-	CreateProject("Samples/UDP/Hello World")
+	CreateProject("Samples/UDP/HelloWorld")
 end
