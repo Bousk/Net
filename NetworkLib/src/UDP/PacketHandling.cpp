@@ -9,27 +9,27 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			void Multiplexer::queue(const unsigned char* data, const size_t datasize)
+			void Multiplexer::queue(std::vector<unsigned char>&& data)
 			{
-				if (datasize > Packet::DataMaxSize)
+				if (data.size() > Packet::DataMaxSize)
 				{
 					//!< Split in even parts
-					const auto parts = (datasize / Packet::DataMaxSize) + (((datasize % Packet::DataMaxSize) != 0) ? 1 : 0);
-					const auto defaultFragmentSize = datasize / parts;
+					const auto parts = (data.size() / Packet::DataMaxSize) + (((data.size() % Packet::DataMaxSize) != 0) ? 1 : 0);
+					const auto defaultFragmentSize = data.size() / parts;
 					size_t queuedSize = 0;
 					for (unsigned i = 0; i < parts; ++i)
 					{
 						const bool isLastPart = (i == (parts - 1));
-						const auto fragmentSize = static_cast<uint16_t>(isLastPart ? (datasize - parts * defaultFragmentSize) : defaultFragmentSize);
+						const auto fragmentSize = static_cast<uint16_t>(isLastPart ? (data.size() - parts * defaultFragmentSize) : defaultFragmentSize);
 						Packet packet;
 						packet.header.id = mNextId++;
 						packet.header.type = ((i == 0) ? Packet::Type::FirstFragment : ((isLastPart) ? Packet::Type::LastFragment : Packet::Type::Fragment));
 						packet.header.size = fragmentSize;
-						memcpy(packet.data.data(), data, fragmentSize);
+						memcpy(packet.data(), data.data() + queuedSize, fragmentSize);
 						mQueue.push_back(packet);
 						queuedSize += fragmentSize;
 					}
-					assert(queuedSize == datasize);
+					assert(queuedSize == data.size());
 				}
 				else
 				{
@@ -37,8 +37,8 @@ namespace Bousk
 					Packet packet;
 					packet.header.id = mNextId++;
 					packet.header.type = Packet::Type::Packet;
-					packet.header.size = static_cast<uint16_t>(datasize);
-					memcpy(packet.data.data(), data, datasize);
+					packet.header.size = static_cast<uint16_t>(data.size());
+					memcpy(packet.data(), data.data(), data.size());
 					mQueue.push_back(packet);
 				}
 			}
@@ -51,7 +51,7 @@ namespace Bousk
 					if (serializedSize + packet.size() > buffersize)
 						break; // Not enough room for next packet
 
-					memcpy(buffer, packet.data.data(), packet.size());
+					memcpy(buffer, packet.data(), packet.size());
 					serializedSize += packet.size();
 					buffer += packet.size();
 
@@ -59,6 +59,12 @@ namespace Bousk
 					packetit = mQueue.erase(packetit);
 				}
 				return serializedSize;
+			}
+			void Demultiplexer::queue(const Packet& pckt)
+			{}
+			std::vector<Packet> Demultiplexer::process()
+			{
+				return std::vector<Packet>();
 			}
 		}
 	}

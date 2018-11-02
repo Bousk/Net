@@ -30,8 +30,10 @@ namespace Bousk
 				static constexpr size_t DataMaxSize = PacketMaxSize - sizeof(Header);
 
 				Header header;
-				std::array<unsigned char, DataMaxSize> data;
+				std::array<unsigned char, DataMaxSize> buffer;
 
+				unsigned char* data() { return buffer.data(); }
+				const unsigned char* data() const { return buffer.data(); }
 				inline uint16_t size() const { return header.size; }
 			};
 		}
