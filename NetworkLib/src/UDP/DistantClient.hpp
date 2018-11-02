@@ -33,6 +33,7 @@ namespace Bousk
 				~DistantClient() = default;
 
 				void send(std::vector<uint8_t>&& data);
+				void processSend();
 				void onDatagramReceived(Datagram&& datagram);
 
 				const sockaddr_storage& address() const { return mAddress; }
