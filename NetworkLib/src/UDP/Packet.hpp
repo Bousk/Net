@@ -31,6 +31,8 @@ namespace Bousk
 
 				Header header;
 				std::array<unsigned char, DataMaxSize> data;
+
+				inline uint16_t size() const { return header.size; }
 			};
 		}
 	}
