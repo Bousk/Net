@@ -2,6 +2,7 @@
 
 #include "UDP/Datagram.hpp"
 #include "UDP/AckHandler.hpp"
+#include "UDP/PacketHandling.hpp"
 #include "Sockets.hpp"
 
 #include <vector>
@@ -45,6 +46,7 @@ namespace Bousk
 
 			private:
 				Client& mClient;
+				Multiplexer mSendQueue;
 				sockaddr_storage mAddress;
 				Datagram::ID mNextDatagramIdToSend{ 0 };
 				AckHandler mReceivedAcks;	//!< To detect missing received datagrams and duplicates

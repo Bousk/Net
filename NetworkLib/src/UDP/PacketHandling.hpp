@@ -18,7 +18,7 @@ namespace Bousk
 				Multiplexer() = default;
 				~Multiplexer() = default;
 
-				void queue(const unsigned char* data, const size_t datasize);
+				void queue(std::vector<unsigned char>&& data);
 				size_t serialize(unsigned char* buffer, const size_t buffersize);
 
 			private:
