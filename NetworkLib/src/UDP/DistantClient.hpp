@@ -42,12 +42,13 @@ namespace Bousk
 				void onDatagramSentAcked(Datagram::ID datagramId);
 				void onDatagramSentLost(Datagram::ID datagramId);
 				void onDatagramReceivedLost(Datagram::ID datagramId);
-				void onDataReceived(std::vector<uint8_t>&& data);
+				void onDataReceived(const uint8_t* data, const size_t datasize);
 				void onMessageReady(std::unique_ptr<Messages::Base>&& msg);
 
 			private:
 				Client& mClient;
 				Multiplexer mSendQueue;
+				Demultiplexer mRecvQueue;
 				sockaddr_storage mAddress;
 				Datagram::ID mNextDatagramIdToSend{ 0 };
 				AckHandler mReceivedAcks;	//!< To detect missing received datagrams and duplicates
