@@ -31,8 +31,8 @@ namespace Bousk
 				Demultiplexer() = default;
 				~Demultiplexer() = default;
 
-				void queue(const Packet& pckt);
-				std::vector<Packet> process();
+				void queue(Packet&& pckt);
+				std::vector<std::vector<unsigned char>> process();
 
 			private:
 				std::vector<Packet> mPendingQueue;

@@ -32,6 +32,8 @@ namespace Bousk
 				Header header;
 				std::array<unsigned char, DataMaxSize> buffer;
 
+				Id id() const { return header.id; }
+				Type type() const { return header.type; }
 				unsigned char* data() { return buffer.data(); }
 				const unsigned char* data() const { return buffer.data(); }
 				inline uint16_t size() const { return header.size; }
