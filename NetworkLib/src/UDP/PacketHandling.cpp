@@ -9,7 +9,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			void Multiplexer::queue(std::vector<unsigned char>&& data)
+			void Multiplexer::queue(std::vector<uint8_t>&& data)
 			{
 				if (data.size() > Packet::DataMaxSize)
 				{
@@ -42,7 +42,7 @@ namespace Bousk
 					mQueue.push_back(packet);
 				}
 			}
-			size_t Multiplexer::serialize(unsigned char* buffer, const size_t buffersize)
+			size_t Multiplexer::serialize(uint8_t* buffer, const size_t buffersize)
 			{
 				size_t serializedSize = 0;
 				for (auto packetit = mQueue.cbegin(); packetit != mQueue.cend();)
@@ -60,25 +60,42 @@ namespace Bousk
 				}
 				return serializedSize;
 			}
-			void Demultiplexer::queue(Packet&& pckt)
+			void Demultiplexer::onDataReceived(const uint8_t* data, const size_t datasize)
 			{
-				if (pckt.id() < mLastProcessed)
+				// Extract packets from buffer
+				size_t processedDataSize = 0;
+				while (processedDataSize < datasize)
+				{
+					const Packet* pckt = reinterpret_cast<const Packet*>(data);
+					if (processedDataSize + pckt->size() > datasize)
+					{
+						// Malformed packet or buffer
+						return;
+					}
+					queue(pckt);
+					processedDataSize += pckt->size();
+					data += pckt->size();
+				}
+			}
+			void Demultiplexer::queue(const Packet* pckt)
+			{
+				if (pckt->id() < mLastProcessed)
 					return; // Packet is too old
 
 				// Find the place for this packet, our queue must remain ordered
-				if (mPendingQueue.empty() || pckt.id() > mPendingQueue.back().id())
+				if (mPendingQueue.empty() || pckt->id() > mPendingQueue.back().id())
 				{
-					mPendingQueue.push_back(std::move(pckt));
+					mPendingQueue.push_back(std::move(*pckt));
 				}
 				else
 				{
-					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() > pckt.id(); });
-					mPendingQueue.insert(insertLocation, std::move(pckt));
+					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() > pckt->id(); });
+					mPendingQueue.insert(insertLocation, std::move(*pckt));
 				}
 			}
-			std::vector<std::vector<unsigned char>> Demultiplexer::process()
+			std::vector<std::vector<uint8_t>> Demultiplexer::process()
 			{
-				std::vector<std::vector<unsigned char>> messagesReady;
+				std::vector<std::vector<uint8_t>> messagesReady;
 
 				auto itPacket = mPendingQueue.cbegin();
 				auto itEnd = mPendingQueue.cend();
@@ -88,7 +105,7 @@ namespace Bousk
 					if (itPacket->type() == Packet::Type::Packet)
 					{
 						// Full packet, just take it
-						std::vector<unsigned char> msg(itPacket->data(), itPacket->data() + itPacket->size());
+						std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->size());
 						messagesReady.push_back(std::move(msg));
 						newestProcessedPacket = itPacket;
 						++itPacket;
@@ -97,7 +114,7 @@ namespace Bousk
 					{
 						// Check if the message is ready (fully received)
 						auto firstPacket = itPacket;
-						std::vector<unsigned char> msg;
+						std::vector<uint8_t> msg;
 						auto expectedPacketId = itPacket->id();
 						auto msgLastPacket = [&]()
 						{

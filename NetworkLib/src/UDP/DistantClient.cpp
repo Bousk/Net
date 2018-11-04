@@ -68,7 +68,7 @@ namespace Bousk
 					onDatagramSentAcked(sendAcked);
 				}
 				//!< Dispatch data
-				onDataReceived(std::vector<uint8_t>(datagram.data.data(), datagram.data.data() + datagram.datasize));
+				onDataReceived(datagram.data.data(), datagram.datasize);
 			}
 
 			void DistantClient::onDatagramSentAcked(Datagram::ID datagramId)
@@ -77,10 +77,14 @@ namespace Bousk
 			{}
 			void DistantClient::onDatagramReceivedLost(Datagram::ID datagramId)
 			{}
-			void DistantClient::onDataReceived(std::vector<uint8_t>&& data)
+			void DistantClient::onDataReceived(const uint8_t* data, const size_t datasize)
 			{
-				auto msg = std::make_unique<Messages::UserData>(std::move(data));
-				onMessageReady(std::move(msg));
+				mRecvQueue.onDataReceived(data, datasize);
+				auto receivedMessages = mRecvQueue.process();
+				for (auto&& msg : receivedMessages)
+				{
+					onMessageReady(std::make_unique<Messages::UserData>(std::move(msg)));
+				}
 			}
 			void DistantClient::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{

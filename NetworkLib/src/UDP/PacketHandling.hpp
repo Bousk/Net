@@ -18,8 +18,8 @@ namespace Bousk
 				Multiplexer() = default;
 				~Multiplexer() = default;
 
-				void queue(std::vector<unsigned char>&& data);
-				size_t serialize(unsigned char* buffer, const size_t buffersize);
+				void queue(std::vector<uint8_t>&& data);
+				size_t serialize(uint8_t* buffer, const size_t buffersize);
 
 			private:
 				std::vector<Packet> mQueue;
@@ -31,8 +31,11 @@ namespace Bousk
 				Demultiplexer() = default;
 				~Demultiplexer() = default;
 
-				void queue(Packet&& pckt);
-				std::vector<std::vector<unsigned char>> process();
+				void onDataReceived(const uint8_t* data, const size_t datasize);
+				std::vector<std::vector<uint8_t>> process();
+
+			private:
+				void queue(const Packet* pckt);
 
 			private:
 				std::vector<Packet> mPendingQueue;
