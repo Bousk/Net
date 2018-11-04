@@ -60,11 +60,96 @@ namespace Bousk
 				}
 				return serializedSize;
 			}
-			void Demultiplexer::queue(const Packet& pckt)
-			{}
-			std::vector<Packet> Demultiplexer::process()
+			void Demultiplexer::queue(Packet&& pckt)
 			{
-				return std::vector<Packet>();
+				if (pckt.id() < mLastProcessed)
+					return; // Packet is too old
+
+				// Find the place for this packet, our queue must remain ordered
+				if (mPendingQueue.empty() || pckt.id() > mPendingQueue.back().id())
+				{
+					mPendingQueue.push_back(std::move(pckt));
+				}
+				else
+				{
+					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() > pckt.id(); });
+					mPendingQueue.insert(insertLocation, std::move(pckt));
+				}
+			}
+			std::vector<std::vector<unsigned char>> Demultiplexer::process()
+			{
+				std::vector<std::vector<unsigned char>> messagesReady;
+
+				auto itPacket = mPendingQueue.cbegin();
+				auto itEnd = mPendingQueue.cend();
+				std::vector<Packet>::const_iterator newestProcessedPacket;
+				while(itPacket != itEnd)
+				{
+					if (itPacket->type() == Packet::Type::Packet)
+					{
+						// Full packet, just take it
+						std::vector<unsigned char> msg(itPacket->data(), itPacket->data() + itPacket->size());
+						messagesReady.push_back(std::move(msg));
+						newestProcessedPacket = itPacket;
+						++itPacket;
+					}
+					else if (itPacket->type() == Packet::Type::FirstFragment)
+					{
+						// Check if the message is ready (fully received)
+						auto firstPacket = itPacket;
+						std::vector<unsigned char> msg;
+						auto expectedPacketId = itPacket->id();
+						auto msgLastPacket = [&]()
+						{
+							++itPacket;
+							while (itPacket != itEnd && itPacket->id() == expectedPacketId)
+							{
+								if (itPacket->type() == Packet::Type::LastFragment)
+								{
+									// Last fragment reached, the message is full
+									msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->size());
+									return itPacket;
+								}
+								else if (itPacket->type() != Packet::Type::Fragment)
+								{
+									// If we reach this, we likely recieved a malformed packet / hack attempt
+									msg.clear();
+									return itPacket;
+								}
+
+								msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->size());
+								++itPacket;
+								++expectedPacketId;
+							}
+							msg.clear();
+							return itPacket;
+						}();
+						if (!msg.empty())
+						{
+							// We do have a message
+							messagesReady.push_back(std::move(msg));
+							newestProcessedPacket = msgLastPacket;
+							itPacket = msgLastPacket;
+							++itPacket;
+						}
+						else
+						{
+							// Move the iterator after the last packet found
+							itPacket = msgLastPacket;
+							if (itPacket != itEnd)
+								++itPacket;
+						}
+					}
+					else
+					{
+						++itPacket;
+					}
+				}
+
+				if (!messagesReady.empty())
+					mPendingQueue.erase(mPendingQueue.cbegin(), std::next(newestProcessedPacket));
+
+				return messagesReady;
 			}
 		}
 	}
