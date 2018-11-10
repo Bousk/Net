@@ -51,11 +51,11 @@ namespace Bousk
 					if (serializedSize + packet.size() > buffersize)
 						break; // Not enough room for next packet
 
-					memcpy(buffer, packet.data(), packet.size());
+					memcpy(buffer, packet.buffer(), packet.size());
 					serializedSize += packet.size();
 					buffer += packet.size();
 
-					// Once the packet has been serialized into a datagram, remove it fron the queue
+					// Once the packet has been serialized into a datagram, remove it from the queue
 					packetit = mQueue.erase(packetit);
 				}
 				return serializedSize;
@@ -67,7 +67,7 @@ namespace Bousk
 				while (processedDataSize < datasize)
 				{
 					const Packet* pckt = reinterpret_cast<const Packet*>(data);
-					if (processedDataSize + pckt->size() > datasize || pckt->size() > Packet::DataMaxSize)
+					if (processedDataSize + pckt->size() > datasize || pckt->datasize() > Packet::DataMaxSize)
 					{
 						// Malformed packet or buffer
 						return;
@@ -111,7 +111,7 @@ namespace Bousk
 					if (itPacket->type() == Packet::Type::Packet)
 					{
 						// Full packet, just take it
-						std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->size());
+						std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
 						messagesReady.push_back(std::move(msg));
 						newestProcessedPacket = itPacket;
 						++itPacket;
@@ -130,7 +130,7 @@ namespace Bousk
 								if (itPacket->type() == Packet::Type::LastFragment)
 								{
 									// Last fragment reached, the message is full
-									msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->size());
+									msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->datasize());
 									return itPacket;
 								}
 								else if (itPacket->type() != Packet::Type::Fragment)
@@ -140,7 +140,7 @@ namespace Bousk
 									return itPacket;
 								}
 
-								msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->size());
+								msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->datasize());
 								++itPacket;
 								++expectedPacketId;
 							}
