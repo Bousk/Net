@@ -34,6 +34,7 @@ void DistantClient_Test::Test()
 	constexpr const char* TestString = "Test data";
 	constexpr size_t TestStringLength = sizeof(TestString);
 	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength));
+	distantClient.processSend();
 	CHECK(distantClient.mNextDatagramIdToSend == 1);
 
 	//!< Manually craft the datagram to check reception
