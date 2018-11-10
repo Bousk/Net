@@ -67,30 +67,35 @@ namespace Bousk
 				while (processedDataSize < datasize)
 				{
 					const Packet* pckt = reinterpret_cast<const Packet*>(data);
-					if (processedDataSize + pckt->size() > datasize)
+					if (processedDataSize + pckt->size() > datasize || pckt->size() > Packet::DataMaxSize)
 					{
 						// Malformed packet or buffer
 						return;
 					}
-					queue(pckt);
+					onPacketReceived(pckt);
 					processedDataSize += pckt->size();
 					data += pckt->size();
 				}
 			}
-			void Demultiplexer::queue(const Packet* pckt)
+			void Demultiplexer::onPacketReceived(const Packet* pckt)
 			{
-				if (pckt->id() < mLastProcessed)
+				if (pckt->id() <= mLastProcessed)
 					return; // Packet is too old
 
 				// Find the place for this packet, our queue must remain ordered
 				if (mPendingQueue.empty() || pckt->id() > mPendingQueue.back().id())
 				{
-					mPendingQueue.push_back(std::move(*pckt));
+					mPendingQueue.push_back(*pckt);
 				}
 				else
 				{
-					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() > pckt->id(); });
-					mPendingQueue.insert(insertLocation, std::move(*pckt));
+					// Find the first iterator with an id bigger than our packet, we must place the packet before that one
+					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() >= pckt->id(); });
+					// Make sure we don't insert a packet received multiple times
+					if (insertLocation->id() != pckt->id())
+					{
+						mPendingQueue.insert(insertLocation, *pckt);
+					}
 				}
 			}
 			std::vector<std::vector<uint8_t>> Demultiplexer::process()
@@ -100,6 +105,7 @@ namespace Bousk
 				auto itPacket = mPendingQueue.cbegin();
 				auto itEnd = mPendingQueue.cend();
 				std::vector<Packet>::const_iterator newestProcessedPacket;
+				// Our queue is ordered, just go through and reassemble packets
 				while(itPacket != itEnd)
 				{
 					if (itPacket->type() == Packet::Type::Packet)
@@ -163,6 +169,7 @@ namespace Bousk
 					}
 				}
 
+				// Remove every processed and partial packets until the last one processed included
 				if (!messagesReady.empty())
 					mPendingQueue.erase(mPendingQueue.cbegin(), std::next(newestProcessedPacket));
 

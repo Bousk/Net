@@ -5,6 +5,7 @@
 #include <vector>
 
 class Multiplexer_Test;
+class Demultiplexer_Test;
 namespace Bousk
 {
 	namespace Network
@@ -27,6 +28,7 @@ namespace Bousk
 			};
 			class Demultiplexer
 			{
+				friend class Demultiplexer_Test;
 			public:
 				Demultiplexer() = default;
 				~Demultiplexer() = default;
@@ -35,11 +37,10 @@ namespace Bousk
 				std::vector<std::vector<uint8_t>> process();
 
 			private:
-				void queue(const Packet* pckt);
+				void onPacketReceived(const Packet* pckt);
 
 			private:
 				std::vector<Packet> mPendingQueue;
-				AckHandler mAcceptor;
 				Packet::Id mLastProcessed{ std::numeric_limits<Packet::Id>::max() };
 			};
 		}
