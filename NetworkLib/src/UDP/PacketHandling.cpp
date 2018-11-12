@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UDP/PacketHandling.hpp"
+#include "Utils.hpp"
 #include <cassert>
 
 namespace Bousk
@@ -79,7 +80,7 @@ namespace Bousk
 			}
 			void Demultiplexer::onPacketReceived(const Packet* pckt)
 			{
-				if (pckt->id() <= mLastProcessed)
+				if (!Utils::IsSequenceNewer(pckt->id(), mLastProcessed))
 					return; // Packet is too old
 
 				// Find the place for this packet, our queue must remain ordered
@@ -89,8 +90,8 @@ namespace Bousk
 				}
 				else
 				{
-					// Find the first iterator with an id bigger than our packet, we must place the packet before that one
-					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() >= pckt->id(); });
+					// Find the first iterator with an id newer than our packet, we must place the packet before that one
+					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return Utils::IsSequenceNewer(p.id(), pckt->id()); });
 					// Make sure we don't insert a packet received multiple times
 					if (insertLocation->id() != pckt->id())
 					{
@@ -152,15 +153,13 @@ namespace Bousk
 							// We do have a message
 							messagesReady.push_back(std::move(msg));
 							newestProcessedPacket = msgLastPacket;
-							itPacket = msgLastPacket;
-							++itPacket;
+							// Move iterator after the last packet of the message
+							itPacket = std::next(msgLastPacket);
 						}
 						else
 						{
-							// Move the iterator after the last packet found
+							// Move the iterator to the last packet found so we can handle it with next loop
 							itPacket = msgLastPacket;
-							if (itPacket != itEnd)
-								++itPacket;
 						}
 					}
 					else
