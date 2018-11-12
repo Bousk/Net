@@ -39,6 +39,7 @@ namespace Bousk
 				const sockaddr_storage& address() const { return mAddress; }
 
 			private:
+				bool fillDatagram(Datagram& dgram);
 				void onDatagramSentAcked(Datagram::ID datagramId);
 				void onDatagramSentLost(Datagram::ID datagramId);
 				void onDatagramReceivedLost(Datagram::ID datagramId);

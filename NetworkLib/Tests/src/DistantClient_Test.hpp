@@ -31,17 +31,20 @@ void DistantClient_Test::Test()
 	CHECK(distantClient.mNextDatagramIdToSend == 0);
 	CHECK(distantClient.mReceivedAcks.lastAck() == std::numeric_limits<uint16_t>::max());
 
-	constexpr const char* TestString = "Test data";
+	constexpr const char TestString[] = "Test data";
 	constexpr size_t TestStringLength = sizeof(TestString);
 	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength));
+
+	//!< Craft the datagram to check reception
+	Bousk::Network::UDP::Datagram datagram;
+	distantClient.fillDatagram(datagram);
+
+	// Process send to update internal state
 	distantClient.processSend();
 	CHECK(distantClient.mNextDatagramIdToSend == 1);
 
-	//!< Manually craft the datagram to check reception
-	Bousk::Network::UDP::Datagram datagram;
-	datagram.header.id = 0;
-	memcpy(datagram.data.data(), TestString, TestStringLength);
-	datagram.datasize = TestStringLength;
+	CHECK(datagram.header.id == 0);
+	CHECK(datagram.datasize == TestStringLength + Bousk::Network::UDP::Packet::HeaderSize);
 
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
