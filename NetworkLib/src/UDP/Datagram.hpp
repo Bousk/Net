@@ -26,6 +26,8 @@ namespace Bousk
 				std::array<uint8_t, DataMaxSize> data;
 
 				size_t datasize{ 0 };
+				// Datagram full size : Header + data
+				size_t size() const { return HeaderSize + datasize; }
 			};
 		}
 	}

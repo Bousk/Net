@@ -21,21 +21,29 @@ namespace Bousk
 			{
 				mSendQueue.queue(std::move(data));
 			}
+			bool DistantClient::fillDatagram(Datagram& dgram)
+			{
+				dgram.header.ack = htons(mReceivedAcks.lastAck());
+				dgram.header.previousAcks = mReceivedAcks.previousAcksMask();
+
+				dgram.datasize = mSendQueue.serialize(dgram.data.data(), Datagram::DataMaxSize);
+				if (dgram.datasize > 0)
+				{
+					dgram.header.id = htons(mNextDatagramIdToSend);
+					++mNextDatagramIdToSend;
+					return true;
+				}
+				return false;
+			}
 			void DistantClient::processSend()
 			{
-				Datagram datagram;
-				datagram.header.ack = htons(mReceivedAcks.lastAck());
-				datagram.header.previousAcks = mReceivedAcks.previousAcksMask();
 				for (;;)
 				{
-					const auto serializedSize = mSendQueue.serialize(datagram.data.data(), Datagram::DataMaxSize);
-					if (serializedSize == 0)
+					Datagram datagram;
+					if (!fillDatagram(datagram))
 						break;
 
-					datagram.header.id = htons(mNextDatagramIdToSend);
-					++mNextDatagramIdToSend;
-
-					sendto(mClient.mSocket, reinterpret_cast<const char*>(&datagram), static_cast<int>(Datagram::HeaderSize + serializedSize), 0, reinterpret_cast<const sockaddr*>(&mAddress), sizeof(mAddress));
+					sendto(mClient.mSocket, reinterpret_cast<const char*>(&datagram), static_cast<int>(datagram.size()), 0, reinterpret_cast<const sockaddr*>(&mAddress), sizeof(mAddress));
 				}
 			}
 			void DistantClient::onDatagramReceived(Datagram&& datagram)
