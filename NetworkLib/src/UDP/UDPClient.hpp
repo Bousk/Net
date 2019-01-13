@@ -32,7 +32,7 @@ namespace Bousk
 				void sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data);
 				void processSend();
 				void receive();
-				std::vector<std::unique_ptr<Messages::Base>>&& poll();
+				std::vector<std::unique_ptr<Messages::Base>> poll();
 
 			private:
 				DistantClient& getClient(const sockaddr_storage& clientAddr);
