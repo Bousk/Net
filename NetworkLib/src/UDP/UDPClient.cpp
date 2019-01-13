@@ -84,7 +84,7 @@ namespace Bousk
 					}
 				}
 			}
-			std::vector<std::unique_ptr<Messages::Base>>&& Client::poll()
+			std::vector<std::unique_ptr<Messages::Base>> Client::poll()
 			{
 				return std::move(mMessages);
 			}
