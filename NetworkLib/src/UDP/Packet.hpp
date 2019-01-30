@@ -26,9 +26,9 @@ namespace Bousk
 					uint16_t size;
 					Type type;
 				};
-				static constexpr size_t PacketMaxSize = Datagram::DataMaxSize;
-				static constexpr size_t HeaderSize = sizeof(Header);
-				static constexpr size_t DataMaxSize = PacketMaxSize - HeaderSize;
+				static constexpr uint16_t PacketMaxSize = Datagram::DataMaxSize;
+				static constexpr uint16_t HeaderSize = sizeof(Header);
+				static constexpr uint16_t DataMaxSize = PacketMaxSize - HeaderSize;
 
 				Header header;
 				std::array<uint8_t, DataMaxSize> dataBuffer;
