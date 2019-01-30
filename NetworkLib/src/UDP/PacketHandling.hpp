@@ -3,6 +3,7 @@
 #include "UDP/Packet.hpp"
 #include "UDP/AckHandler.hpp"
 #include <vector>
+#include <limits>
 
 class Multiplexer_Test;
 class Demultiplexer_Test;
