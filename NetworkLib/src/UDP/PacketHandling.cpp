@@ -14,22 +14,19 @@ namespace Bousk
 			{
 				if (data.size() > Packet::DataMaxSize)
 				{
-					//!< Split in even parts
-					const auto parts = (data.size() / Packet::DataMaxSize) + (((data.size() % Packet::DataMaxSize) != 0) ? 1 : 0);
-					const auto defaultFragmentSize = data.size() / parts;
 					size_t queuedSize = 0;
-					for (unsigned i = 0; i < parts; ++i)
+					while (queuedSize < data.size())
 					{
-						const bool isLastPart = (i == (parts - 1));
-						const auto fragmentSize = static_cast<uint16_t>(isLastPart ? (data.size() - parts * defaultFragmentSize) : defaultFragmentSize);
+						const auto fragmentSize = std::min(Packet::DataMaxSize,  static_cast<uint16_t>(data.size()));
 						Packet packet;
 						packet.header.id = mNextId++;
-						packet.header.type = ((i == 0) ? Packet::Type::FirstFragment : ((isLastPart) ? Packet::Type::LastFragment : Packet::Type::Fragment));
+						packet.header.type = ((queuedSize == 0) ? Packet::Type::FirstFragment : Packet::Type::Fragment);
 						packet.header.size = fragmentSize;
 						memcpy(packet.data(), data.data() + queuedSize, fragmentSize);
 						mQueue.push_back(packet);
 						queuedSize += fragmentSize;
 					}
+					mQueue.back().header.type = Packet::Type::LastFragment;
 					assert(queuedSize == data.size());
 				}
 				else
@@ -90,8 +87,8 @@ namespace Bousk
 				}
 				else
 				{
-					// Find the first iterator with an id newer than our packet, we must place the packet before that one
-					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return Utils::IsSequenceNewer(p.id(), pckt->id()); });
+					// Find the first iterator with an id equals to or newer than our packet, we must place the packet before that one
+					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() == pckt->id() || Utils::IsSequenceNewer(p.id(), pckt->id()); });
 					// Make sure we don't insert a packet received multiple times
 					if (insertLocation->id() != pckt->id())
 					{
@@ -120,7 +117,6 @@ namespace Bousk
 					else if (itPacket->type() == Packet::Type::FirstFragment)
 					{
 						// Check if the message is ready (fully received)
-						auto firstPacket = itPacket;
 						std::vector<uint8_t> msg;
 						auto expectedPacketId = itPacket->id();
 						auto msgLastPacket = [&]()
@@ -170,7 +166,10 @@ namespace Bousk
 
 				// Remove every processed and partial packets until the last one processed included
 				if (!messagesReady.empty())
+				{
+					mLastProcessed = newestProcessedPacket->id();
 					mPendingQueue.erase(mPendingQueue.cbegin(), std::next(newestProcessedPacket));
+				}
 
 				return messagesReady;
 			}
