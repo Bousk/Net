@@ -17,7 +17,7 @@ namespace Bousk
 					size_t queuedSize = 0;
 					while (queuedSize < data.size())
 					{
-						const auto fragmentSize = std::min(Packet::DataMaxSize,  static_cast<uint16_t>(data.size()));
+						const auto fragmentSize = std::min(Packet::DataMaxSize,  static_cast<uint16_t>(data.size() - queuedSize));
 						Packet packet;
 						packet.header.id = mNextId++;
 						packet.header.type = ((queuedSize == 0) ? Packet::Type::FirstFragment : Packet::Type::Fragment);
