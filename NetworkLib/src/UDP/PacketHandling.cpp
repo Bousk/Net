@@ -117,11 +117,12 @@ namespace Bousk
 					else if (itPacket->type() == Packet::Type::FirstFragment)
 					{
 						// Check if the message is ready (fully received)
-						std::vector<uint8_t> msg;
+						std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
 						auto expectedPacketId = itPacket->id();
 						auto msgLastPacket = [&]()
 						{
 							++itPacket;
+							++expectedPacketId;
 							while (itPacket != itEnd && itPacket->id() == expectedPacketId)
 							{
 								if (itPacket->type() == Packet::Type::LastFragment)
