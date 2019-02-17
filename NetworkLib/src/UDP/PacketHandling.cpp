@@ -117,10 +117,10 @@ namespace Bousk
 					else if (itPacket->type() == Packet::Type::FirstFragment)
 					{
 						// Check if the message is ready (fully received)
-						std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
-						auto expectedPacketId = itPacket->id();
-						auto msgLastPacket = [&]()
+						std::vector<uint8_t> msg = [&]()
 						{
+							std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
+							auto expectedPacketId = itPacket->id();
 							++itPacket;
 							++expectedPacketId;
 							while (itPacket != itEnd && itPacket->id() == expectedPacketId)
@@ -129,13 +129,13 @@ namespace Bousk
 								{
 									// Last fragment reached, the message is full
 									msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->datasize());
-									return itPacket;
+									return msg;
 								}
 								else if (itPacket->type() != Packet::Type::Fragment)
 								{
 									// If we reach this, we likely recieved a malformed packet / hack attempt
 									msg.clear();
-									return itPacket;
+									return msg;
 								}
 
 								msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->datasize());
@@ -143,20 +143,15 @@ namespace Bousk
 								++expectedPacketId;
 							}
 							msg.clear();
-							return itPacket;
+							return msg;
 						}();
 						if (!msg.empty())
 						{
 							// We do have a message
 							messagesReady.push_back(std::move(msg));
-							newestProcessedPacket = msgLastPacket;
+							newestProcessedPacket = itPacket;
 							// Move iterator after the last packet of the message
-							itPacket = std::next(msgLastPacket);
-						}
-						else
-						{
-							// Move the iterator to the last packet found so we can handle it with next loop
-							itPacket = msgLastPacket;
+							++itPacket;
 						}
 					}
 					else
