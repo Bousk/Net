@@ -14,7 +14,7 @@ namespace Bousk
 			if (sNew == sLast)
 				return false;
 			return (sNew > sLast && sNew - sLast <= std::numeric_limits<uint16_t>::max() / 2)
-				|| (sNew < sLast && sLast - sNew > std::numeric_limits<uint16_t>::max() / 2); // overflow handling
+				|| (sNew < sLast && sLast - sNew > std::numeric_limits<uint16_t>::max() / 2); //!< overflow handling
 		}
 		uint16_t SequenceDiff(const uint16_t sNew, const uint16_t sLast)
 		{

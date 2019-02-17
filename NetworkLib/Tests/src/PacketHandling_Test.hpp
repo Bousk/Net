@@ -33,7 +33,7 @@ void Multiplexer_Test::Test()
 		CHECK(memcmp(packet->data(), arr.data(), packet->datasize()) == 0);
 	}
 	{
-		// Send fragmented message : 3 fragments
+		//!< Send fragmented message : 3 fragments
 		std::vector<uint8_t> data(Bousk::Network::UDP::Packet::DataMaxSize * 3, 0);
 		const unsigned int seed = static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
 		std::default_random_engine generator(seed);
@@ -66,8 +66,8 @@ public:
 
 void Demultiplexer_Test::Test()
 {
-	// Use the multiplexer to easily queue and split data
-	// It's been tested before so it's reliable
+	//!< Use the multiplexer to easily queue and split data
+	//!< It's been tested before so it's reliable
 	Bousk::Network::UDP::Multiplexer mux;
 	Bousk::Network::UDP::Demultiplexer demux;
 	CHECK(demux.mPendingQueue.empty());
@@ -75,7 +75,7 @@ void Demultiplexer_Test::Test()
 	{
 		const std::array<uint8_t, 5> arr0{ 'T', 'o', 't', 'o', '\0' };
 		std::vector<uint8_t> data0(arr0.cbegin(), arr0.cend());
-		// Receive packet 0 & 1
+		//!< Receive packet 0 & 1
 		{
 			mux.queue(std::move(data0));
 			Bousk::Network::UDP::Packet packet;
@@ -108,7 +108,7 @@ void Demultiplexer_Test::Test()
 		CHECK(packets[1] == data1);
 	}
 	{
-		// Receive fragmented message : 3 fragments
+		//!< Receive fragmented message : 3 fragments
 		std::vector<uint8_t> data(Bousk::Network::UDP::Packet::DataMaxSize * 3, 0);
 		const unsigned int seed = static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
 		std::default_random_engine generator(seed);

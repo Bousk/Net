@@ -12,6 +12,7 @@ namespace Bousk
 		{
 			void Multiplexer::queue(std::vector<uint8_t>&& data)
 			{
+				assert(data.size() <= Packet::MaxMessageSize);
 				if (data.size() > Packet::DataMaxSize)
 				{
 					size_t queuedSize = 0;
@@ -47,27 +48,27 @@ namespace Bousk
 				{
 					const auto& packet = *packetit;
 					if (serializedSize + packet.size() > buffersize)
-						break; // Not enough room for next packet
+						break; //!< Not enough room for next packet
 
 					memcpy(buffer, packet.buffer(), packet.size());
 					serializedSize += packet.size();
 					buffer += packet.size();
 
-					// Once the packet has been serialized into a datagram, remove it from the queue
+					//!< Once the packet has been serialized into a datagram, remove it from the queue
 					packetit = mQueue.erase(packetit);
 				}
 				return serializedSize;
 			}
 			void Demultiplexer::onDataReceived(const uint8_t* data, const size_t datasize)
 			{
-				// Extract packets from buffer
+				//!< Extract packets from buffer
 				size_t processedDataSize = 0;
 				while (processedDataSize < datasize)
 				{
 					const Packet* pckt = reinterpret_cast<const Packet*>(data);
 					if (processedDataSize + pckt->size() > datasize || pckt->datasize() > Packet::DataMaxSize)
 					{
-						// Malformed packet or buffer
+						//!< Malformed packet or buffer
 						return;
 					}
 					onPacketReceived(pckt);
@@ -78,18 +79,18 @@ namespace Bousk
 			void Demultiplexer::onPacketReceived(const Packet* pckt)
 			{
 				if (!Utils::IsSequenceNewer(pckt->id(), mLastProcessed))
-					return; // Packet is too old
+					return; //!< Packet is too old
 
-				// Find the place for this packet, our queue must remain ordered
+							//!< Find the place for this packet, our queue must remain ordered
 				if (mPendingQueue.empty() || pckt->id() > mPendingQueue.back().id())
 				{
 					mPendingQueue.push_back(*pckt);
 				}
 				else
 				{
-					// Find the first iterator with an id equals to or newer than our packet, we must place the packet before that one
+					//!< Find the first iterator with an id equals to or newer than our packet, we must place the packet before that one
 					auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() == pckt->id() || Utils::IsSequenceNewer(p.id(), pckt->id()); });
-					// Make sure we don't insert a packet received multiple times
+					//!< Make sure we don't insert a packet received multiple times
 					if (insertLocation->id() != pckt->id())
 					{
 						mPendingQueue.insert(insertLocation, *pckt);
@@ -103,12 +104,12 @@ namespace Bousk
 				auto itPacket = mPendingQueue.cbegin();
 				auto itEnd = mPendingQueue.cend();
 				std::vector<Packet>::const_iterator newestProcessedPacket;
-				// Our queue is ordered, just go through and reassemble packets
+				//!< Our queue is ordered, just go through and reassemble packets
 				while(itPacket != itEnd)
 				{
 					if (itPacket->type() == Packet::Type::Packet)
 					{
-						// Full packet, just take it
+						//!< Full packet, just take it
 						std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
 						messagesReady.push_back(std::move(msg));
 						newestProcessedPacket = itPacket;
@@ -116,7 +117,7 @@ namespace Bousk
 					}
 					else if (itPacket->type() == Packet::Type::FirstFragment)
 					{
-						// Check if the message is ready (fully received)
+						//!< Check if the message is ready (fully received)
 						std::vector<uint8_t> msg = [&]()
 						{
 							std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
@@ -127,13 +128,13 @@ namespace Bousk
 							{
 								if (itPacket->type() == Packet::Type::LastFragment)
 								{
-									// Last fragment reached, the message is full
+									//!< Last fragment reached, the message is full
 									msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->datasize());
 									return msg;
 								}
 								else if (itPacket->type() != Packet::Type::Fragment)
 								{
-									// If we reach this, we likely recieved a malformed packet / hack attempt
+									//!< If we reach this, we likely recieved a malformed packet / hack attempt
 									msg.clear();
 									return msg;
 								}
@@ -147,10 +148,10 @@ namespace Bousk
 						}();
 						if (!msg.empty())
 						{
-							// We do have a message
+							//!< We do have a message
 							messagesReady.push_back(std::move(msg));
 							newestProcessedPacket = itPacket;
-							// Move iterator after the last packet of the message
+							//!< Move iterator after the last packet of the message
 							++itPacket;
 						}
 					}
@@ -160,7 +161,7 @@ namespace Bousk
 					}
 				}
 
-				// Remove every processed and partial packets until the last one processed included
+				//!< Remove every processed and partial packets until the last one processed included
 				if (!messagesReady.empty())
 				{
 					mLastProcessed = newestProcessedPacket->id();
