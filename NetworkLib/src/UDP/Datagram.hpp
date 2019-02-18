@@ -18,14 +18,16 @@ namespace Bousk
 					ID ack;
 					uint64_t previousAcks;
 				};
-				static constexpr size_t BufferMaxSize = 1400;
-				static constexpr size_t HeaderSize = sizeof(Header);
-				static constexpr size_t DataMaxSize = BufferMaxSize - HeaderSize;
+				static constexpr uint16_t BufferMaxSize = 1400;
+				static constexpr uint16_t HeaderSize = sizeof(Header);
+				static constexpr uint16_t DataMaxSize = BufferMaxSize - HeaderSize;
 
 				Header header;
 				std::array<uint8_t, DataMaxSize> data;
 
 				size_t datasize{ 0 };
+				//!< Datagram full size : Header + data
+				size_t size() const { return HeaderSize + datasize; }
 			};
 		}
 	}

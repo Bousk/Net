@@ -48,6 +48,11 @@ namespace Bousk
 				auto& client = getClient(target);
 				client.send(std::move(data));
 			}
+			void Client::processSend()
+			{
+				for (auto& client : mClients)
+					client->processSend();
+			}
 			void Client::receive()
 			{
 				for (;;)
