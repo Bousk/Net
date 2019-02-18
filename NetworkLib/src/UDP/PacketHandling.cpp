@@ -10,25 +10,25 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			void Multiplexer::queue(std::vector<uint8_t>&& data)
+			void Multiplexer::queue(std::vector<uint8_t>&& msgData)
 			{
-				assert(data.size() <= Packet::MaxMessageSize);
-				if (data.size() > Packet::DataMaxSize)
+				assert(msgData.size() <= Packet::MaxMessageSize);
+				if (msgData.size() > Packet::DataMaxSize)
 				{
 					size_t queuedSize = 0;
-					while (queuedSize < data.size())
+					while (queuedSize < msgData.size())
 					{
-						const auto fragmentSize = std::min(Packet::DataMaxSize,  static_cast<uint16_t>(data.size() - queuedSize));
+						const auto fragmentSize = std::min(Packet::DataMaxSize,  static_cast<uint16_t>(msgData.size() - queuedSize));
 						Packet packet;
 						packet.header.id = mNextId++;
 						packet.header.type = ((queuedSize == 0) ? Packet::Type::FirstFragment : Packet::Type::Fragment);
 						packet.header.size = fragmentSize;
-						memcpy(packet.data(), data.data() + queuedSize, fragmentSize);
+						memcpy(packet.data(), msgData.data() + queuedSize, fragmentSize);
 						mQueue.push_back(packet);
 						queuedSize += fragmentSize;
 					}
 					mQueue.back().header.type = Packet::Type::LastFragment;
-					assert(queuedSize == data.size());
+					assert(queuedSize == msgData.size());
 				}
 				else
 				{
@@ -36,8 +36,8 @@ namespace Bousk
 					Packet packet;
 					packet.header.id = mNextId++;
 					packet.header.type = Packet::Type::Packet;
-					packet.header.size = static_cast<uint16_t>(data.size());
-					memcpy(packet.data(), data.data(), data.size());
+					packet.header.size = static_cast<uint16_t>(msgData.size());
+					memcpy(packet.data(), msgData.data(), msgData.size());
 					mQueue.push_back(packet);
 				}
 			}

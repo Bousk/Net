@@ -20,7 +20,7 @@ namespace Bousk
 				Multiplexer() = default;
 				~Multiplexer() = default;
 
-				void queue(std::vector<uint8_t>&& data);
+				void queue(std::vector<uint8_t>&& msgData);
 				size_t serialize(uint8_t* buffer, const size_t buffersize);
 
 			private:
