@@ -19,14 +19,32 @@ namespace Bousk
 			}
 			void DistantClient::send(std::vector<uint8_t>&& data)
 			{
-				Datagram datagram;
-				datagram.header.id = htons(mNextDatagramIdToSend);
-				++mNextDatagramIdToSend;
-				datagram.header.ack = htons(mReceivedAcks.lastAck());
-				datagram.header.previousAcks = mReceivedAcks.previousAcksMask();
-				memcpy(datagram.data.data(), data.data(), data.size());
+				mSendQueue.queue(std::move(data));
+			}
+			bool DistantClient::fillDatagram(Datagram& dgram)
+			{
+				dgram.header.ack = htons(mReceivedAcks.lastAck());
+				dgram.header.previousAcks = mReceivedAcks.previousAcksMask();
 
-				sendto(mClient.mSocket, reinterpret_cast<const char*>(&datagram), static_cast<int>(Datagram::HeaderSize + data.size()), 0, reinterpret_cast<const sockaddr*>(&mAddress), sizeof(mAddress));
+				dgram.datasize = mSendQueue.serialize(dgram.data.data(), Datagram::DataMaxSize);
+				if (dgram.datasize > 0)
+				{
+					dgram.header.id = htons(mNextDatagramIdToSend);
+					++mNextDatagramIdToSend;
+					return true;
+				}
+				return false;
+			}
+			void DistantClient::processSend()
+			{
+				for (;;)
+				{
+					Datagram datagram;
+					if (!fillDatagram(datagram))
+						break;
+
+					sendto(mClient.mSocket, reinterpret_cast<const char*>(&datagram), static_cast<int>(datagram.size()), 0, reinterpret_cast<const sockaddr*>(&mAddress), sizeof(mAddress));
+				}
 			}
 			void DistantClient::onDatagramReceived(Datagram&& datagram)
 			{
@@ -58,7 +76,7 @@ namespace Bousk
 					onDatagramSentAcked(sendAcked);
 				}
 				//!< Dispatch data
-				onDataReceived(std::vector<uint8_t>(datagram.data.data(), datagram.data.data() + datagram.datasize));
+				onDataReceived(datagram.data.data(), datagram.datasize);
 			}
 
 			void DistantClient::onDatagramSentAcked(Datagram::ID datagramId)
@@ -67,10 +85,14 @@ namespace Bousk
 			{}
 			void DistantClient::onDatagramReceivedLost(Datagram::ID datagramId)
 			{}
-			void DistantClient::onDataReceived(std::vector<uint8_t>&& data)
+			void DistantClient::onDataReceived(const uint8_t* data, const size_t datasize)
 			{
-				auto msg = std::make_unique<Messages::UserData>(std::move(data));
-				onMessageReady(std::move(msg));
+				mRecvQueue.onDataReceived(data, datasize);
+				auto receivedMessages = mRecvQueue.process();
+				for (auto&& msg : receivedMessages)
+				{
+					onMessageReady(std::make_unique<Messages::UserData>(std::move(msg)));
+				}
 			}
 			void DistantClient::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{
