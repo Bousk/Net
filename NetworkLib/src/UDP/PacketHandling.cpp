@@ -81,8 +81,8 @@ namespace Bousk
 				if (!Utils::IsSequenceNewer(pckt->id(), mLastProcessed))
 					return; //!< Packet is too old
 
-							//!< Find the place for this packet, our queue must remain ordered
-				if (mPendingQueue.empty() || pckt->id() > mPendingQueue.back().id())
+				//!< Find the place for this packet, our queue must remain ordered
+				if (mPendingQueue.empty() || Utils::IsSequenceNewer(pckt->id(), mPendingQueue.back().id()))
 				{
 					mPendingQueue.push_back(*pckt);
 				}
