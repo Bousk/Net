@@ -17,12 +17,12 @@ namespace Bousk
 					while (queuedSize < msgData.size())
 					{
 						const auto fragmentSize = std::min(Packet::DataMaxSize,  static_cast<uint16_t>(msgData.size() - queuedSize));
-						Packet packet;
+						mQueue.resize(mQueue.size() + 1);
+						Packet& packet = mQueue.back();
 						packet.header.id = mNextId++;
 						packet.header.type = ((queuedSize == 0) ? Packet::Type::FirstFragment : Packet::Type::Fragment);
 						packet.header.size = fragmentSize;
 						memcpy(packet.data(), msgData.data() + queuedSize, fragmentSize);
-						mQueue.push_back(packet);
 						queuedSize += fragmentSize;
 					}
 					mQueue.back().header.type = Packet::Type::LastFragment;
@@ -31,12 +31,12 @@ namespace Bousk
 				else
 				{
 					//!< Single packet
-					Packet packet;
+					mQueue.resize(mQueue.size() + 1);
+					Packet& packet = mQueue.back();
 					packet.header.id = mNextId++;
 					packet.header.type = Packet::Type::Packet;
 					packet.header.size = static_cast<uint16_t>(msgData.size());
 					memcpy(packet.data(), msgData.data(), msgData.size());
-					mQueue.push_back(packet);
 				}
 			}
 			size_t Multiplexer::serialize(uint8_t* buffer, const size_t buffersize)
