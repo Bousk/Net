@@ -1,5 +1,3 @@
-#pragma once
-
 #include "UDP/PacketHandling.hpp"
 #include "Utils.hpp"
 #include <cassert>
