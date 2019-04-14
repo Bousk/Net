@@ -2,6 +2,7 @@
 #include "AckHandler_Test.hpp"
 #include "DistantClient_Test.hpp"
 #include "PacketHandling_Test.hpp"
+#include "ReliableOrdered_Test.hpp"
 
 int main()
 {
@@ -9,5 +10,6 @@ int main()
 	AckHandler_Test::Test();
 	PacketHandling_Test::Test();
 	DistantClient_Test::Test();
+	ReliableOrdered_Test::Test();
 	return 0;
 }
