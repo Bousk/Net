@@ -1,5 +1,6 @@
 #include "UDP/Protocoles/ReliableOrdered.hpp"
 #include "Utils.hpp"
+#include <algorithm>
 #include <cassert>
 
 namespace Bousk
@@ -46,11 +47,11 @@ namespace Bousk
 					size_t Multiplexer::serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId)
 					{
 						size_t serializedSize = 0;
-						for (auto packetit = mQueue.begin(); packetit != mQueue.end(); ++packetit)
+						for (auto& packetHolder : mQueue)
 						{
-							const auto& packet = packetit->packet();
-							if (!packetit->shouldSend())
+							if (!packetHolder.shouldSend())
 								continue;
+							const auto& packet = packetHolder.packet();
 							if (serializedSize + packet.size() > buffersize)
 								break; //!< Not enough room for next packet
 
@@ -59,27 +60,23 @@ namespace Bousk
 							buffer += packet.size();
 
 							//!< Once the packet has been serialized into a datagram, save which datagram it's been included into
-							packetit->onSent(datagramId);
+							packetHolder.onSent(datagramId);
 						}
 						return serializedSize;
 					}
 
 					void Multiplexer::onDatagramAcked(Datagram::ID datagramId)
 					{
-						for (auto packetit = mQueue.cbegin(); packetit != mQueue.cend();)
-						{
-							if (packetit->isIncludedIn(datagramId))
-								packetit = mQueue.erase(packetit);
-							else
-								++packetit;
-						}
+						mQueue.erase(std::remove_if(mQueue.begin(), mQueue.end()
+							, [&](const ReliablePacket& packetHolder) { return packetHolder.isIncludedIn(datagramId); })
+						, mQueue.cend());
 					}
 					void Multiplexer::onDatagramLost(Datagram::ID datagramId)
 					{
-						for (auto packetit = mQueue.begin(); packetit != mQueue.end(); ++packetit)
+						for (auto& packetHolder : mQueue)
 						{
-							if (packetit->isIncludedIn(datagramId))
-								packetit->resend();
+							if (packetHolder.isIncludedIn(datagramId))
+								packetHolder.resend();
 						}
 					}
 
@@ -105,7 +102,7 @@ namespace Bousk
 						if (!Utils::IsSequenceNewer(pckt->id(), mLastProcessed))
 							return; //!< Packet is too old
 
-									//!< Find the place for this packet, our queue must remain ordered
+						//!< Find the place for this packet, our queue must remain ordered
 						if (mPendingQueue.empty() || Utils::IsSequenceNewer(pckt->id(), mPendingQueue.back().id()))
 						{
 							mPendingQueue.push_back(*pckt);
