@@ -182,13 +182,27 @@ void ReliableOrdered_Demultiplexer_Test::Test()
 
 		const auto datacopy = data;
 		mux.queue(std::move(data));
-		for (;;)
 		{
 			Bousk::Network::UDP::Packet packet;
 			const size_t serializedData = mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, datagramId++);
-			if (serializedData == 0)
-				break;
 			demux.onDataReceived(packet.buffer(), packet.size());
+			CHECK(demux.process().empty());
+		}
+		{
+			Bousk::Network::UDP::Packet packet;
+			const size_t serializedData = mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, datagramId++);
+			demux.onDataReceived(packet.buffer(), packet.size());
+			CHECK(demux.process().empty());
+		}
+		{
+			Bousk::Network::UDP::Packet packet;
+			const size_t serializedData = mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, datagramId++);
+			demux.onDataReceived(packet.buffer(), packet.size());
+		}
+		{
+			Bousk::Network::UDP::Packet packet;
+			const size_t serializedData = mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, datagramId++);
+			CHECK(serializedData == 0);
 		}
 		CHECK(demux.mPendingQueue.size() == 3);
 		const std::vector<std::vector<uint8_t>> packets = demux.process();
