@@ -3,6 +3,7 @@
 #include "UDP/Packet.hpp"
 #include "UDP/AckHandler.hpp"
 #include <vector>
+#include <array>
 #include <set>
 #include <limits>
 
@@ -50,10 +51,13 @@ namespace Bousk
 						};
 						std::vector<ReliablePacket> mQueue;
 						Packet::Id mNextId{ 0 };
+						Packet::Id mFirstAllowedPacket{ 0 };
 					};
 					class Demultiplexer
 					{
 						friend class ReliableOrdered_Demultiplexer_Test;
+					public:
+						static constexpr size_t QueueSize = 2 * Packet::MaxPacketsPerMessage;
 					public:
 						Demultiplexer() = default;
 						~Demultiplexer() = default;
@@ -65,7 +69,7 @@ namespace Bousk
 						void onPacketReceived(const Packet* pckt);
 
 					private:
-						std::vector<Packet> mPendingQueue;
+						std::array<Packet, QueueSize> mPendingQueue;
 						Packet::Id mLastProcessed{ std::numeric_limits<Packet::Id>::max() };
 					};
 				}
