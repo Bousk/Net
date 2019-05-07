@@ -23,7 +23,7 @@ namespace Bousk
 				struct Header
 				{
 					Id id;
-					uint16_t size;
+					uint16_t size{ 0 };
 					Type type;
 				};
 				static constexpr uint16_t PacketMaxSize = Datagram::DataMaxSize;
@@ -35,10 +35,10 @@ namespace Bousk
 				Header header;
 				std::array<uint8_t, DataMaxSize> dataBuffer;
 
-				Id id() const { return header.id; }
-				Type type() const { return header.type; }
-				uint8_t* data() { return dataBuffer.data(); }
-				const uint8_t* data() const { return dataBuffer.data(); }
+				inline Id id() const { return header.id; }
+				inline Type type() const { return header.type; }
+				inline uint8_t* data() { return dataBuffer.data(); }
+				inline const uint8_t* data() const { return dataBuffer.data(); }
 				inline uint16_t datasize() const { return header.size; }
 				//!< Full buffer : header + data
 				inline const uint8_t* buffer() const { return reinterpret_cast<const uint8_t*>(this); }
