@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Tester.hpp"
-#include "UDP/Protocoles/ReliableOrdered.hpp"
+#include "UDP/Protocols/ReliableOrdered.hpp"
 
 #include <limits>
 #include <chrono>

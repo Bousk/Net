@@ -1,7 +1,9 @@
 #pragma once
 
-#include "UDP/Packet.hpp"
 #include "UDP/AckHandler.hpp"
+#include "UDP/Packet.hpp"
+#include "UDP/Protocoles/ProtocolInterface.hpp"
+
 #include <vector>
 #include <set>
 #include <limits>
@@ -18,18 +20,18 @@ namespace Bousk
 			{
 				namespace ReliableOrdered
 				{
-					class Multiplexer
+					class Multiplexer : public IMultiplexer
 					{
 						friend class ReliableOrdered_Multiplexer_Test;
 					public:
 						Multiplexer() = default;
-						~Multiplexer() = default;
+						~Multiplexer() override = default;
 
-						void queue(std::vector<uint8_t>&& msgData);
-						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId);
+						void queue(std::vector<uint8_t>&& msgData) override;
+						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId) override;
 
-						void onDatagramAcked(Datagram::ID datagramId);
-						void onDatagramLost(Datagram::ID datagramId);
+						void onDatagramAcked(Datagram::ID datagramId) override;
+						void onDatagramLost(Datagram::ID datagramId) override;
 
 					private:
 						class ReliablePacket
@@ -51,15 +53,16 @@ namespace Bousk
 						std::vector<ReliablePacket> mQueue;
 						Packet::Id mNextId{ 0 };
 					};
-					class Demultiplexer
+
+					class Demultiplexer : public IDemultiplexer
 					{
 						friend class ReliableOrdered_Demultiplexer_Test;
 					public:
 						Demultiplexer() = default;
-						~Demultiplexer() = default;
+						~Demultiplexer() override = default;
 
-						void onDataReceived(const uint8_t* data, const size_t datasize);
-						std::vector<std::vector<uint8_t>> process();
+						void onDataReceived(const uint8_t* data, const size_t datasize) override;
+						std::vector<std::vector<uint8_t>> process() override;
 
 					private:
 						void onPacketReceived(const Packet* pckt);

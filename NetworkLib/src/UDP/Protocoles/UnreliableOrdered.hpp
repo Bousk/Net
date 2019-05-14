@@ -1,7 +1,9 @@
 #pragma once
 
-#include "UDP/Packet.hpp"
 #include "UDP/AckHandler.hpp"
+#include "UDP/Packet.hpp"
+#include "UDP/Protocoles/ProtocolInterface.hpp"
+
 #include <vector>
 #include <limits>
 
@@ -17,29 +19,29 @@ namespace Bousk
 			{
 				namespace UnreliableOrdered
 				{
-					class Multiplexer
+					class Multiplexer : public IMultiplexer
 					{
 						friend class Multiplexer_Test;
 					public:
 						Multiplexer() = default;
-						~Multiplexer() = default;
+						~Multiplexer() override = default;
 
-						void queue(std::vector<uint8_t>&& msgData);
-						size_t serialize(uint8_t* buffer, const size_t buffersize);
+						void queue(std::vector<uint8_t>&& msgData) override;
+						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID) override;
 
 					private:
 						std::vector<Packet> mQueue;
 						Packet::Id mNextId{ 0 };
 					};
-					class Demultiplexer
+					class Demultiplexer : public IDemultiplexer
 					{
 						friend class Demultiplexer_Test;
 					public:
 						Demultiplexer() = default;
-						~Demultiplexer() = default;
+						~Demultiplexer() override = default;
 
-						void onDataReceived(const uint8_t* data, const size_t datasize);
-						std::vector<std::vector<uint8_t>> process();
+						void onDataReceived(const uint8_t* data, const size_t datasize) override;
+						std::vector<std::vector<uint8_t>> process() override;
 
 					private:
 						void onPacketReceived(const Packet* pckt);
