@@ -14,7 +14,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			namespace Protocoles
+			namespace Protocols
 			{
 				namespace ReliableOrdered
 				{
