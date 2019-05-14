@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Tester.hpp"
-#include "UDP/PacketHandling.hpp"
+#include "UDP/Protocoles/UnreliableOrdered.hpp"
 
 #include <limits>
 #include <chrono>
@@ -15,7 +15,7 @@ public:
 
 void Multiplexer_Test::Test()
 {
-	Bousk::Network::UDP::Multiplexer mux;
+	Bousk::Network::UDP::Protocoles::UnreliableOrdered::Multiplexer mux;
 	CHECK(mux.mQueue.size() == 0);
 	CHECK(mux.mNextId == 0);
 	{
@@ -68,8 +68,8 @@ void Demultiplexer_Test::Test()
 {
 	//!< Use the multiplexer to easily queue and split data
 	//!< It's been tested before so it's reliable
-	Bousk::Network::UDP::Multiplexer mux;
-	Bousk::Network::UDP::Demultiplexer demux;
+	Bousk::Network::UDP::Protocoles::UnreliableOrdered::Multiplexer mux;
+	Bousk::Network::UDP::Protocoles::UnreliableOrdered::Demultiplexer demux;
 	CHECK(demux.mPendingQueue.empty());
 	CHECK(demux.mLastProcessed == std::numeric_limits<Bousk::Network::UDP::Packet::Id>::max());
 	{
