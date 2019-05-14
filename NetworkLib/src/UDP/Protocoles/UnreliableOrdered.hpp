@@ -13,39 +13,42 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			namespace UnreliableOrdered
+			namespace Protocoles
 			{
-				class Multiplexer
+				namespace UnreliableOrdered
 				{
-					friend class Multiplexer_Test;
-				public:
-					Multiplexer() = default;
-					~Multiplexer() = default;
+					class Multiplexer
+					{
+						friend class Multiplexer_Test;
+					public:
+						Multiplexer() = default;
+						~Multiplexer() = default;
 
-					void queue(std::vector<uint8_t>&& msgData);
-					size_t serialize(uint8_t* buffer, const size_t buffersize);
+						void queue(std::vector<uint8_t>&& msgData);
+						size_t serialize(uint8_t* buffer, const size_t buffersize);
 
-				private:
-					std::vector<Packet> mQueue;
-					Packet::Id mNextId{ 0 };
-				};
-				class Demultiplexer
-				{
-					friend class Demultiplexer_Test;
-				public:
-					Demultiplexer() = default;
-					~Demultiplexer() = default;
+					private:
+						std::vector<Packet> mQueue;
+						Packet::Id mNextId{ 0 };
+					};
+					class Demultiplexer
+					{
+						friend class Demultiplexer_Test;
+					public:
+						Demultiplexer() = default;
+						~Demultiplexer() = default;
 
-					void onDataReceived(const uint8_t* data, const size_t datasize);
-					std::vector<std::vector<uint8_t>> process();
+						void onDataReceived(const uint8_t* data, const size_t datasize);
+						std::vector<std::vector<uint8_t>> process();
 
-				private:
-					void onPacketReceived(const Packet* pckt);
+					private:
+						void onPacketReceived(const Packet* pckt);
 
-				private:
-					std::vector<Packet> mPendingQueue;
-					Packet::Id mLastProcessed{ std::numeric_limits<Packet::Id>::max() };
-				};
+					private:
+						std::vector<Packet> mPendingQueue;
+						Packet::Id mLastProcessed{ std::numeric_limits<Packet::Id>::max() };
+					};
+				}
 			}
 		}
 	}
