@@ -15,7 +15,7 @@ public:
 
 void ReliableOrdered_Multiplexer_Test::Test()
 {
-	Bousk::Network::UDP::Protocoles::ReliableOrdered::Multiplexer mux;
+	Bousk::Network::UDP::Protocols::ReliableOrdered::Multiplexer mux;
 	CHECK(mux.mQueue.size() == 0);
 	CHECK(mux.mNextId == 0);
 	Bousk::Network::UDP::Datagram::ID datagramId = 0;
@@ -131,8 +131,8 @@ void ReliableOrdered_Demultiplexer_Test::Test()
 {
 	//!< Use the multiplexer to easily queue and split data
 	//!< It's been tested before so it's reliable
-	Bousk::Network::UDP::Protocoles::ReliableOrdered::Multiplexer mux;
-	Bousk::Network::UDP::Protocoles::ReliableOrdered::Demultiplexer demux;
+	Bousk::Network::UDP::Protocols::ReliableOrdered::Multiplexer mux;
+	Bousk::Network::UDP::Protocols::ReliableOrdered::Demultiplexer demux;
 	CHECK(demux.mPendingQueue.empty());
 	CHECK(demux.mLastProcessed == std::numeric_limits<Bousk::Network::UDP::Packet::Id>::max());
 	Bousk::Network::UDP::Datagram::ID datagramId = 0;
