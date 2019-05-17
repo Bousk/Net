@@ -12,7 +12,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			ProtocolsHandler::ProtocolsHandler()
+			ChannelsHandler::ChannelsHandler()
 			{
 				mMultiplexers.push_back(std::make_unique<Protocols::UnreliableOrdered::Multiplexer>());
 				mMultiplexers.push_back(std::make_unique<Protocols::ReliableOrdered::Multiplexer>());
@@ -22,12 +22,12 @@ namespace Bousk
 			}
 
 			// Multiplexer
-			void ProtocolsHandler::queue(std::vector<uint8_t>&& msgData, size_t canalIndex)
+			void ChannelsHandler::queue(std::vector<uint8_t>&& msgData, size_t canalIndex)
 			{
 				assert(canalIndex < mMultiplexers.size());
 				mMultiplexers[canalIndex]->queue(std::move(msgData));
 			}
-			size_t ProtocolsHandler::serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId)
+			size_t ChannelsHandler::serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId)
 			{
 				size_t remainingBuffersize = buffersize;
 				for (uint32_t protocolid = 0; protocolid < mMultiplexers.size(); ++protocolid)
@@ -35,19 +35,19 @@ namespace Bousk
 					Protocols::IMultiplexer* protocol = mMultiplexers[protocolid].get();
 
 					uint8_t* const protocolHeaderStart = buffer;
-					uint8_t* const protocolDataStart = buffer + ProtocolHeader::Size;
-					const size_t protocolAvailableSize = remainingBuffersize - ProtocolHeader::Size;
+					uint8_t* const protocolDataStart = buffer + ChannelHeader::Size;
+					const size_t protocolAvailableSize = remainingBuffersize - ChannelHeader::Size;
 
 					const size_t serializedData = protocol->serialize(protocolDataStart, protocolAvailableSize, datagramId);
 					assert(serializedData <= protocolAvailableSize);
 					if (serializedData)
 					{
 						// Data added, let's add the protocol header
-						ProtocolHeader* const protocolHeader = reinterpret_cast<ProtocolHeader*>(protocolHeaderStart);
+						ChannelHeader* const protocolHeader = reinterpret_cast<ChannelHeader*>(protocolHeaderStart);
 						protocolHeader->canalId = protocolid;
 						protocolHeader->datasize = static_cast<uint32_t>(serializedData);
 
-						const size_t protocolTotalSize = serializedData + ProtocolHeader::Size;
+						const size_t protocolTotalSize = serializedData + ChannelHeader::Size;
 						buffer += protocolTotalSize;
 						remainingBuffersize -= protocolTotalSize;
 					}
@@ -55,14 +55,14 @@ namespace Bousk
 				return buffersize - remainingBuffersize;
 			}
 
-			void ProtocolsHandler::onDatagramAcked(Datagram::ID datagramId)
+			void ChannelsHandler::onDatagramAcked(Datagram::ID datagramId)
 			{
 				for (auto& protocol : mMultiplexers)
 				{
 					protocol->onDatagramAcked(datagramId);
 				}
 			}
-			void ProtocolsHandler::onDatagramLost(Datagram::ID datagramId)
+			void ChannelsHandler::onDatagramLost(Datagram::ID datagramId)
 			{
 				for (auto& protocol : mMultiplexers)
 				{
@@ -71,12 +71,12 @@ namespace Bousk
 			}
 
 			// Demultiplexer
-			void ProtocolsHandler::onDataReceived(const uint8_t* data, const size_t datasize)
+			void ChannelsHandler::onDataReceived(const uint8_t* data, const size_t datasize)
 			{
 				size_t processedData = 0;
 				while (processedData < datasize)
 				{
-					const ProtocolHeader* protocolHeader = reinterpret_cast<const ProtocolHeader*>(data);
+					const ChannelHeader* protocolHeader = reinterpret_cast<const ChannelHeader*>(data);
 					if (processedData + protocolHeader->datasize > datasize || protocolHeader->datasize > Datagram::DataMaxSize)
 					{
 						// Malformed buffer
@@ -87,13 +87,13 @@ namespace Bousk
 						// Canal id requested doesn't exist
 						return;
 					}
-					mDemultiplexers[protocolHeader->canalId]->onDataReceived(data + ProtocolHeader::Size, protocolHeader->datasize);
-					const size_t protocolTotalSize = protocolHeader->datasize + ProtocolHeader::Size;
+					mDemultiplexers[protocolHeader->canalId]->onDataReceived(data + ChannelHeader::Size, protocolHeader->datasize);
+					const size_t protocolTotalSize = protocolHeader->datasize + ChannelHeader::Size;
 					data += protocolTotalSize;
 					processedData += protocolTotalSize;
 				}
 			}
-			std::vector<std::vector<uint8_t>> ProtocolsHandler::process()
+			std::vector<std::vector<uint8_t>> ChannelsHandler::process()
 			{
 				std::vector<std::vector<uint8_t>> messages;
 				for (auto& protocol : mDemultiplexers)

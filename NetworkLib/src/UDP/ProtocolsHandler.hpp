@@ -17,11 +17,11 @@ namespace Bousk
 				class IDemultiplexer;
 			}
 
-			class ProtocolsHandler
+			class ChannelsHandler
 			{
 			public:
-				ProtocolsHandler();
-				~ProtocolsHandler() = default;
+				ChannelsHandler();
+				~ChannelsHandler() = default;
 
 				// Multiplexer
 				void queue(std::vector<uint8_t>&& msgData, size_t canalIndex);
