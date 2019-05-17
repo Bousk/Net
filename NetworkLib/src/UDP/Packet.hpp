@@ -1,7 +1,7 @@
 #pragma once
 
 #include <UDP/Datagram.hpp>
-#include <UDP/ProtocolsHeader.hpp>
+#include <UDP/ChannelHeader.hpp>
 #include <cstdint>
 #include <array>
 
