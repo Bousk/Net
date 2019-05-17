@@ -1,5 +1,5 @@
-#include <UDP/ProtocolsHandler.hpp>
-#include <UDP/ProtocolsHeader.hpp>
+#include <UDP/ChannelsHandler.hpp>
+#include <UDP/ChannelHeader.hpp>
 #include <UDP/Protocols/UnreliableOrdered.hpp>
 #include <UDP/Protocols/ReliableOrdered.hpp>
 

@@ -8,7 +8,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			struct ProtocolHeader
+			struct ChannelHeader
 			{
 				static constexpr size_t Size = sizeof(uint32_t) + sizeof(uint32_t);
 
