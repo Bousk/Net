@@ -27,7 +27,7 @@ namespace Bousk
 					uint16_t size;
 					Type type;
 				};
-				static constexpr uint16_t PacketMaxSize = Datagram::DataMaxSize - ProtocolHeader::Size;
+				static constexpr uint16_t PacketMaxSize = Datagram::DataMaxSize - ChannelHeader::Size;
 				static constexpr uint16_t HeaderSize = sizeof(Header);
 				static constexpr uint16_t DataMaxSize = PacketMaxSize - HeaderSize;
 				static constexpr size_t MaxPacketsPerMessage = 32;
