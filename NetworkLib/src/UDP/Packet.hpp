@@ -1,6 +1,7 @@
 #pragma once
 
-#include "UDP/Datagram.hpp"
+#include <UDP/Datagram.hpp>
+#include <UDP/ProtocolsHeader.hpp>
 #include <cstdint>
 #include <array>
 
@@ -26,7 +27,7 @@ namespace Bousk
 					uint16_t size;
 					Type type;
 				};
-				static constexpr uint16_t PacketMaxSize = Datagram::DataMaxSize;
+				static constexpr uint16_t PacketMaxSize = Datagram::DataMaxSize - ProtocolHeader::Size;
 				static constexpr uint16_t HeaderSize = sizeof(Header);
 				static constexpr uint16_t DataMaxSize = PacketMaxSize - HeaderSize;
 				static constexpr size_t MaxPacketsPerMessage = 32;
