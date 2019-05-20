@@ -21,10 +21,10 @@ namespace Bousk
 			{
 			public:
 				ChannelsHandler();
-				~ChannelsHandler() = default;
+				~ChannelsHandler();
 
 				// Multiplexer
-				void queue(std::vector<uint8_t>&& msgData, size_t canalIndex);
+				void queue(std::vector<uint8_t>&& msgData, uint32_t canalIndex);
 				size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId);
 
 				void onDatagramAcked(Datagram::ID datagramId);

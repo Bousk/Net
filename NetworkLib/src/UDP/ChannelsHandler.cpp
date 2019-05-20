@@ -20,9 +20,10 @@ namespace Bousk
 				mDemultiplexers.push_back(std::make_unique<Protocols::UnreliableOrdered::Demultiplexer>());
 				mDemultiplexers.push_back(std::make_unique<Protocols::ReliableOrdered::Demultiplexer>());
 			}
+			ChannelsHandler::~ChannelsHandler() = default;
 
 			// Multiplexer
-			void ChannelsHandler::queue(std::vector<uint8_t>&& msgData, size_t canalIndex)
+			void ChannelsHandler::queue(std::vector<uint8_t>&& msgData, uint32_t canalIndex)
 			{
 				assert(canalIndex < mMultiplexers.size());
 				mMultiplexers[canalIndex]->queue(std::move(msgData));

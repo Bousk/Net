@@ -29,7 +29,7 @@ namespace Bousk
 
 				bool init(uint16_t port);
 				void release();
-				void sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data);
+				void sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data, uint32_t canalIndex);
 				void processSend();
 				void receive();
 				std::vector<std::unique_ptr<Messages::Base>> poll();
