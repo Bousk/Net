@@ -3,6 +3,8 @@
 #include "Tester.hpp"
 #include "UDP/DistantClient.hpp"
 #include "UDP/UDPClient.hpp"
+#include <UDP/Packet.hpp>
+#include <UDP/ChannelHeader.hpp>
 #include "Messages.hpp"
 
 #include <cstring>
@@ -34,19 +36,19 @@ void DistantClient_Test::Test()
 	constexpr const char TestString[] = "Test data";
 	constexpr size_t TestStringLength = sizeof(TestString);
 
-	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength));
+	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength), 0);
 	//!< Craft the datagram to check reception
 	Bousk::Network::UDP::Datagram datagram;
 	distantClient.fillDatagram(datagram);
 	CHECK(distantClient.mNextDatagramIdToSend == 1);
 
 	auto QueueDatagram = [&]() {
-		distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength));
-		distantClient.mSendQueue.serialize(datagram.data.data(), Bousk::Network::UDP::Datagram::DataMaxSize);
+		distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength), 0);
+		distantClient.mChannelsHandler.serialize(datagram.data.data(), Bousk::Network::UDP::Datagram::DataMaxSize, 0);
 	};
 
 	CHECK(datagram.header.id == 0);
-	CHECK(datagram.datasize == TestStringLength + Bousk::Network::UDP::Packet::HeaderSize);
+	CHECK(datagram.datasize == TestStringLength + Bousk::Network::UDP::Packet::HeaderSize + Bousk::Network::UDP::ChannelHeader::Size);
 
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
