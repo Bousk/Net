@@ -17,31 +17,42 @@ namespace Bousk
 		{
 			namespace Protocols
 			{
-				namespace UnreliableOrdered
+				class UnreliableOrdered : public IProtocol
 				{
-					class Multiplexer : public IMultiplexer
+				public:
+					UnreliableOrdered() = default;
+					~UnreliableOrdered() override = default;
+
+					void queue(std::vector<uint8_t>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }
+					size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
+
+					void onDataReceived(const uint8_t* data, const size_t datasize) override { mDemultiplexer.onDataReceived(data, datasize); }
+					std::vector<std::vector<uint8_t>> process() override { return mDemultiplexer.process(); }
+
+				private:
+					class Multiplexer
 					{
 						friend class Multiplexer_Test;
 					public:
 						Multiplexer() = default;
-						~Multiplexer() override = default;
+						~Multiplexer() = default;
 
-						void queue(std::vector<uint8_t>&& msgData) override;
-						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID) override;
+						void queue(std::vector<uint8_t>&& msgData);
+						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID);
 
 					private:
 						std::vector<Packet> mQueue;
 						Packet::Id mNextId{ 0 };
-					};
-					class Demultiplexer : public IDemultiplexer
+					} mMultiplexer;
+					class Demultiplexer
 					{
 						friend class Demultiplexer_Test;
 					public:
 						Demultiplexer() = default;
-						~Demultiplexer() override = default;
+						~Demultiplexer() = default;
 
-						void onDataReceived(const uint8_t* data, const size_t datasize) override;
-						std::vector<std::vector<uint8_t>> process() override;
+						void onDataReceived(const uint8_t* data, const size_t datasize);
+						std::vector<std::vector<uint8_t>> process();
 
 					private:
 						void onPacketReceived(const Packet* pckt);
@@ -49,8 +60,8 @@ namespace Bousk
 					private:
 						std::vector<Packet> mPendingQueue;
 						Packet::Id mLastProcessed{ std::numeric_limits<Packet::Id>::max() };
-					};
-				}
+					} mDemultiplexer;
+				};
 			}
 		}
 	}
