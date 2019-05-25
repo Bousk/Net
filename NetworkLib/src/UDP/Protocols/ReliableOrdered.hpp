@@ -18,20 +18,34 @@ namespace Bousk
 		{
 			namespace Protocols
 			{
-				namespace ReliableOrdered
+				class ReliableOrdered : public IProtocol
 				{
-					class Multiplexer : public IMultiplexer
+				public:
+					ReliableOrdered() = default;
+					~ReliableOrdered() override = default;
+
+					void queue(std::vector<uint8_t>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }
+					size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
+
+					void onDatagramAcked(Datagram::ID datagramId) override { mMultiplexer.onDatagramAcked(datagramId); }
+					void onDatagramLost(Datagram::ID datagramId) override { mMultiplexer.onDatagramLost(datagramId); }
+
+					void onDataReceived(const uint8_t* data, const size_t datasize) override { mDemultiplexer.onDataReceived(data, datasize); }
+					std::vector<std::vector<uint8_t>> process() override { return mDemultiplexer.process(); }
+
+				private:
+					class Multiplexer
 					{
 						friend class ReliableOrdered_Multiplexer_Test;
 					public:
 						Multiplexer() = default;
-						~Multiplexer() override = default;
+						~Multiplexer() = default;
 
-						void queue(std::vector<uint8_t>&& msgData) override;
-						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId) override;
+						void queue(std::vector<uint8_t>&& msgData);
+						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId);
 
-						void onDatagramAcked(Datagram::ID datagramId) override;
-						void onDatagramLost(Datagram::ID datagramId) override;
+						void onDatagramAcked(Datagram::ID datagramId);
+						void onDatagramLost(Datagram::ID datagramId);
 
 					private:
 						class ReliablePacket
@@ -52,17 +66,16 @@ namespace Bousk
 						};
 						std::vector<ReliablePacket> mQueue;
 						Packet::Id mNextId{ 0 };
-					};
-
-					class Demultiplexer : public IDemultiplexer
+					} mMultiplexer;
+					class Demultiplexer
 					{
 						friend class ReliableOrdered_Demultiplexer_Test;
 					public:
 						Demultiplexer() = default;
-						~Demultiplexer() override = default;
+						~Demultiplexer() = default;
 
-						void onDataReceived(const uint8_t* data, const size_t datasize) override;
-						std::vector<std::vector<uint8_t>> process() override;
+						void onDataReceived(const uint8_t* data, const size_t datasize);
+						std::vector<std::vector<uint8_t>> process();
 
 					private:
 						void onPacketReceived(const Packet* pckt);
@@ -70,8 +83,8 @@ namespace Bousk
 					private:
 						std::vector<Packet> mPendingQueue;
 						Packet::Id mLastProcessed{ std::numeric_limits<Packet::Id>::max() };
-					};
-				}
+					} mDemultiplexer;
+				};
 			}
 		}
 	}
