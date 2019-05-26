@@ -20,6 +20,8 @@ namespace Bousk
 			{
 				class ReliableOrdered : public IProtocol
 				{
+					friend class ReliableOrdered_Multiplexer_Test;
+					friend class ReliableOrdered_Demultiplexer_Test;
 				public:
 					ReliableOrdered() = default;
 					~ReliableOrdered() override = default;
