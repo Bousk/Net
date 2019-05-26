@@ -19,6 +19,8 @@ namespace Bousk
 			{
 				class UnreliableOrdered : public IProtocol
 				{
+					friend class Multiplexer_Test;
+					friend class Demultiplexer_Test;
 				public:
 					UnreliableOrdered() = default;
 					~UnreliableOrdered() override = default;
