@@ -47,11 +47,13 @@ namespace Bousk
 					size_t serializedSize = 0;
 					for (auto& packetHolder : mQueue)
 					{
+						if (!(Utils::SequenceDiff(packetHolder.packet().id(), mFirstAllowedPacket) < Demultiplexer::QueueSize))
+							break;
 						if (!packetHolder.shouldSend())
 							continue;
 						const auto& packet = packetHolder.packet();
 						if (serializedSize + packet.size() > buffersize)
-							break; //!< Not enough room for next packet
+							continue; //!< Not enough room, let's skip this one for now
 
 						memcpy(buffer, packet.buffer(), packet.size());
 						serializedSize += packet.size();
@@ -65,9 +67,16 @@ namespace Bousk
 
 				void ReliableOrdered::Multiplexer::onDatagramAcked(Datagram::ID datagramId)
 				{
+					if (mQueue.empty())
+						return;
+
 					mQueue.erase(std::remove_if(mQueue.begin(), mQueue.end()
 						, [&](const ReliablePacket& packetHolder) { return packetHolder.isIncludedIn(datagramId); })
 						, mQueue.cend());
+					if (mQueue.empty())
+						mFirstAllowedPacket = mNextId;
+					else if (Utils::IsSequenceNewer(mQueue.front().packet().id(), mFirstAllowedPacket))
+						mFirstAllowedPacket = mQueue.front().packet().id();
 				}
 				void ReliableOrdered::Multiplexer::onDatagramLost(Datagram::ID datagramId)
 				{
@@ -88,7 +97,7 @@ namespace Bousk
 						if (processedDataSize + pckt->size() > datasize || pckt->datasize() > Packet::DataMaxSize)
 						{
 							//!< Malformed packet or buffer
-							return;
+							break;
 						}
 						onPacketReceived(pckt);
 						processedDataSize += pckt->size();
@@ -100,90 +109,109 @@ namespace Bousk
 					if (!Utils::IsSequenceNewer(pckt->id(), mLastProcessed))
 						return; //!< Packet is too old
 
-					//!< Find the place for this packet, our queue must remain ordered
-					if (mPendingQueue.empty() || Utils::IsSequenceNewer(pckt->id(), mPendingQueue.back().id()))
+								//!< Find the place for this packet
+					const size_t index = pckt->id() % mPendingQueue.size();
+					Packet& pendingPacket = mPendingQueue[index];
+					if (pendingPacket.datasize() == 0)
 					{
-						mPendingQueue.push_back(*pckt);
+						// Slot is available, simply copy data from network into the queue
+						pendingPacket = *pckt;
 					}
 					else
 					{
-						//!< Find the first iterator with an id equals to or newer than our packet, we must place the packet before that one
-						auto insertLocation = std::find_if(mPendingQueue.cbegin(), mPendingQueue.cend(), [&pckt](const Packet& p) { return p.id() == pckt->id() || Utils::IsSequenceNewer(p.id(), pckt->id()); });
-						//!< Make sure we don't insert a packet received multiple times
-						if (insertLocation->id() != pckt->id())
-						{
-							mPendingQueue.insert(insertLocation, *pckt);
-						}
+						// Slot is NOT available, packet should already be received, otherwise it's an error
+						assert(pendingPacket.id() == pckt->id() && pendingPacket.datasize() == pckt->datasize());
 					}
 				}
 				std::vector<std::vector<uint8_t>> ReliableOrdered::Demultiplexer::process()
 				{
+					auto ResetPacket = [](Packet& pckt) { pckt.header.size = 0; };
+					auto IsPacketValid = [](const Packet& pckt) { return pckt.header.size != 0; };
 					std::vector<std::vector<uint8_t>> messagesReady;
 
-					auto itPacket = mPendingQueue.cbegin();
-					auto itEnd = mPendingQueue.cend();
-					std::vector<Packet>::const_iterator newestProcessedPacket;
 					Packet::Id expectedPacketId = mLastProcessed + 1;
+					const size_t startIndexOffset = expectedPacketId % mPendingQueue.size();
 					//!< Our queue is ordered, just go through and reassemble packets
-					while (itPacket != itEnd && itPacket->id() == expectedPacketId)
+					for (size_t i = 0; i < mPendingQueue.size(); ++i, ++expectedPacketId)
 					{
-						if (itPacket->type() == Packet::Type::Packet)
+						const size_t packetIndex = (i + startIndexOffset) % mPendingQueue.size();
+						Packet& packet = mPendingQueue[packetIndex];
+						if (!IsPacketValid(packet))
+							break;
+						if (packet.type() == Packet::Type::Packet)
 						{
 							//!< Full packet, just take it
-							std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
+							std::vector<uint8_t> msg(packet.data(), packet.data() + packet.datasize());
+							mLastProcessed = packet.id();
+							ResetPacket(packet);
 							messagesReady.push_back(std::move(msg));
-							newestProcessedPacket = itPacket;
-							++itPacket;
-							++expectedPacketId;
 						}
-						else if (itPacket->type() == Packet::Type::FirstFragment)
+						else if (packet.type() == Packet::Type::FirstFragment)
 						{
 							//!< Check if the message is ready (fully received)
-							std::vector<uint8_t> msg = [&]()
+							const bool isMessageFull = [=]() mutable
 							{
-								std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
-								++itPacket;
+								// Skip first fragment
+								++i;
 								++expectedPacketId;
-								while (itPacket != itEnd && itPacket->id() == expectedPacketId)
+								// Iterate through remaining packets to check message is complete
+								for (size_t j = i; j < mPendingQueue.size(); ++j, ++expectedPacketId)
 								{
-									if (itPacket->type() == Packet::Type::LastFragment)
+									const size_t idx = (j + startIndexOffset) % mPendingQueue.size();
+									const Packet& pckt = mPendingQueue[idx];
+									if (pckt.id() != expectedPacketId || pckt.datasize() == 0)
+										break; // Expected packet not received yet
+									if (pckt.type() == Packet::Type::LastFragment)
 									{
 										//!< Last fragment reached, the message is full
-										msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->datasize());
-										return msg;
+										return true;
 									}
-									else if (itPacket->type() != Packet::Type::Fragment)
+									else if (pckt.type() != Packet::Type::Fragment)
 									{
 										//!< If we reach this, we likely recieved a malformed packet / hack attempt
-										msg.clear();
-										return msg;
+										break;
 									}
-
-									msg.insert(msg.cend(), itPacket->data(), itPacket->data() + itPacket->datasize());
-									++itPacket;
-									++expectedPacketId;
 								}
-								msg.clear();
-								return msg;
+								return false;
 							}();
-							if (!msg.empty())
+							if (!isMessageFull)
+								break; // Messages are ordered and next one to extract is not full yet
+
+									   // Start the message with first fragment packet, then skip it
+							std::vector<uint8_t> msg(packet.data(), packet.data() + packet.datasize());
+							++i;
+							++expectedPacketId;
+							// Iterate through remaining packets to try to complete it
+							for (size_t j = i; j < mPendingQueue.size(); ++i, ++j, ++expectedPacketId)
 							{
-								//!< We do have a message
-								messagesReady.push_back(std::move(msg));
-								newestProcessedPacket = itPacket;
-								//!< Move iterator after the last packet of the message
-								++itPacket;
+								const size_t idx = (j + startIndexOffset) % mPendingQueue.size();
+								Packet& pckt = mPendingQueue[idx];
+
+								if (pckt.type() == Packet::Type::LastFragment)
+								{
+									//!< Last fragment reached, the message is full
+									msg.insert(msg.cend(), pckt.data(), pckt.data() + pckt.datasize());
+									mLastProcessed = pckt.id();
+									ResetPacket(pckt);
+									messagesReady.push_back(std::move(msg));
+									break;
+								}
+								else if (pckt.type() != Packet::Type::Fragment)
+								{
+									//!< If we reach this, we likely recieved a malformed packet / hack attempt
+									break;
+								}
+
+								msg.insert(msg.cend(), pckt.data(), pckt.data() + pckt.datasize());
+								ResetPacket(pckt);
 							}
 						}
+						else
+						{
+							// Messages are ordered and next one to extract is not received yet
+							break;
+						}
 					}
-
-					//!< Remove every processed and partial packets until the last one processed included
-					if (!messagesReady.empty())
-					{
-						mLastProcessed = newestProcessedPacket->id();
-						mPendingQueue.erase(mPendingQueue.cbegin(), std::next(newestProcessedPacket));
-					}
-
 					return messagesReady;
 				}
 			}
