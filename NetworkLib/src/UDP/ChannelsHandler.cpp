@@ -14,26 +14,23 @@ namespace Bousk
 		{
 			ChannelsHandler::ChannelsHandler()
 			{
-				mMultiplexers.push_back(std::make_unique<Protocols::UnreliableOrdered::Multiplexer>());
-				mMultiplexers.push_back(std::make_unique<Protocols::ReliableOrdered::Multiplexer>());
-
-				mDemultiplexers.push_back(std::make_unique<Protocols::UnreliableOrdered::Demultiplexer>());
-				mDemultiplexers.push_back(std::make_unique<Protocols::ReliableOrdered::Demultiplexer>());
+				mChannels.push_back(std::make_unique<Protocols::UnreliableOrdered>());
+				mChannels.push_back(std::make_unique<Protocols::ReliableOrdered>());
 			}
 			ChannelsHandler::~ChannelsHandler() = default;
 
 			// Multiplexer
 			void ChannelsHandler::queue(std::vector<uint8_t>&& msgData, uint32_t canalIndex)
 			{
-				assert(canalIndex < mMultiplexers.size());
-				mMultiplexers[canalIndex]->queue(std::move(msgData));
+				assert(canalIndex < mChannels.size());
+				mChannels[canalIndex]->queue(std::move(msgData));
 			}
 			size_t ChannelsHandler::serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId)
 			{
 				size_t remainingBuffersize = buffersize;
-				for (uint32_t protocolid = 0; protocolid < mMultiplexers.size(); ++protocolid)
+				for (uint32_t channelId = 0; channelId < mChannels.size(); ++channelId)
 				{
-					Protocols::IMultiplexer* protocol = mMultiplexers[protocolid].get();
+					Protocols::IProtocol* protocol = mChannels[channelId].get();
 
 					uint8_t* const protocolHeaderStart = buffer;
 					uint8_t* const protocolDataStart = buffer + ChannelHeader::Size;
@@ -45,12 +42,12 @@ namespace Bousk
 					{
 						// Data added, let's add the protocol header
 						ChannelHeader* const protocolHeader = reinterpret_cast<ChannelHeader*>(protocolHeaderStart);
-						protocolHeader->canalId = protocolid;
+						protocolHeader->channelId = channelId;
 						protocolHeader->datasize = static_cast<uint32_t>(serializedData);
 
-						const size_t protocolTotalSize = serializedData + ChannelHeader::Size;
-						buffer += protocolTotalSize;
-						remainingBuffersize -= protocolTotalSize;
+						const size_t channelTotalSize = serializedData + ChannelHeader::Size;
+						buffer += channelTotalSize;
+						remainingBuffersize -= channelTotalSize;
 					}
 				}
 				return buffersize - remainingBuffersize;
@@ -58,16 +55,16 @@ namespace Bousk
 
 			void ChannelsHandler::onDatagramAcked(Datagram::ID datagramId)
 			{
-				for (auto& protocol : mMultiplexers)
+				for (auto& channel : mChannels)
 				{
-					protocol->onDatagramAcked(datagramId);
+					channel->onDatagramAcked(datagramId);
 				}
 			}
 			void ChannelsHandler::onDatagramLost(Datagram::ID datagramId)
 			{
-				for (auto& protocol : mMultiplexers)
+				for (auto& channel : mChannels)
 				{
-					protocol->onDatagramLost(datagramId);
+					channel->onDatagramLost(datagramId);
 				}
 			}
 
@@ -83,23 +80,23 @@ namespace Bousk
 						// Malformed buffer
 						return;
 					}
-					if (protocolHeader->canalId >= mDemultiplexers.size())
+					if (protocolHeader->channelId >= mChannels.size())
 					{
 						// Canal id requested doesn't exist
 						return;
 					}
-					mDemultiplexers[protocolHeader->canalId]->onDataReceived(data + ChannelHeader::Size, protocolHeader->datasize);
-					const size_t protocolTotalSize = protocolHeader->datasize + ChannelHeader::Size;
-					data += protocolTotalSize;
-					processedData += protocolTotalSize;
+					mChannels[protocolHeader->channelId]->onDataReceived(data + ChannelHeader::Size, protocolHeader->datasize);
+					const size_t channelTotalSize = protocolHeader->datasize + ChannelHeader::Size;
+					data += channelTotalSize;
+					processedData += channelTotalSize;
 				}
 			}
 			std::vector<std::vector<uint8_t>> ChannelsHandler::process()
 			{
 				std::vector<std::vector<uint8_t>> messages;
-				for (auto& protocol : mDemultiplexers)
+				for (auto& channel : mChannels)
 				{
-					std::vector<std::vector<uint8_t>> protocolMessages = protocol->process();
+					std::vector<std::vector<uint8_t>> protocolMessages = channel->process();
 					if (!protocolMessages.empty())
 					{
 						messages.reserve(messages.size() + protocolMessages.size());

@@ -13,8 +13,7 @@ namespace Bousk
 		{
 			namespace Protocols
 			{
-				class IMultiplexer;
-				class IDemultiplexer;
+				class IProtocol;
 			}
 
 			class ChannelsHandler
@@ -35,8 +34,7 @@ namespace Bousk
 				std::vector<std::vector<uint8_t>> process();
 
 			private:
-				std::vector<std::unique_ptr<Protocols::IMultiplexer>> mMultiplexers;
-				std::vector<std::unique_ptr<Protocols::IDemultiplexer>> mDemultiplexers;
+				std::vector<std::unique_ptr<Protocols::IProtocol>> mChannels;
 			};
 		}
 	}
