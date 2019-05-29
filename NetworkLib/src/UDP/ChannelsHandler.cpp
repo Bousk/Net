@@ -12,11 +12,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			ChannelsHandler::ChannelsHandler()
-			{
-				mChannels.push_back(std::make_unique<Protocols::UnreliableOrdered>());
-				mChannels.push_back(std::make_unique<Protocols::ReliableOrdered>());
-			}
+			ChannelsHandler::ChannelsHandler() = default;
 			ChannelsHandler::~ChannelsHandler() = default;
 
 			// Multiplexer

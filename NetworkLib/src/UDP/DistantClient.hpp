@@ -32,6 +32,9 @@ namespace Bousk
 				DistantClient& operator=(DistantClient&&) = delete;
 				~DistantClient() = default;
 
+				template<class T>
+				void registerChannel();
+
 				void send(std::vector<uint8_t>&& data, uint32_t canalIndex);
 				void processSend();
 				void onDatagramReceived(Datagram&& datagram);
@@ -54,6 +57,12 @@ namespace Bousk
 				AckHandler mReceivedAcks;	//!< To detect missing received datagrams and duplicates
 				AckHandler mSentAcks;		//!< Which sent datagrams have been acked to detect loss
 			};
+			
+			template<class T>
+			void DistantClient::registerChannel()
+			{
+				mChannelsHandler.registerChannel<T>();
+			}
 		}
 	}
 }
