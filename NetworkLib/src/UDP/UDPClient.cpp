@@ -19,6 +19,8 @@ namespace Bousk
 
 			bool Client::init(uint16_t port)
 			{
+				assert(!mRegisteredChannels.empty()); // Initializing without any channel doesn't make sense..
+
 				release();
 				mSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 				if (mSocket == INVALID_SOCKET)
@@ -43,10 +45,10 @@ namespace Bousk
 					CloseSocket(mSocket);
 				mSocket = INVALID_SOCKET;
 			}
-			void Client::sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data)
+			void Client::sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data, uint32_t canalIndex)
 			{
 				auto& client = getClient(target);
-				client.send(std::move(data));
+				client.send(std::move(data), canalIndex);
 			}
 			void Client::processSend()
 			{
@@ -101,7 +103,13 @@ namespace Bousk
 					return *(itClient->get());
 
 				mClients.emplace_back(std::make_unique<DistantClient>(*this, clientAddr));
+				setupChannels(*(mClients.back()));
 				return *(mClients.back());
+			}
+			void Client::setupChannels(DistantClient& client)
+			{
+				for (auto fct : mRegisteredChannels)
+					fct(client);
 			}
 			void Client::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{
