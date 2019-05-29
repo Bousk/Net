@@ -5,6 +5,7 @@
 #include "UDP/UDPClient.hpp"
 #include <UDP/Packet.hpp>
 #include <UDP/ChannelHeader.hpp>
+#include <UDP/Protocols/UnreliableOrdered.hpp>
 #include "Messages.hpp"
 
 #include <cstring>
@@ -29,6 +30,7 @@ void DistantClient_Test::Test()
 	localAddress.sin_family = AF_INET;
 	localAddress.sin_port = htons(8888);
 	Bousk::Network::UDP::DistantClient distantClient(client, reinterpret_cast<const sockaddr_storage&>(localAddress));
+	distantClient.registerChannel<Bousk::Network::UDP::Protocols::UnreliableOrdered>();
 
 	CHECK(distantClient.mNextDatagramIdToSend == 0);
 	CHECK(distantClient.mReceivedAcks.lastAck() == std::numeric_limits<uint16_t>::max());
