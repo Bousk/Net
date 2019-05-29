@@ -2,7 +2,7 @@
 
 #include "UDP/Datagram.hpp"
 #include "UDP/AckHandler.hpp"
-#include "UDP/PacketHandling.hpp"
+#include "UDP/ChannelsHandler.hpp"
 #include "Sockets.hpp"
 
 #include <vector>
@@ -32,7 +32,10 @@ namespace Bousk
 				DistantClient& operator=(DistantClient&&) = delete;
 				~DistantClient() = default;
 
-				void send(std::vector<uint8_t>&& data);
+				template<class T>
+				void registerChannel();
+
+				void send(std::vector<uint8_t>&& data, uint32_t canalIndex);
 				void processSend();
 				void onDatagramReceived(Datagram&& datagram);
 
@@ -48,13 +51,18 @@ namespace Bousk
 
 			private:
 				Client& mClient;
-				Multiplexer mSendQueue;
-				Demultiplexer mRecvQueue;
+				ChannelsHandler mChannelsHandler;
 				sockaddr_storage mAddress;
 				Datagram::ID mNextDatagramIdToSend{ 0 };
 				AckHandler mReceivedAcks;	//!< To detect missing received datagrams and duplicates
 				AckHandler mSentAcks;		//!< Which sent datagrams have been acked to detect loss
 			};
+			
+			template<class T>
+			void DistantClient::registerChannel()
+			{
+				mChannelsHandler.registerChannel<T>();
+			}
 		}
 	}
 }

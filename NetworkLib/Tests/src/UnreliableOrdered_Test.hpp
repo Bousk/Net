@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Tester.hpp"
-#include "UDP/PacketHandling.hpp"
+#include "UDP/Protocols/UnreliableOrdered.hpp"
 
 #include <limits>
 #include <chrono>
@@ -15,7 +15,7 @@ public:
 
 void Multiplexer_Test::Test()
 {
-	Bousk::Network::UDP::Multiplexer mux;
+	Bousk::Network::UDP::Protocols::UnreliableOrdered::Multiplexer mux;
 	CHECK(mux.mQueue.size() == 0);
 	CHECK(mux.mNextId == 0);
 	{
@@ -26,7 +26,7 @@ void Multiplexer_Test::Test()
 		CHECK(mux.mNextId == 1);
 
 		std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-		const size_t serializedData = mux.serialize(buffer.data(), buffer.size());
+		const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), 0);
 		CHECK(serializedData == Bousk::Network::UDP::Packet::HeaderSize + arr.size());
 		const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
 		CHECK(packet->datasize() == arr.size());
@@ -49,7 +49,7 @@ void Multiplexer_Test::Test()
 		for (; !mux.mQueue.empty(); )
 		{
 			std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-			const size_t serializedData = mux.serialize(buffer.data(), buffer.size());
+			const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), 0);
 			const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
 			CHECK(memcmp(packet->data(), datacopy.data() + totalDataSize, packet->datasize()) == 0);
 			totalDataSize += serializedData - Bousk::Network::UDP::Packet::HeaderSize;
@@ -68,8 +68,8 @@ void Demultiplexer_Test::Test()
 {
 	//!< Use the multiplexer to easily queue and split data
 	//!< It's been tested before so it's reliable
-	Bousk::Network::UDP::Multiplexer mux;
-	Bousk::Network::UDP::Demultiplexer demux;
+	Bousk::Network::UDP::Protocols::UnreliableOrdered::Multiplexer mux;
+	Bousk::Network::UDP::Protocols::UnreliableOrdered::Demultiplexer demux;
 	CHECK(demux.mPendingQueue.empty());
 	CHECK(demux.mLastProcessed == std::numeric_limits<Bousk::Network::UDP::Packet::Id>::max());
 	{
@@ -79,7 +79,7 @@ void Demultiplexer_Test::Test()
 		{
 			mux.queue(std::move(data0));
 			Bousk::Network::UDP::Packet packet;
-			mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize);
+			mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, 0);
 			CHECK(packet.id() == 0);
 			CHECK(packet.type() == Bousk::Network::UDP::Packet::Type::Packet);
 			CHECK(packet.datasize() == static_cast<uint16_t>(arr0.size()));
@@ -91,7 +91,7 @@ void Demultiplexer_Test::Test()
 		{
 			mux.queue(std::move(data1));
 			Bousk::Network::UDP::Packet packet;
-			mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize);
+			mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, 0);
 			CHECK(packet.id() == 1);
 			CHECK(packet.type() == Bousk::Network::UDP::Packet::Type::Packet);
 			CHECK(packet.datasize() == static_cast<uint16_t>(arr1.size()));
@@ -121,7 +121,7 @@ void Demultiplexer_Test::Test()
 		for (;;)
 		{
 			Bousk::Network::UDP::Packet packet;
-			const size_t serializedData = mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize);
+			const size_t serializedData = mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, 0);
 			if (serializedData == 0)
 				break;
 			demux.onDataReceived(packet.buffer(), packet.size());
@@ -135,7 +135,7 @@ void Demultiplexer_Test::Test()
 	}
 }
 
-class PacketHandling_Test
+class UnreliableOrdered_Test
 {
 public:
 	static void Test()

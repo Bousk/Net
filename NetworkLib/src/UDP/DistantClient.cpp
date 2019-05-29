@@ -17,16 +17,16 @@ namespace Bousk
 			{
 				memcpy(&mAddress, &addr, sizeof(addr));
 			}
-			void DistantClient::send(std::vector<uint8_t>&& data)
+			void DistantClient::send(std::vector<uint8_t>&& data, uint32_t canalIndex)
 			{
-				mSendQueue.queue(std::move(data));
+				mChannelsHandler.queue(std::move(data), canalIndex);
 			}
 			bool DistantClient::fillDatagram(Datagram& dgram)
 			{
 				dgram.header.ack = htons(mReceivedAcks.lastAck());
 				dgram.header.previousAcks = mReceivedAcks.previousAcksMask();
 
-				dgram.datasize = mSendQueue.serialize(dgram.data.data(), Datagram::DataMaxSize);
+				dgram.datasize = mChannelsHandler.serialize(dgram.data.data(), Datagram::DataMaxSize, mNextDatagramIdToSend);
 				if (dgram.datasize > 0)
 				{
 					dgram.header.id = htons(mNextDatagramIdToSend);
@@ -87,8 +87,8 @@ namespace Bousk
 			{}
 			void DistantClient::onDataReceived(const uint8_t* data, const size_t datasize)
 			{
-				mRecvQueue.onDataReceived(data, datasize);
-				auto receivedMessages = mRecvQueue.process();
+				mChannelsHandler.onDataReceived(data, datasize);
+				auto receivedMessages = mChannelsHandler.process();
 				for (auto&& msg : receivedMessages)
 				{
 					onMessageReady(std::make_unique<Messages::UserData>(std::move(msg)));
