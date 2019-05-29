@@ -28,18 +28,18 @@ namespace Bousk
 				{
 					Protocols::IProtocol* protocol = mChannels[channelId].get();
 
-					uint8_t* const protocolHeaderStart = buffer;
-					uint8_t* const protocolDataStart = buffer + ChannelHeader::Size;
-					const size_t protocolAvailableSize = remainingBuffersize - ChannelHeader::Size;
+					uint8_t* const channelHeaderStart = buffer;
+					uint8_t* const channelDataStart = buffer + ChannelHeader::Size;
+					const size_t channelAvailableSize = remainingBuffersize - ChannelHeader::Size;
 
-					const size_t serializedData = protocol->serialize(protocolDataStart, protocolAvailableSize, datagramId);
-					assert(serializedData <= protocolAvailableSize);
+					const size_t serializedData = protocol->serialize(channelDataStart, channelAvailableSize, datagramId);
+					assert(serializedData <= channelAvailableSize);
 					if (serializedData)
 					{
 						// Data added, let's add the protocol header
-						ChannelHeader* const protocolHeader = reinterpret_cast<ChannelHeader*>(protocolHeaderStart);
-						protocolHeader->channelId = channelId;
-						protocolHeader->datasize = static_cast<uint32_t>(serializedData);
+						ChannelHeader* const channelHeader = reinterpret_cast<ChannelHeader*>(channelHeaderStart);
+						channelHeader->channelId = channelId;
+						channelHeader->datasize = static_cast<uint32_t>(serializedData);
 
 						const size_t channelTotalSize = serializedData + ChannelHeader::Size;
 						buffer += channelTotalSize;
@@ -70,19 +70,19 @@ namespace Bousk
 				size_t processedData = 0;
 				while (processedData < datasize)
 				{
-					const ChannelHeader* protocolHeader = reinterpret_cast<const ChannelHeader*>(data);
-					if (processedData + protocolHeader->datasize > datasize || protocolHeader->datasize > Datagram::DataMaxSize)
+					const ChannelHeader* channelHeader = reinterpret_cast<const ChannelHeader*>(data);
+					if (processedData + channelHeader->datasize > datasize || channelHeader->datasize > Datagram::DataMaxSize)
 					{
 						// Malformed buffer
 						return;
 					}
-					if (protocolHeader->channelId >= mChannels.size())
+					if (channelHeader->channelId >= mChannels.size())
 					{
-						// Canal id requested doesn't exist
+						// Channel id requested doesn't exist
 						return;
 					}
-					mChannels[protocolHeader->channelId]->onDataReceived(data + ChannelHeader::Size, protocolHeader->datasize);
-					const size_t channelTotalSize = protocolHeader->datasize + ChannelHeader::Size;
+					mChannels[channelHeader->channelId]->onDataReceived(data + ChannelHeader::Size, channelHeader->datasize);
+					const size_t channelTotalSize = channelHeader->datasize + ChannelHeader::Size;
 					data += channelTotalSize;
 					processedData += channelTotalSize;
 				}
