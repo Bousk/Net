@@ -108,7 +108,7 @@ namespace Bousk
 			}
 			void Client::setupChannels(DistantClient& client)
 			{
-				for (auto fct : mRegisteredChannels)
+				for (auto& fct : mRegisteredChannels)
 					fct(client);
 			}
 			void Client::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
