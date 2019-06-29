@@ -26,7 +26,7 @@ namespace Bousk
 					~UnreliableOrdered() override = default;
 
 					void queue(std::vector<uint8_t>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }
-					size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
+					size_t serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
 
 					void onDataReceived(const uint8_t* data, const size_t datasize) override { mDemultiplexer.onDataReceived(data, datasize); }
 					std::vector<std::vector<uint8_t>> process() override { return mDemultiplexer.process(); }
@@ -40,7 +40,7 @@ namespace Bousk
 						~Multiplexer() = default;
 
 						void queue(std::vector<uint8_t>&& msgData);
-						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID);
+						size_t serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID);
 
 					private:
 						std::vector<Packet> mQueue;

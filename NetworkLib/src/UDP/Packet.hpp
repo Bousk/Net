@@ -16,7 +16,7 @@ namespace Bousk
 				using Id = uint16_t;
 				enum class Type : uint8_t
 				{
-					Packet,
+					FullMessage,
 					FirstFragment,
 					Fragment,
 					LastFragment,
