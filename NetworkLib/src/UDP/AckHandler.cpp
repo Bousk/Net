@@ -8,7 +8,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			void AckHandler::update(uint16_t newAck, uint64_t previousAcks, bool trackLoss /*= false*/)
+			void AckHandler::update(const uint16_t newAck, uint64_t previousAcks, const bool trackLoss /*= false*/)
 			{
 				mLastAckIsNew = false;
 				if (newAck == mLastAck)
@@ -100,7 +100,7 @@ namespace Bousk
 					}
 				}
 			}
-			bool AckHandler::isAcked(uint16_t ack) const
+			bool AckHandler::isAcked(const uint16_t ack) const
 			{
 				if (ack == mLastAck)
 					return true;
@@ -112,7 +112,7 @@ namespace Bousk
 				const uint8_t bitPosition = static_cast<uint8_t>(diff - 1);
 				return Utils::HasBit(mPreviousAcks, bitPosition);
 			}
-			bool AckHandler::isNewlyAcked(uint16_t ack) const
+			bool AckHandler::isNewlyAcked(const uint16_t ack) const
 			{
 				if (ack == mLastAck)
 					return mLastAckIsNew;

@@ -17,7 +17,7 @@ namespace Bousk
 			Client::~Client()
 			{}
 
-			bool Client::init(uint16_t port)
+			bool Client::init(const uint16_t port)
 			{
 				assert(!mRegisteredChannels.empty()); // Initializing without any channel doesn't make sense..
 
@@ -45,7 +45,7 @@ namespace Bousk
 					CloseSocket(mSocket);
 				mSocket = INVALID_SOCKET;
 			}
-			void Client::sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data, uint32_t canalIndex)
+			void Client::sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data, const uint32_t canalIndex)
 			{
 				auto& client = getClient(target);
 				client.send(std::move(data), canalIndex);

@@ -46,7 +46,7 @@ namespace Bousk
 				void onDatagramSentAcked(Datagram::ID datagramId);
 				void onDatagramSentLost(Datagram::ID datagramId);
 				void onDatagramReceivedLost(Datagram::ID datagramId);
-				void onDataReceived(const uint8_t* data, const size_t datasize);
+				void onDataReceived(const uint8_t* data, size_t datasize);
 				void onMessageReady(std::unique_ptr<Messages::Base>&& msg);
 
 			private:
