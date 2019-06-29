@@ -36,12 +36,12 @@ namespace Bousk
 						mQueue.resize(mQueue.size() + 1);
 						Packet& packet = mQueue.back();
 						packet.header.id = mNextId++;
-						packet.header.type = Packet::Type::Packet;
+						packet.header.type = Packet::Type::FullMessage;
 						packet.header.size = static_cast<uint16_t>(msgData.size());
 						memcpy(packet.data(), msgData.data(), msgData.size());
 					}
 				}
-				size_t UnreliableOrdered::Multiplexer::serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID)
+				size_t UnreliableOrdered::Multiplexer::serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID)
 				{
 					size_t serializedSize = 0;
 					for (auto packetit = mQueue.cbegin(); packetit != mQueue.cend();)
@@ -107,7 +107,7 @@ namespace Bousk
 					//!< Our queue is ordered, just go through and reassemble packets
 					while (itPacket != itEnd)
 					{
-						if (itPacket->type() == Packet::Type::Packet)
+						if (itPacket->type() == Packet::Type::FullMessage)
 						{
 							//!< Full packet, just take it
 							std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());

@@ -28,10 +28,10 @@ namespace Bousk
 					~ReliableOrdered() override = default;
 
 					void queue(std::vector<uint8_t>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }
-					size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
+					size_t serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
 
-					void onDatagramAcked(Datagram::ID datagramId) override { mMultiplexer.onDatagramAcked(datagramId); }
-					void onDatagramLost(Datagram::ID datagramId) override { mMultiplexer.onDatagramLost(datagramId); }
+					void onDatagramAcked(const Datagram::ID datagramId) override { mMultiplexer.onDatagramAcked(datagramId); }
+					void onDatagramLost(const Datagram::ID datagramId) override { mMultiplexer.onDatagramLost(datagramId); }
 
 					void onDataReceived(const uint8_t* data, const size_t datasize) override { mDemultiplexer.onDataReceived(data, datasize); }
 					std::vector<std::vector<uint8_t>> process() override { return mDemultiplexer.process(); }
@@ -45,10 +45,10 @@ namespace Bousk
 						~Multiplexer() = default;
 
 						void queue(std::vector<uint8_t>&& msgData);
-						size_t serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId);
+						size_t serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID datagramId);
 
-						void onDatagramAcked(Datagram::ID datagramId);
-						void onDatagramLost(Datagram::ID datagramId);
+						void onDatagramAcked(const Datagram::ID datagramId);
+						void onDatagramLost(const Datagram::ID datagramId);
 
 					private:
 						class ReliablePacket
@@ -59,8 +59,8 @@ namespace Bousk
 
 							bool shouldSend() const { return mShouldSend; }
 							void resend() { mShouldSend = true; }
-							void onSent(Datagram::ID datagramId) { mDatagramsIncluding.insert(datagramId); mShouldSend = false; }
-							bool isIncludedIn(Datagram::ID datagramId) const { return mDatagramsIncluding.find(datagramId) != mDatagramsIncluding.cend(); }
+							void onSent(const Datagram::ID datagramId) { mDatagramsIncluding.insert(datagramId); mShouldSend = false; }
+							bool isIncludedIn(const Datagram::ID datagramId) const { return mDatagramsIncluding.find(datagramId) != mDatagramsIncluding.cend(); }
 
 						private:
 							Packet mPacket;

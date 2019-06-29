@@ -81,7 +81,7 @@ void Demultiplexer_Test::Test()
 			Bousk::Network::UDP::Packet packet;
 			mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, 0);
 			CHECK(packet.id() == 0);
-			CHECK(packet.type() == Bousk::Network::UDP::Packet::Type::Packet);
+			CHECK(packet.type() == Bousk::Network::UDP::Packet::Type::FullMessage);
 			CHECK(packet.datasize() == static_cast<uint16_t>(arr0.size()));
 			CHECK(memcmp(packet.data(), arr0.data(), arr0.size()) == 0);
 			demux.onDataReceived(packet.buffer(), packet.size());
@@ -93,7 +93,7 @@ void Demultiplexer_Test::Test()
 			Bousk::Network::UDP::Packet packet;
 			mux.serialize(reinterpret_cast<uint8_t*>(&packet), Bousk::Network::UDP::Packet::PacketMaxSize, 0);
 			CHECK(packet.id() == 1);
-			CHECK(packet.type() == Bousk::Network::UDP::Packet::Type::Packet);
+			CHECK(packet.type() == Bousk::Network::UDP::Packet::Type::FullMessage);
 			CHECK(packet.datasize() == static_cast<uint16_t>(arr1.size()));
 			CHECK(memcmp(packet.data(), arr1.data(), arr1.size()) == 0);
 			demux.onDataReceived(packet.buffer(), packet.size());

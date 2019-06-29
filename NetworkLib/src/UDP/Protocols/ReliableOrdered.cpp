@@ -37,12 +37,12 @@ namespace Bousk
 						mQueue.resize(mQueue.size() + 1);
 						Packet& packet = mQueue.back().packet();
 						packet.header.id = mNextId++;
-						packet.header.type = Packet::Type::Packet;
+						packet.header.type = Packet::Type::FullMessage;
 						packet.header.size = static_cast<uint16_t>(msgData.size());
 						memcpy(packet.data(), msgData.data(), msgData.size());
 					}
 				}
-				size_t ReliableOrdered::Multiplexer::serialize(uint8_t* buffer, const size_t buffersize, Datagram::ID datagramId)
+				size_t ReliableOrdered::Multiplexer::serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID datagramId)
 				{
 					size_t serializedSize = 0;
 					for (auto& packetHolder : mQueue)
@@ -65,7 +65,7 @@ namespace Bousk
 					return serializedSize;
 				}
 
-				void ReliableOrdered::Multiplexer::onDatagramAcked(Datagram::ID datagramId)
+				void ReliableOrdered::Multiplexer::onDatagramAcked(const Datagram::ID datagramId)
 				{
 					if (mQueue.empty())
 						return;
@@ -78,7 +78,7 @@ namespace Bousk
 					else if (Utils::IsSequenceNewer(mQueue.front().packet().id(), mFirstAllowedPacket))
 						mFirstAllowedPacket = mQueue.front().packet().id();
 				}
-				void ReliableOrdered::Multiplexer::onDatagramLost(Datagram::ID datagramId)
+				void ReliableOrdered::Multiplexer::onDatagramLost(const Datagram::ID datagramId)
 				{
 					for (auto& packetHolder : mQueue)
 					{
@@ -138,7 +138,7 @@ namespace Bousk
 						Packet& packet = mPendingQueue[packetIndex];
 						if (!IsPacketValid(packet))
 							break;
-						if (packet.type() == Packet::Type::Packet)
+						if (packet.type() == Packet::Type::FullMessage)
 						{
 							//!< Full packet, just take it
 							std::vector<uint8_t> msg(packet.data(), packet.data() + packet.datasize());
