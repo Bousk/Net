@@ -80,9 +80,13 @@ namespace Bousk
 			}
 
 			void DistantClient::onDatagramSentAcked(Datagram::ID datagramId)
-			{}
+			{
+				mChannelsHandler.onDatagramAcked(datagramId);
+			}
 			void DistantClient::onDatagramSentLost(Datagram::ID datagramId)
-			{}
+			{
+				mChannelsHandler.onDatagramLost(datagramId);
+			}
 			void DistantClient::onDatagramReceivedLost(Datagram::ID datagramId)
 			{}
 			void DistantClient::onDataReceived(const uint8_t* data, const size_t datasize)
