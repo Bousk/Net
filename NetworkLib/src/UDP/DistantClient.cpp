@@ -87,7 +87,7 @@ namespace Bousk
 			{
 				mChannelsHandler.onDatagramLost(datagramId);
 			}
-			void DistantClient::onDatagramReceivedLost(Datagram::ID datagramId)
+			void DistantClient::onDatagramReceivedLost(Datagram::ID)
 			{}
 			void DistantClient::onDataReceived(const uint8_t* data, const size_t datasize)
 			{

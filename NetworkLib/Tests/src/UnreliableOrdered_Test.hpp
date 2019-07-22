@@ -39,7 +39,7 @@ void Multiplexer_Test::Test()
 		std::default_random_engine generator(seed);
 		std::uniform_int_distribution<unsigned int> distribution(0, 100);
 		for (uint8_t& d : data)
-			d = distribution(generator);
+			d = static_cast<uint8_t>(distribution(generator));
 
 		const auto datacopy = data;
 		mux.queue(std::move(data));
@@ -114,7 +114,7 @@ void Demultiplexer_Test::Test()
 		std::default_random_engine generator(seed);
 		std::uniform_int_distribution<unsigned int> distribution(0, 100);
 		for (uint8_t& d : data)
-			d = distribution(generator);
+			d = static_cast<uint8_t>(distribution(generator));
 
 		const auto datacopy = data;
 		mux.queue(std::move(data));
