@@ -49,7 +49,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 		std::default_random_engine generator(seed);
 		std::uniform_int_distribution<unsigned int> distribution(0, 100);
 		for (uint8_t& d : data)
-			d = distribution(generator);
+			d = static_cast<uint8_t>(distribution(generator));
 
 		const auto datacopy = data;
 		mux.queue(std::move(data));
@@ -74,7 +74,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 		size_t acked = 0;
 		for (auto i = 0; i < nbPackets; ++i)
 		{
-			const Bousk::Network::UDP::Datagram::ID dgramId = firstSentDatagramId + i;
+			const Bousk::Network::UDP::Datagram::ID dgramId = static_cast<Bousk::Network::UDP::Datagram::ID>(firstSentDatagramId + i);
 			mux.onDatagramAcked(dgramId);
 			++acked;
 			CHECK(mux.mQueue.size() == 3 - acked);
@@ -133,7 +133,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 		std::default_random_engine generator(seed);
 		std::uniform_int_distribution<unsigned int> distribution(0, 100);
 		for (uint8_t& d : data)
-			d = distribution(generator);
+			d = static_cast<uint8_t>(distribution(generator));
 
 		const auto datacopy = data;
 		mux.queue(std::move(data));
@@ -212,7 +212,7 @@ void ReliableOrdered_Demultiplexer_Test::Test()
 		std::default_random_engine generator(seed);
 		std::uniform_int_distribution<unsigned int> distribution(0, 100);
 		for (uint8_t& d : data)
-			d = distribution(generator);
+			d = static_cast<uint8_t>(distribution(generator));
 
 		const auto datacopy = data;
 		mux.queue(std::move(data));
@@ -259,7 +259,7 @@ void ReliableOrdered_Demultiplexer_Test::Test()
 		std::default_random_engine generator(seed);
 		std::uniform_int_distribution<unsigned int> distribution(0, 100);
 		for (uint8_t& d : data)
-			d = distribution(generator);
+			d = static_cast<uint8_t>(distribution(generator));
 
 		const auto datacopy = data;
 		mux.queue(std::move(data));
