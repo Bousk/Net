@@ -24,16 +24,19 @@ namespace Bousk
 			bool write(float32 data);
 
 			template<class T>
-			bool write(const std::vector<T>& data);
-			bool write(const std::string& data);
+			bool write(const std::vector<T>& data) { return writeContainer(data); }
+			bool write(const std::string& data) { return writeContainer(data); }
 
 			inline const uint8* buffer() const { return mBuffer.data(); }
 			inline size_t bufferSize() const { return mBuffer.size(); }
 
 		private:
 			bool writeBytes(const uint8* buffer, size_t nbBytes);
-			template<class T>
-			bool writeArray(const T* data, uint8 nbElements);
+			template<class CONTAINER>
+			bool writeContainer(const CONTAINER& container);
+
+			// For std::string support
+			bool write(char data) { return write(*reinterpret_cast<uint8*>(&data)); }
 
 		private:
 			std::vector<uint8> mBuffer;
