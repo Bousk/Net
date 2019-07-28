@@ -4,6 +4,7 @@
 #include "UnreliableOrdered_Test.hpp"
 #include "ReliableOrdered_Test.hpp"
 #include "Serialization_Test.hpp"
+#include "Types_Test.hpp"
 
 int main()
 {
@@ -19,5 +20,6 @@ int main()
 	DistantClient_Test::Test();
 	ReliableOrdered_Test::Test();
 	Serialization_Test::Test();
+	Types_Test::Test();
 	return 0;
 }
