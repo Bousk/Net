@@ -27,6 +27,9 @@ namespace Bousk
 		static constexpr uint8 Left = 0b10000000;
 		static constexpr uint8 Right = 0b00000001;
 	};
+	constexpr uint8 BoolTrue = Bit<uint8>::Right;
+	constexpr uint8 BoolFalse = 0;
+
 	template<>
 	struct Bit<uint64>
 	{
