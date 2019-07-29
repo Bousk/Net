@@ -17,7 +17,7 @@ namespace Bousk
 			{
 				memcpy(&mAddress, &addr, sizeof(addr));
 			}
-			void DistantClient::send(std::vector<uint8_t>&& data, const uint32_t canalIndex)
+			void DistantClient::send(std::vector<uint8_t>&& data, uint32_t canalIndex)
 			{
 				mChannelsHandler.queue(std::move(data), canalIndex);
 			}
@@ -79,11 +79,15 @@ namespace Bousk
 				onDataReceived(datagram.data.data(), datagram.datasize);
 			}
 
-			void DistantClient::onDatagramSentAcked(const Datagram::ID datagramId)
-			{}
-			void DistantClient::onDatagramSentLost(const Datagram::ID datagramId)
-			{}
-			void DistantClient::onDatagramReceivedLost(const Datagram::ID datagramId)
+			void DistantClient::onDatagramSentAcked(Datagram::ID datagramId)
+			{
+				mChannelsHandler.onDatagramAcked(datagramId);
+			}
+			void DistantClient::onDatagramSentLost(Datagram::ID datagramId)
+			{
+				mChannelsHandler.onDatagramLost(datagramId);
+			}
+			void DistantClient::onDatagramReceivedLost(Datagram::ID)
 			{}
 			void DistantClient::onDataReceived(const uint8_t* data, const size_t datasize)
 			{
