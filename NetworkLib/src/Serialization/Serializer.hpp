@@ -22,7 +22,7 @@ namespace Bousk
 			inline bool write(uint8 data) { return write(data, std::numeric_limits<uint8>::min(), std::numeric_limits<uint8>::max()); }
 			inline bool write(uint16 data) { return write(data, std::numeric_limits<uint16>::min(), std::numeric_limits<uint16>::max()); }
 			inline bool write(uint32 data) { return write(data, std::numeric_limits<uint32>::min(), std::numeric_limits<uint32>::max()); }
-			bool write(bool data);
+			inline bool write(bool data) { return writeBit(data); }
 			bool write(int8 data);
 			bool write(int16 data);
 			bool write(int32 data);
@@ -37,6 +37,7 @@ namespace Bousk
 
 		private:
 			bool writeBits(const uint8* buffer, const uint8 buffersize, const uint8 nbBits);
+			bool writeBit(bool data);
 			template<class CONTAINER>
 			bool writeContainer(const CONTAINER& container);
 
