@@ -36,14 +36,17 @@ namespace Bousk
 
 		bool Serializer::write(const int8 data)
 		{
+			static_assert(sizeof(int8) == sizeof(uint8), "");
 			return write(*reinterpret_cast<const uint8*>(&data));
 		}
 		bool Serializer::write(const int16 data)
 		{
+			static_assert(sizeof(int16) == sizeof(uint16), "");
 			return write(*reinterpret_cast<const uint16*>(&data));
 		}
 		bool Serializer::write(const int32 data)
 		{
+			static_assert(sizeof(int32) == sizeof(uint32), "");
 			return write(*reinterpret_cast<const uint32*>(&data));
 		}
 
