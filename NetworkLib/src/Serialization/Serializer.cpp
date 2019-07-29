@@ -56,11 +56,5 @@ namespace Bousk
 			Conversion::ToNetwork(data, conv);
 			return writeBytes(reinterpret_cast<const uint8*>(&conv), 4);
 		}
-
-		bool Serializer::write(const std::string& data)
-		{
-			assert(data.size() <= std::numeric_limits<uint8>::max());
-			return writeArray(reinterpret_cast<const uint8*>(data.data()), static_cast<uint8>(data.size()));
-		}
 	}
 }
