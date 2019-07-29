@@ -53,10 +53,12 @@ namespace Bousk
 		static constexpr uint8 Value = std::conditional<VALUE >= (std::numeric_limits<uint64>::max() / 2 + 1), Return<uint8, 64>, InternalNbBits<1>>::type::Value;
 	};
 
-	template<typename INTERNAL_TYPE, INTERNAL_TYPE MIN, INTERNAL_TYPE MAX>
+	template<typename INTERNAL_TYPE, int64 MIN, int64 MAX>
 	class RangedInteger
 	{
 		static_assert(MIN < MAX, "Min & Max values must be strictly ordered.");
+		static_assert(MIN >= std::numeric_limits<INTERNAL_TYPE>::min(), "Min value out of bound");
+		static_assert(MAX <= std::numeric_limits<INTERNAL_TYPE>::max(), "Max value out of bound");
 	public:
 		using Type = INTERNAL_TYPE;
 		static constexpr Type Min() { return MIN; }
@@ -84,7 +86,7 @@ namespace Bousk
 
 
 #define DEFINE_RANGED_TYPE(NAME, INTERNALTYPE) \
-	template<INTERNALTYPE MIN, INTERNALTYPE MAX> \
+	template<int64 MIN, int64 MAX> \
 	using NAME = RangedInteger<INTERNALTYPE, MIN, MAX>
 	
 
