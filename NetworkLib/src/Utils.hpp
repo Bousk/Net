@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <chrono>
+#include <Types.hpp>
 
 #define UNUSED(x) (void)(x)
 
@@ -18,12 +19,12 @@ namespace Bousk
 		inline void UnsetBit(uint64_t& bitfield, uint8_t n);
 		inline bool HasBit(uint64_t bitfield, uint8_t n);
 
-		template<class INTEGER>
-		struct Bit {};
-		template<>
-		struct Bit<uint64_t> {
-			static constexpr uint64_t Right = 0b0000000000000000000000000000000000000000000000000000000000000001;
-		};
+		using Bousk::Bit;
+
+		uint8 CountNeededBits(uint64 v);
+
+		uint8 CreateRightBitsMask(uint8 rightBits);
+		uint8 CreateBitsMask(uint8 nbBits, uint8 rightBitsToSkip);
 	}
 }
 

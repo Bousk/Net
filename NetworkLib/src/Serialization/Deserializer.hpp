@@ -17,13 +17,21 @@ namespace Bousk
 				, mBufferSize(bufferSize)
 			{}
 
-			bool read(uint8& data);
-			bool read(uint16& data);
-			bool read(uint32& data);
+			bool read(uint8& data, uint8 minValue, uint8 maxValue);
+			bool read(uint16& data, uint16 minValue, uint16 maxValue);
+			bool read(uint32& data, uint32 minValue, uint32 maxValue);
+			inline bool read(uint8& data) { return read(data, std::numeric_limits<uint8>::min(), std::numeric_limits<uint8>::max()); }
+			inline bool read(uint16& data) { return read(data, std::numeric_limits<uint16>::min(), std::numeric_limits<uint16>::max()); }
+			inline bool read(uint32& data) { return read(data, std::numeric_limits<uint32>::min(), std::numeric_limits<uint32>::max()); }
+			bool read(int8& data, int8 minValue, int8 maxValue);
+			bool read(int16& data, int16 minValue, int16 maxValue);
+			bool read(int32& data, int32 minValue, int32 maxValue);
+			bool read(int8& data) { return read(data, std::numeric_limits<int8>::min(), std::numeric_limits<int8>::max()); }
+			bool read(int16& data) { return read(data, std::numeric_limits<int16>::min(), std::numeric_limits<int16>::max()); }
+			bool read(int32& data) { return read(data, std::numeric_limits<int32>::min(), std::numeric_limits<int32>::max()); }
+
 			bool read(bool& data);
-			bool read(int8& data);
-			bool read(int16& data);
-			bool read(int32& data);
+
 			bool read(float32& data);
 
 			template<class T>
