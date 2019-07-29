@@ -5,38 +5,48 @@
 #include <string>
 #include <vector>
 
+class Serializer_Test;
 namespace Bousk
 {
 	namespace Serialization
 	{
 		class Serializer
 		{
+			friend class Serializer_Test;
 		public:
 			Serializer() = default;
 
-			bool write(uint8 data);
-			bool write(uint16 data);
-			bool write(uint32 data);
-			bool write(bool data);
+			bool write(uint8 data, uint8 minValue, uint8 maxValue);
+			bool write(uint16 data, uint16 minValue, uint16 maxValue);
+			bool write(uint32 data, uint32 minValue, uint32 maxValue);
+			inline bool write(uint8 data) { return write(data, std::numeric_limits<uint8>::min(), std::numeric_limits<uint8>::max()); }
+			inline bool write(uint16 data) { return write(data, std::numeric_limits<uint16>::min(), std::numeric_limits<uint16>::max()); }
+			inline bool write(uint32 data) { return write(data, std::numeric_limits<uint32>::min(), std::numeric_limits<uint32>::max()); }
+			inline bool write(bool data) { return writeBit(data); }
 			bool write(int8 data);
 			bool write(int16 data);
 			bool write(int32 data);
 			bool write(float32 data);
 
 			template<class T>
-			bool write(const std::vector<T>& data);
-			bool write(const std::string& data);
+			inline bool write(const std::vector<T>& data) { return writeContainer(data); }
+			inline bool write(const std::string& data) { return writeContainer(data); }
 
 			inline const uint8* buffer() const { return mBuffer.data(); }
 			inline size_t bufferSize() const { return mBuffer.size(); }
 
 		private:
-			bool writeBytes(const uint8* buffer, size_t nbBytes);
-			template<class T>
-			bool writeArray(const T* data, uint8 nbElements);
+			bool writeBits(const uint8* buffer, const uint8 buffersize, const uint8 nbBits);
+			bool writeBit(bool data);
+			template<class CONTAINER>
+			bool writeContainer(const CONTAINER& container);
+
+			// For std::string support
+			inline bool write(char data) { return write(*reinterpret_cast<uint8*>(&data)); }
 
 		private:
 			std::vector<uint8> mBuffer;
+			uint8 mUsedBits{ 0 };
 		};
 	}
 }
