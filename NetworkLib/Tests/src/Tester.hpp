@@ -12,4 +12,5 @@
 #define TO_STRING(token) TO_STRING_INTERNAL(token)
 #define CHECK_SUCCESS(expr) do { /*std::cout << "[OK] " #expr << std::endl;*/ } while(0)
 #define CHECK_FAILURE(expr) do { std::cout << "[FAILURE][" __FILE__ ":" TO_STRING(__LINE__) "] " #expr << std::endl; DEBUGBREAK(); } while(0)
-#define CHECK(expr) do { if (expr) { CHECK_SUCCESS(expr); } else { CHECK_FAILURE(expr); } } while(0)
+// variadic arguments but is supposed to be used with 1 single check. This to prevent issues "too many arguments" when using template with multiple values hence using a , ...
+#define CHECK(...) do { if ((__VA_ARGS__)) { CHECK_SUCCESS((__VA_ARGS__)); } else { CHECK_FAILURE((__VA_ARGS__)); } } while(0)
