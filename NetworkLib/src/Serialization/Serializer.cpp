@@ -70,7 +70,7 @@ namespace Bousk
 			return writeBits(reinterpret_cast<const uint8*>(&conv), 4, Utils::CountNeededBits(maxValue - minValue));
 		}
 
-		bool Serializer::write(const bool data)
+		bool Serializer::writeBit(bool data)
 		{
 			if (mUsedBits && data)
 			{

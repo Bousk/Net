@@ -24,6 +24,7 @@ namespace Bousk
 	template<>
 	struct Bit<uint8>
 	{
+		static constexpr uint8 Left = 0b10000000;
 		static constexpr uint8 Right = 0b00000001;
 	};
 	template<>
