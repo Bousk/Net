@@ -5,12 +5,14 @@
 #include <string>
 #include <vector>
 
+class Serialization_Test;
 namespace Bousk
 {
 	namespace Serialization
 	{
 		class Deserializer
 		{
+			friend class Serialization_Test;
 		public:
 			Deserializer(const uint8* buffer, const size_t bufferSize)
 				: mBuffer(buffer)
@@ -41,9 +43,13 @@ namespace Bousk
 			inline size_t remainingBytes() const { return mBufferSize - mBytesRead; }
 
 		private:
-			bool readBytes(size_t nbBytes, uint8* buffer);
+			bool readBits(uint8 nbBits, uint8* buffer, uint8 bufferSize);
 			template<class CONTAINER>
 			bool readContainer(CONTAINER& container);
+
+			inline size_t bufferSizeBits() const { return mBufferSize * 8; }
+			inline size_t bufferReadBits() const { return mBytesRead * 8 + mBitsRead; }
+			inline size_t remainingBits() const { return bufferSizeBits() - bufferReadBits(); }
 
 			// For std::string support
 			bool read(char& data) { return read(reinterpret_cast<uint8&>(data)); }
@@ -52,6 +58,7 @@ namespace Bousk
 			const uint8* mBuffer;
 			const size_t mBufferSize;
 			size_t mBytesRead{ 0 };
+			uint8 mBitsRead{ 0 };
 		};
 
 	}

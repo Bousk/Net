@@ -57,16 +57,16 @@ namespace Bousk
 		{
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
-			const uint8 rangedData = static_cast<uint8>(data - minValue);
-			const uint8 range = static_cast<uint8>(maxValue - minValue);
+			const uint8 rangedData = data - minValue;
+			const uint8 range = maxValue - minValue;
 			return writeBits(&rangedData, 1, Utils::CountNeededBits(range));
 		}
 		bool Serializer::write(uint16 data, uint16 minValue, uint16 maxValue)
 		{
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
-			const uint16 rangedData = static_cast<uint16>(data - minValue);
-			const uint16 range = static_cast<uint16>(maxValue - minValue);
+			const uint16 rangedData = data - minValue;
+			const uint16 range = maxValue - minValue;
 			uint16 conv;
 			Conversion::ToNetwork(rangedData, conv);
 			return writeBits(reinterpret_cast<const uint8*>(&conv), 2, Utils::CountNeededBits(range));
@@ -75,8 +75,8 @@ namespace Bousk
 		{
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
-			const uint32 rangedData = static_cast<uint32>(data - minValue);
-			const uint32 range = static_cast<uint32>(maxValue - minValue);
+			const uint32 rangedData = data - minValue;
+			const uint32 range = maxValue - minValue;
 			uint32 conv;
 			Conversion::ToNetwork(rangedData, conv);
 			return writeBits(reinterpret_cast<const uint8*>(&conv), 4, Utils::CountNeededBits(range));
@@ -84,29 +84,29 @@ namespace Bousk
 
 		bool Serializer::write(const int8 data, int8 minValue, int8 maxValue)
 		{
+			static_assert(sizeof(int8) == sizeof(uint8), "");
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
 			const uint8 rangedData = static_cast<uint8>(data - minValue);
 			const uint8 range = static_cast<uint8>(maxValue - minValue);
-			static_assert(sizeof(int8) == sizeof(uint8), "");
 			return write(*reinterpret_cast<const uint8*>(&rangedData), static_cast<uint8>(0), range);
 		}
 		bool Serializer::write(const int16 data, int16 minValue, int16 maxValue)
 		{
+			static_assert(sizeof(int16) == sizeof(uint16), "");
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
 			const uint16 rangedData = static_cast<uint16>(data - minValue);
 			const uint16 range = static_cast<uint16>(maxValue - minValue);
-			static_assert(sizeof(int16) == sizeof(uint16), "");
 			return write(*reinterpret_cast<const uint16*>(&rangedData), static_cast<uint16>(0), range);
 		}
 		bool Serializer::write(const int32 data, int32 minValue, int32 maxValue)
 		{
+			static_assert(sizeof(int32) == sizeof(uint32), "");
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
 			const uint32 rangedData = static_cast<uint32>(data - minValue);
 			const uint32 range = static_cast<uint32>(maxValue - minValue);
-			static_assert(sizeof(int32) == sizeof(uint32), "");
 			return write(*reinterpret_cast<const uint32*>(&rangedData), static_cast<uint32>(0), range);
 		}
 
