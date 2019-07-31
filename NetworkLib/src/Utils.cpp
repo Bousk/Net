@@ -36,7 +36,14 @@ namespace Bousk
 		uint8 CreateBitsMask(uint8 nbBits, uint8 rightBitsToSkip)
 		{
 			assert(rightBitsToSkip < 8);
+			assert(rightBitsToSkip + nbBits <= 8);
 			return CreateRightBitsMask(nbBits) << rightBitsToSkip;
+		}
+		uint8 CreateLeftAlignedBitMask(uint8 nbBits, uint8 leftBitsToSkip)
+		{
+			assert(leftBitsToSkip < 8);
+			assert(leftBitsToSkip + nbBits <= 8);
+			return CreateRightBitsMask(nbBits) << (8 - leftBitsToSkip - nbBits);
 		}
 	}
 }

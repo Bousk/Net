@@ -5,14 +5,14 @@
 #include <string>
 #include <vector>
 
-class Serializer_Test;
+class Serialization_Test;
 namespace Bousk
 {
 	namespace Serialization
 	{
 		class Serializer
 		{
-			friend class Serializer_Test;
+			friend class Serialization_Test;
 		public:
 			Serializer() = default;
 
