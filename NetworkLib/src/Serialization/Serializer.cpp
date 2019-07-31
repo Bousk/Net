@@ -16,16 +16,16 @@ namespace Bousk
 			{
 				const uint8 srcByte = *(buffer + buffersize - readingBytesOffset);
 				const uint8 bitsToWrite = std::min(8, nbBits - totalWrittenBits);
-				const uint8 availableBits = (8 - mUsedBits) % 8;
 				uint8 writtenBits = 0;
-				if (availableBits)
+				if (mUsedBits)
 				{
 					// We have an existing byte to pack data to
-					const uint8 nbBitsToPack = std::min(bitsToWrite, availableBits);
+					const uint8 remainingBitsInCurrentByte = 8 - mUsedBits;
+					const uint8 nbBitsToPack = std::min(bitsToWrite, remainingBitsInCurrentByte);
 					// Extract bits from the right
 					const uint8 rightBitsToPack = srcByte & Utils::CreateRightBitsMask(nbBitsToPack);
 					// Align those bits on the left to pack to existing bits in buffer
-					const uint8 bitsShiftToAlignLeft = availableBits - nbBitsToPack;
+					const uint8 bitsShiftToAlignLeft = remainingBitsInCurrentByte - nbBitsToPack;
 					const uint8 leftAlignedBits = rightBitsToPack << bitsShiftToAlignLeft;
 					mBuffer.back() |= leftAlignedBits;
 					writtenBits += nbBitsToPack;
@@ -36,12 +36,12 @@ namespace Bousk
 					// Extract bits to serialize
 					const uint8 leftBitsToPack = srcByte & Utils::CreateBitsMask(remainingBits, writtenBits);
 					// Remove bits on the right : align the interesting ones on the right
-					const uint8 bitsShiftToAlignRight = 8 - writtenBits - remainingBits;
+					const uint8 bitsShiftToAlignRight = writtenBits;
 					const uint8 rightAlignedBits = leftBitsToPack >> bitsShiftToAlignRight;
 					// Align bits to the left on the new byte
 					const uint8 bitsShiftToAlignLeft = 8 - remainingBits;
 					const uint8 leftAlignedBits = rightAlignedBits << bitsShiftToAlignLeft;
-					// Add those bits as a new byte to the buffer
+					// Add those bits as a new byte to the buffer, they are aligned on the left in new byte
 					mBuffer.push_back(leftAlignedBits);
 					writtenBits += remainingBits;
 				}
