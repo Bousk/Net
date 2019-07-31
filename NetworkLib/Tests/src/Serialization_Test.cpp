@@ -87,5 +87,90 @@ void Serialization_Test::TestBasics()
 
 void Serialization_Test::TestAdvanced()
 {
-	;
+	{
+		Bousk::Serialization::Serializer serializer;
+		
+#define WRITE_AS(TYPE, VALUE, RANGE_MIN, RANGE_MAX) serializer.write(static_cast<TYPE>(VALUE), static_cast<TYPE>(RANGE_MIN), static_cast<TYPE>(RANGE_MAX))
+		// Write a full byte
+		CHECK(WRITE_AS(Bousk::uint8, 5, 0, 255));
+		CHECK(serializer.bufferSize() == 1);
+		CHECK(serializer.mUsedBits == 0);
+		CHECK(serializer.mBuffer[0] == 0b00000101);
+		// Write 4 bits
+		CHECK(WRITE_AS(Bousk::int8, 3, -7, 8)); // 3 on [-7, 8] => 10 on [0, 15] => 1010
+		CHECK(serializer.bufferSize() == 2);
+		CHECK(serializer.mUsedBits == 4);
+		CHECK(serializer.mBuffer[0] == 0b00000101);
+		CHECK(serializer.mBuffer[1] == 0b10100000);
+		// Write 5 bits
+		CHECK(WRITE_AS(Bousk::uint8, 18, 0, 31)); // => 1 0010
+		CHECK(serializer.bufferSize() == 3);
+		CHECK(serializer.mUsedBits == 1);
+		CHECK(serializer.mBuffer[0] == 0b00000101);
+		CHECK(serializer.mBuffer[1] == 0b10100010);
+		CHECK(serializer.mBuffer[2] == 0b10000000);
+		// Write a couple bools
+		CHECK(serializer.write(true));
+		CHECK(serializer.bufferSize() == 3);
+		CHECK(serializer.mUsedBits == 2);
+		CHECK(serializer.mBuffer[0] == 0b00000101);
+		CHECK(serializer.mBuffer[1] == 0b10100010);
+		CHECK(serializer.mBuffer[2] == 0b11000000);
+		CHECK(serializer.write(false));
+		CHECK(serializer.bufferSize() == 3);
+		CHECK(serializer.mUsedBits == 3);
+		CHECK(serializer.mBuffer[0] == 0b00000101);
+		CHECK(serializer.mBuffer[1] == 0b10100010);
+		CHECK(serializer.mBuffer[2] == 0b11000000);
+		// Pack a 13 bits value
+		CHECK(WRITE_AS(Bousk::int16, 3578, -4000, 4000)); // 7578 [0, 8000] => 11101 100 11010
+		CHECK(serializer.bufferSize() == 4);
+		CHECK(serializer.mUsedBits == 0);
+		CHECK(serializer.mBuffer[0] == 0b00000101);
+		CHECK(serializer.mBuffer[1] == 0b10100010);
+		CHECK(serializer.mBuffer[2] == 0b11011010);
+		CHECK(serializer.mBuffer[3] == 0b10011101);
+#undef WRITE_AS
+
+		Bousk::Serialization::Deserializer deserializer(serializer.buffer(), serializer.bufferSize());
+#define READ_AND_CHECK(TYPE, EXPECTED_VALUE, RANGE_MIN, RANGE_MAX)										\
+		do {																							\
+			TYPE data;																					\
+			CHECK(deserializer.read(data, static_cast<TYPE>(RANGE_MIN), static_cast<TYPE>(RANGE_MAX)));	\
+			CHECK(data == static_cast<TYPE>(EXPECTED_VALUE));								\
+		} while(0)
+#define READ_AND_CHECK_BOOL(EXPECTED_VALUE)	\
+		do {								\
+			bool data;						\
+			CHECK(deserializer.read(data));	\
+			CHECK(data == EXPECTED_VALUE);	\
+		} while(0)
+		// Full byte
+		READ_AND_CHECK(Bousk::uint8, 5, 0, 255);
+		CHECK(deserializer.bufferReadBits() == 8);
+		// 4 bits
+		READ_AND_CHECK(Bousk::int8, 3, -7, 8);
+		CHECK(deserializer.mBytesRead == 1);
+		CHECK(deserializer.mBitsRead == 4);
+		CHECK(deserializer.bufferReadBits() == 12);
+		// 5 bits
+		READ_AND_CHECK(Bousk::uint8, 18, 0, 31);
+		CHECK(deserializer.mBytesRead == 2);
+		CHECK(deserializer.mBitsRead == 1);
+		CHECK(deserializer.bufferReadBits() == 17);
+		// Write a couple bools
+		READ_AND_CHECK_BOOL(true);
+		CHECK(deserializer.mBytesRead == 2);
+		CHECK(deserializer.mBitsRead == 2);
+		CHECK(deserializer.bufferReadBits() == 18);
+		READ_AND_CHECK_BOOL(false);
+		CHECK(deserializer.mBytesRead == 2);
+		CHECK(deserializer.mBitsRead == 3);
+		CHECK(deserializer.bufferReadBits() == 19);
+		// 13 bits value
+		READ_AND_CHECK(Bousk::int16, 3578, -4000, 4000);
+		CHECK(deserializer.mBytesRead == 4);
+		CHECK(deserializer.mBitsRead == 0);
+		CHECK(deserializer.bufferReadBits() == 32);
+	}
 }
