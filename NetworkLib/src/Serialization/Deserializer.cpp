@@ -26,10 +26,14 @@ namespace Bousk
 					const uint8 srcByte = *(mBuffer + mBytesRead);
 					// Read first bits from the current reading byte
 					const uint8 remainingBitsInCurrentByte = 8 - mBitsRead;
+					const uint8 leftBitsToSkip = mBitsRead;
 					const uint8 bitsToReadFromCurrentByte = std::min(bitsToRead, remainingBitsInCurrentByte);
-					const uint8 readMask = Utils::CreateLeftAlignedBitMask(bitsToReadFromCurrentByte, mBitsRead);
+					const uint8 remainingBitsOnTheRight = 8 - bitsToReadFromCurrentByte - leftBitsToSkip;
+					// Extract bits from the left
+					const uint8 readMask = Utils::CreateBitsMask(bitsToReadFromCurrentByte, remainingBitsOnTheRight);
 					const uint8 bits = srcByte & readMask;
-					const uint8 bitsAlignedRight = bits >> mBitsRead;
+					// Align those bits on the right in the output byte
+					const uint8 bitsAlignedRight = bits >> remainingBitsOnTheRight;
 					dstByte |= bitsAlignedRight;
 
 					bitsRead += bitsToReadFromCurrentByte;
@@ -41,13 +45,17 @@ namespace Bousk
 				if (bitsRead < bitsToRead)
 				{
 					const uint8 srcByte = *(mBuffer + mBytesRead);
-					// Read remaining bits of current byte from next reading byte
+					// Read remaining bits of current output byte from next reading byte
 					const uint8 bitsToReadFromCurrentByte = bitsToRead - bitsRead;
-					const uint8 readMask = Utils::CreateRightBitsMask(bitsToReadFromCurrentByte);
+					const uint8 remainingBitsOnTheRight = 8 - bitsToReadFromCurrentByte;
+					// Those bits are on the left
+					const uint8 readMask = Utils::CreateBitsMask(bitsToReadFromCurrentByte, remainingBitsOnTheRight);
 					const uint8 bits = srcByte & readMask;
-					const uint8 bitsAlignedLeftToPack = bits << bitsRead;
-					dstByte |= bitsAlignedLeftToPack;
+					// Align them on the right to pack to first part read
+					const uint8 bitsAlignedRightToPack = bits >> (8 - bitsToReadFromCurrentByte - bitsRead);
+					dstByte |= bitsAlignedRightToPack;
 
+					bitsRead += bitsToReadFromCurrentByte;
 					mBitsRead += bitsToReadFromCurrentByte;
 					mBytesRead += mBitsRead / 8;
 					mBitsRead %= 8;

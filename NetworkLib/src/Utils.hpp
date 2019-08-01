@@ -25,7 +25,6 @@ namespace Bousk
 
 		uint8 CreateRightBitsMask(uint8 rightBits);
 		uint8 CreateBitsMask(uint8 nbBits, uint8 rightBitsToSkip);
-		uint8 CreateLeftAlignedBitMask(uint8 nbBits, uint8 leftBitsToSkip);
 	}
 }
 

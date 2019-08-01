@@ -35,12 +35,9 @@ namespace Bousk
 				{
 					// Extract bits to serialize
 					const uint8 leftBitsToPack = srcByte & Utils::CreateBitsMask(remainingBits, writtenBits);
-					// Remove bits on the right : align the interesting ones on the right
-					const uint8 bitsShiftToAlignRight = writtenBits;
-					const uint8 rightAlignedBits = leftBitsToPack >> bitsShiftToAlignRight;
 					// Align bits to the left on the new byte
-					const uint8 bitsShiftToAlignLeft = 8 - remainingBits;
-					const uint8 leftAlignedBits = rightAlignedBits << bitsShiftToAlignLeft;
+					const uint8 bitsShiftToAlignLeft = 8 - writtenBits - remainingBits;
+					const uint8 leftAlignedBits = leftBitsToPack << bitsShiftToAlignLeft;
 					// Add those bits as a new byte to the buffer, they are aligned on the left in new byte
 					mBuffer.push_back(leftAlignedBits);
 					writtenBits += remainingBits;
