@@ -85,11 +85,10 @@ namespace Bousk
 	};
 
 
-#define DEFINE_RANGED_TYPE(NAME, INTERNALTYPE) \
-	template<int64 MIN, int64 MAX> \
+#define DEFINE_RANGED_TYPE(NAME, INTERNALTYPE)			\
+	template<int64 MIN, int64 MAX>						\
 	using NAME = RangedInteger<INTERNALTYPE, MIN, MAX>
 	
-
 	DEFINE_RANGED_TYPE(Int8, int8);
 	DEFINE_RANGED_TYPE(Int16, int16);
 	DEFINE_RANGED_TYPE(Int32, int32);
@@ -97,7 +96,6 @@ namespace Bousk
 	DEFINE_RANGED_TYPE(Uint8, uint8);
 	DEFINE_RANGED_TYPE(Uint16, uint16);
 	DEFINE_RANGED_TYPE(Uint32, uint32);
-
 #undef DEFINE_RANGED_TYPE
 
 	template<uint8 BASE, uint8 EXPONENT>
