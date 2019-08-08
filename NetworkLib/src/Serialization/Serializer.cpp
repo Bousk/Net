@@ -9,7 +9,7 @@ namespace Bousk
 {
 	namespace Serialization
 	{
-		bool Serializer::writeBits(const uint8* buffer, const uint8 buffersize, const uint8 nbBits)
+		bool Serializer::writeBits(const uint8* const buffer, const uint8 buffersize, const uint8 nbBits)
 		{
 			// buffer here is in network/big endian, so bits to write must be read right (buffer + buffersize - 1) to left (buffer)
 			for (uint8 totalWrittenBits = 0, readingBytesOffset = 1; totalWrittenBits < nbBits; ++readingBytesOffset)
@@ -50,7 +50,7 @@ namespace Bousk
 			return true;
 		}
 
-		bool Serializer::write(uint8 data, uint8 minValue, uint8 maxValue)
+		bool Serializer::write(const uint8 data, const uint8 minValue, const uint8 maxValue)
 		{
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
@@ -68,7 +68,7 @@ namespace Bousk
 			Conversion::ToNetwork(rangedData, conv);
 			return writeBits(reinterpret_cast<const uint8*>(&conv), 2, Utils::CountNeededBits(range));
 		}
-		bool Serializer::write(uint32 data, uint32 minValue, uint32 maxValue)
+		bool Serializer::write(const uint32 data, const uint32 minValue, const uint32 maxValue)
 		{
 			assert(minValue < maxValue);
 			assert(minValue <= data && data <= maxValue);
@@ -79,7 +79,7 @@ namespace Bousk
 			return writeBits(reinterpret_cast<const uint8*>(&conv), 4, Utils::CountNeededBits(range));
 		}
 
-		bool Serializer::write(const int8 data, int8 minValue, int8 maxValue)
+		bool Serializer::write(const int8 data, const int8 minValue, const int8 maxValue)
 		{
 			static_assert(sizeof(int8) == sizeof(uint8), "");
 			assert(minValue < maxValue);
@@ -97,7 +97,7 @@ namespace Bousk
 			const uint16 range = static_cast<uint16>(maxValue - minValue);
 			return write(rangedData, static_cast<uint16>(0), range);
 		}
-		bool Serializer::write(const int32 data, int32 minValue, int32 maxValue)
+		bool Serializer::write(const int32 data, const int32 minValue, const int32 maxValue)
 		{
 			static_assert(sizeof(int32) == sizeof(uint32), "");
 			assert(minValue < maxValue);
@@ -107,7 +107,7 @@ namespace Bousk
 			return write(rangedData, static_cast<uint32>(0), range);
 		}
 
-		bool Serializer::write(float32 data)
+		bool Serializer::write(const float32 data)
 		{
 			uint32 conv;
 			Conversion::ToNetwork(data, conv);
