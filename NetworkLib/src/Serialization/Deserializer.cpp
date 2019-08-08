@@ -68,7 +68,7 @@ namespace Bousk
 			return true;
 		}
 
-		bool Deserializer::read(uint8& data, uint8 minValue, uint8 maxValue)
+		bool Deserializer::read(uint8& data, const uint8 minValue, const uint8 maxValue)
 		{
 			assert(minValue < maxValue);
 			const uint8 range = maxValue - minValue;
@@ -84,7 +84,7 @@ namespace Bousk
 			}
 			return false;
 		}
-		bool Deserializer::read(uint16& data, uint16 minValue, uint16 maxValue)
+		bool Deserializer::read(uint16& data, const uint16 minValue, const uint16 maxValue)
 		{
 			assert(minValue < maxValue);
 			const uint16 range = maxValue - minValue;
@@ -100,7 +100,7 @@ namespace Bousk
 			}
 			return false;
 		}
-		bool Deserializer::read(uint32& data, uint32 minValue, uint32 maxValue)
+		bool Deserializer::read(uint32& data, const uint32 minValue, const uint32 maxValue)
 		{
 			assert(minValue < maxValue);
 			const uint32 range = maxValue - minValue;
@@ -117,7 +117,7 @@ namespace Bousk
 			return false;
 		}
 
-		bool Deserializer::read(int8& data, int8 minValue, int8 maxValue)
+		bool Deserializer::read(int8& data, const int8 minValue, const int8 maxValue)
 		{
 			static_assert(sizeof(int8) == sizeof(uint8), "");
 			assert(minValue < maxValue);
@@ -129,7 +129,7 @@ namespace Bousk
 			}
 			return false;
 		}
-		bool Deserializer::read(int16& data, int16 minValue, int16 maxValue)
+		bool Deserializer::read(int16& data, const int16 minValue, const int16 maxValue)
 		{
 			static_assert(sizeof(int16) == sizeof(uint16), "");
 			assert(minValue < maxValue);
@@ -141,7 +141,7 @@ namespace Bousk
 			}
 			return false;
 		}
-		bool Deserializer::read(int32& data, int32 minValue, int32 maxValue)
+		bool Deserializer::read(int32& data, const int32 minValue, const int32 maxValue)
 		{
 			static_assert(sizeof(int32) == sizeof(uint32), "");
 			assert(minValue < maxValue);
