@@ -11,6 +11,7 @@ namespace Bousk
 	{
 		bool Deserializer::readBits(const uint8 nbBits, uint8* const buffer, const uint8 bufferSize)
 		{
+			static_assert(CHAR_BIT == 8, "");
 			assert(nbBits <= bufferSize * 8);
 			if (remainingBits() < nbBits)
 				return false;
