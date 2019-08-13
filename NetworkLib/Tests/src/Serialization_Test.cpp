@@ -6,6 +6,7 @@
 #include <Serialization/Serializer.hpp>
 #include <Serialization/Deserializer.hpp>
 
+#include <string>
 #include <vector>
 
 void Serialization_Test::TestBasics()
@@ -172,5 +173,7 @@ void Serialization_Test::TestAdvanced()
 		CHECK(deserializer.mBytesRead == 4);
 		CHECK(deserializer.mBitsRead == 0);
 		CHECK(deserializer.bufferReadBits() == 32);
+#undef READ_AND_CHECK
+#undef READ_AND_CHECK_BOOL
 	}
 }
