@@ -77,6 +77,9 @@ namespace Bousk
 		template<typename OtherType>
 		static constexpr bool IsWithinRange(OtherType v) { return (v >= Min() && v <= Max()); }
 
+		inline Type get() const { return mValue; }
+		inline operator Type() const { return mValue; }
+
 	private:
 		void checkValue() { assert(IsWithinRange(mValue)); }
 
@@ -93,9 +96,9 @@ namespace Bousk
 	DEFINE_RANGED_TYPE(Int16, int16);
 	DEFINE_RANGED_TYPE(Int32, int32);
 
-	DEFINE_RANGED_TYPE(Uint8, uint8);
-	DEFINE_RANGED_TYPE(Uint16, uint16);
-	DEFINE_RANGED_TYPE(Uint32, uint32);
+	DEFINE_RANGED_TYPE(UInt8, uint8);
+	DEFINE_RANGED_TYPE(UInt16, uint16);
+	DEFINE_RANGED_TYPE(UInt32, uint32);
 #undef DEFINE_RANGED_TYPE
 
 	template<uint8 BASE, uint8 EXPONENT>
@@ -104,29 +107,54 @@ namespace Bousk
 		template<uint8 EXP>
 		struct InternalPow
 		{
-			static constexpr uint64 Value = Return<uint64, BASE * InternalPow<EXP-1>>::Value;
+			static constexpr uint32 Value = Return<uint32, BASE * InternalPow<EXP-1>::Value>::Value;
 		};
 		template<>
 		struct InternalPow<1>
 		{
-			static constexpr uint64 Value = BASE;
+			static constexpr uint32 Value = BASE;
 		};
-		static constexpr uint64 Value = InternalPow<EXPONENT>::Value;
-	};
-	template<uint8 BASE>
-	struct Pow<BASE, 0>
-	{
-		static constexpr uint64 Value = 1;
+		template<>
+		struct InternalPow<0>
+		{
+			static constexpr uint32 Value = 1;
+		};
+		static constexpr uint32 Value = InternalPow<EXPONENT>::Value;
 	};
 
-	template<int32 MIN, int32 MAX, uint8 DECIMALS, uint8 STEP = 1>
+	template<class FLOATTYPE, int32 MIN, int32 MAX, uint8 NBDECIMALS, uint8 STEP = 1 >
 	class Float
 	{
-		static_assert(DECIMALS > 0, "At least 1 decimal.");
-		static_assert(DECIMALS < 10, "Maximum 10 decimals.");
+		static_assert(NBDECIMALS > 0, "At least 1 decimal.");
+		static_assert(NBDECIMALS < 10, "Maximum 10 decimals.");
+		static_assert(STEP != 0, "Step must not be 0.");
 		static_assert(STEP % 10 != 0, "Step should not be a multiple of 10. Remove a decimal.");
-		static constexpr uint32 Diff = MAX - MIN;
-		static constexpr uint8 Decimals = DECIMALS;
-		static constexpr uint64 Multiple = Pow<10, Decimals>::Value;
+		using FloatType = FLOATTYPE;
+		static constexpr int32 Min = MIN;
+		static constexpr int32 Max = MAX;
+		static constexpr uint32 Diff = Max - Min;
+		static constexpr uint8 NbDecimals = NBDECIMALS;
+		static constexpr uint32 Multiple = Pow<10, NbDecimals>::Value;
+		static constexpr uint8 Step = STEP;
+		static constexpr uint32 Domain = (MAX - MIN) * Multiple / STEP;
+
+	public:
+		Float() = default;
+		Float(FloatType value)
+		{
+			mQuantizedValue = Quantize(value);
+		}
+
+		static uint32 Quantize(FloatType value)
+		{
+			assert(value >= Min && value <= Max);
+			return static_cast<uint32>(((value - Min) * Multiple + 0.5) / Step);
+		}
+
+		inline FloatType get() const { return static_cast<FloatType>(mQuantizedValue.get() * Step * 1. / Multiple + Min); }
+		inline operator FloatType() const { return get(); }
+
+	private:
+		UInt32<0, Domain> mQuantizedValue;
 	};
 }
