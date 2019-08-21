@@ -148,10 +148,10 @@ namespace Bousk
 		static uint32 Quantize(FloatType value)
 		{
 			assert(value >= Min && value <= Max);
-			return static_cast<uint32>(((value - Min) * Multiple + 0.5) / Step);
+			return static_cast<uint32>(((value - Min) * Multiple) / Step);
 		}
 
-		inline FloatType get() const { return static_cast<FloatType>(mQuantizedValue.get() * Step * 1. / Multiple + Min); }
+		inline FloatType get() const { return static_cast<FloatType>((mQuantizedValue.get() * Step * 1.) / Multiple + Min); }
 		inline operator FloatType() const { return get(); }
 
 	private:

@@ -48,6 +48,10 @@ public:
 			CHECK_FLOATS_EQUAL(Bousk::float64, f.get(), -38.3, 1);
 			f = 75.9;
 			CHECK_FLOATS_EQUAL(Bousk::float64, f.get(), 75.9, 1);
+			f = -42;
+			CHECK_FLOATS_EQUAL(Bousk::float64, f.get(), -42, 1);
+			f = 76;
+			CHECK_FLOATS_EQUAL(Bousk::float64, f.get(), 76, 1);
 			f = 0;
 			CHECK_FLOATS_EQUAL(Bousk::float64, f.get(), 0, 1);
 			f = -0.1;
