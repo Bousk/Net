@@ -1,31 +1,34 @@
-local utils = require"utils"
+require "utils"
 require "NetworkLib"
 
 workspace "NetworkLib"
 	configurations { "Debug", "Release" }
 	architecture "x64"
+	location("./Projects/" .. _ACTION)
 	filter "system:windows"
 		systemversion "10.0.15063.0"
-
+	filter {}
+		
 CreateNetworkLib("./")
 
 function CreateProject(path)
-	local prettypath = string.gsub(path, "/", "_")
-	prettypath = string.gsub(prettypath, "\\", "_")
+	local prettypath = buildPathName(path)
+	print("Creating project " .. prettypath .. " from " .. path)
 	project(prettypath)
 		kind "ConsoleApp"
 		language "C++"
-		location(path)
+		-- architecture "x64"
 		targetdir (path .. "/%{cfg.buildcfg}")
 		files { path.."/*.hpp", path.."/*.cpp", path.."/*.inl" }
 		links { "Network" }
-		includedirs { "src" }
+		includedirs { path, "./src" }
 		filter "configurations:Debug"
 			defines { "DEBUG" }
 			symbols "On"
 		filter "configurations:Release"
 			defines { "NDEBUG" }
 			optimize "On"
+		filter {}
 end
 if isModuleAvailable("lfs") then
 	local lfs = require"lfs"
@@ -71,5 +74,5 @@ else
 	group("Samples")
 	CreateProject("Samples/TCP/Client")
 	CreateProject("Samples/TCP/Server")
-	CreateProject("Samples/UDP/Hello World")
+	CreateProject("Samples/UDP/HelloWorld")
 end

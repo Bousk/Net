@@ -3,6 +3,9 @@
 #include "Tester.hpp"
 #include "UDP/DistantClient.hpp"
 #include "UDP/UDPClient.hpp"
+#include <UDP/Packet.hpp>
+#include <UDP/ChannelHeader.hpp>
+#include <UDP/Protocols/UnreliableOrdered.hpp>
 #include "Messages.hpp"
 
 #include <cstring>
@@ -27,20 +30,27 @@ void DistantClient_Test::Test()
 	localAddress.sin_family = AF_INET;
 	localAddress.sin_port = htons(8888);
 	Bousk::Network::UDP::DistantClient distantClient(client, reinterpret_cast<const sockaddr_storage&>(localAddress));
+	distantClient.registerChannel<Bousk::Network::UDP::Protocols::UnreliableOrdered>();
 
 	CHECK(distantClient.mNextDatagramIdToSend == 0);
 	CHECK(distantClient.mReceivedAcks.lastAck() == std::numeric_limits<uint16_t>::max());
 
-	constexpr const char* TestString = "Test data";
+	constexpr const char TestString[] = "Test data";
 	constexpr size_t TestStringLength = sizeof(TestString);
-	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength));
+
+	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength), 0);
+	//!< Craft the datagram to check reception
+	Bousk::Network::UDP::Datagram datagram;
+	distantClient.fillDatagram(datagram);
 	CHECK(distantClient.mNextDatagramIdToSend == 1);
 
-	//!< Manually craft the datagram to check reception
-	Bousk::Network::UDP::Datagram datagram;
-	datagram.header.id = 0;
-	memcpy(datagram.data.data(), TestString, TestStringLength);
-	datagram.datasize = TestStringLength;
+	auto QueueDatagram = [&]() {
+		distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength), 0);
+		distantClient.mChannelsHandler.serialize(datagram.data.data(), Bousk::Network::UDP::Datagram::DataMaxSize, 0);
+	};
+
+	CHECK(datagram.header.id == 0);
+	CHECK(datagram.datasize == TestStringLength + Bousk::Network::UDP::Packet::HeaderSize + Bousk::Network::UDP::ChannelHeader::Size);
 
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
@@ -67,8 +77,9 @@ void DistantClient_Test::Test()
 		CHECK(polledMessages.size() == 0);
 	}
 
-	//!< Send datagram #2, 1 is now missing
+	//!< Receive datagram #2, #1 is now missing
 	datagram.header.id = htons(2);
+	QueueDatagram();
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 2);
@@ -85,6 +96,7 @@ void DistantClient_Test::Test()
 
 	//!< Now receive datagram #1
 	datagram.header.id = htons(1);
+	QueueDatagram();
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 2);
@@ -103,6 +115,7 @@ void DistantClient_Test::Test()
 
 	//!< Jump 64 packets ahead, all missed in between
 	datagram.header.id = htons(66);
+	QueueDatagram();
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 66);
@@ -121,6 +134,7 @@ void DistantClient_Test::Test()
 
 	//!< Receive next one and everything is missing in between
 	datagram.header.id = htons(67);
+	QueueDatagram();
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 67);
@@ -137,8 +151,9 @@ void DistantClient_Test::Test()
 		CHECK(memcmp(TestString, dataMsg->data.data(), TestStringLength) == 0);
 	}
 
-	//!< Receive next one, 3 is now lost
+	//!< Receive next one, #3 is now lost
 	datagram.header.id = htons(68);
+	QueueDatagram();
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 68);
@@ -156,6 +171,7 @@ void DistantClient_Test::Test()
 
 	//!< Receive datagram #3 : too old, ignored
 	datagram.header.id = htons(3);
+	QueueDatagram();
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 68);

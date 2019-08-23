@@ -8,7 +8,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			void AckHandler::update(uint16_t newAck, uint64_t previousAcks, bool trackLoss /*= false*/)
+			void AckHandler::update(const uint16_t newAck, uint64_t previousAcks, const bool trackLoss /*= false*/)
 			{
 				mLastAckIsNew = false;
 				if (newAck == mLastAck)
@@ -20,16 +20,16 @@ namespace Bousk
 				else if (Utils::IsSequenceNewer(newAck, mLastAck))
 				{
 					//!< This is a more recent ack, check loss etc
-					const auto diff = Utils::SequenceDiff(newAck, mLastAck);
-					const auto gap = diff - 1;
+					const uint16_t diff = Utils::SequenceDiff(newAck, mLastAck);
+					const uint16_t gap = diff - 1;
 					//!< Bits to shift from mask, check for loss
-					const auto bitsToShift = std::min(diff, static_cast<uint16_t>(64));
+					const uint8_t bitsToShift = static_cast<uint8_t>(std::min(diff, static_cast<uint16_t>(64)));
 					if (trackLoss)
 					{
-						for (uint32_t i = 0; i < bitsToShift; ++i)
+						for (uint8_t i = 0; i < bitsToShift; ++i)
 						{
-							const auto packetDiffWithLastAck = 64 - i;
-							const auto bitInPreviousMask = packetDiffWithLastAck - 1;
+							const uint8_t packetDiffWithLastAck = 64 - i;
+							const uint8_t bitInPreviousMask = packetDiffWithLastAck - 1;
 							if (!Utils::HasBit(mPreviousAcks, bitInPreviousMask))
 							{
 								//!< This packet hasn't been acked and is now out of range : lost
@@ -55,7 +55,7 @@ namespace Bousk
 						//!< Catchup last packet in actual mask and notify loss for every missing one
 						if (trackLoss)
 						{
-							for (uint32_t p = 64; p < static_cast<uint32_t>(gap); ++p)
+							for (uint16_t p = 64; p < gap; ++p)
 							{
 								const uint16_t packetid = mLastAck + (p - 64) + 1;
 								mLoss.push_back(packetid);
@@ -65,7 +65,7 @@ namespace Bousk
 					else
 					{
 						//!< Mark previous last ack as acked in the mask of previous acks
-						Utils::SetBit(mPreviousAcks, gap);
+						Utils::SetBit(mPreviousAcks, static_cast<uint8_t>(gap));
 					}
 					mLastAck = newAck;
 					mLastAckIsNew = true;
@@ -75,7 +75,7 @@ namespace Bousk
 				else
 				{
 					//!< This is an old ack, if it's not too old it may contain interesting information on acks
-					const auto diff = Utils::SequenceDiff(mLastAck, newAck);
+					const uint16_t diff = Utils::SequenceDiff(mLastAck, newAck);
 					if (diff <= 64)
 					{
 						//!< Align previous mask to our sequence
@@ -89,7 +89,7 @@ namespace Bousk
 							previousAcks <<= diff;
 						}
 						//!< Set ack bit in the shifted mask
-						const auto ackBitInMask = diff - 1;
+						const uint8_t ackBitInMask = static_cast<uint8_t>(diff - 1);
 						Utils::SetBit(previousAcks, ackBitInMask);
 						mNewAcks = (mPreviousAcks & previousAcks) ^ previousAcks;
 						mPreviousAcks |= previousAcks;
@@ -100,7 +100,7 @@ namespace Bousk
 					}
 				}
 			}
-			bool AckHandler::isAcked(uint16_t ack) const
+			bool AckHandler::isAcked(const uint16_t ack) const
 			{
 				if (ack == mLastAck)
 					return true;
@@ -112,7 +112,7 @@ namespace Bousk
 				const uint8_t bitPosition = static_cast<uint8_t>(diff - 1);
 				return Utils::HasBit(mPreviousAcks, bitPosition);
 			}
-			bool AckHandler::isNewlyAcked(uint16_t ack) const
+			bool AckHandler::isNewlyAcked(const uint16_t ack) const
 			{
 				if (ack == mLastAck)
 					return mLastAckIsNew;
