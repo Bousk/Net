@@ -6,3 +6,13 @@
 *.db-shm
 *.db-wal
 *.opendb
+*.ipch
+*.ilk
+*.pdb
+*.exe
+*.user
+*.obj
+*.log
+*.idb
+*.tlog
+*.lib
