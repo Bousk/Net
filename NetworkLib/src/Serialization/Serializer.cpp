@@ -12,8 +12,9 @@ namespace Bousk
 		bool Serializer::writeBits(const uint8* const buffer, const uint8 buffersize, const uint8 nbBits)
 		{
 			static_assert(CHAR_BIT == 8, "");
+			uint8 totalWrittenBits = 0;
 			// buffer here is in network/big endian, so bits to write must be read right (buffer + buffersize - 1) to left (buffer)
-			for (uint8 totalWrittenBits = 0, readingBytesOffset = 1; totalWrittenBits < nbBits; ++readingBytesOffset)
+			for (uint8 readingBytesOffset = 1; readingBytesOffset <= buffersize && totalWrittenBits < nbBits; ++readingBytesOffset)
 			{
 				const uint8 srcByte = *(buffer + buffersize - readingBytesOffset);
 				const uint8 bitsToWrite = std::min(8, nbBits - totalWrittenBits);
@@ -48,7 +49,7 @@ namespace Bousk
 				mUsedBits += writtenBits;
 				mUsedBits %= 8;
 			}
-			return true;
+			return totalWrittenBits == nbBits;
 		}
 
 		bool Serializer::write(const uint8 data, const uint8 minValue, const uint8 maxValue)

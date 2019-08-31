@@ -16,9 +16,10 @@ namespace Bousk
 			if (remainingBits() < nbBits)
 				return false;
 
+			uint8 totalReadBits = 0;
 			const size_t bufferBytesToWriteTo = (nbBits / 8) + (nbBits % 8 == 0 ? 0 : 1);
 			// buffer here is in network/big endian, so bits must be write right (buffer + bufferBytesToWriteTo - 1) to left (buffer)
-			for (uint8 totalReadBits = 0, writingBytesOffset = 1; totalReadBits < nbBits; ++writingBytesOffset)
+			for (uint8 writingBytesOffset = 1; writingBytesOffset <= bufferSize && totalReadBits < nbBits; ++writingBytesOffset)
 			{
 				uint8& dstByte = *(buffer + bufferBytesToWriteTo - writingBytesOffset);
 				const uint8 bitsToRead = std::min(8, nbBits - totalReadBits);
@@ -66,7 +67,7 @@ namespace Bousk
 				totalReadBits += bitsRead;
 			}
 
-			return true;
+			return totalReadBits == nbBits;
 		}
 
 		bool Deserializer::read(uint8& data, const uint8 minValue, const uint8 maxValue)
