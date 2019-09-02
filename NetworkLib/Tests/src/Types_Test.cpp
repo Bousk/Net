@@ -1,6 +1,8 @@
 #include <Types_Test.hpp>
 #include <Tester.hpp>
 #include <Types.hpp>
+#include <RangedInteger.hpp>
+#include <Float.hpp>
 
 void Types_Test::Test()
 {
