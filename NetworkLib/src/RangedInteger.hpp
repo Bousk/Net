@@ -21,10 +21,10 @@ namespace Bousk
 		RangedInteger() = default;
 		RangedInteger(Type v) : mValue(v) { checkValue(); }
 		template<typename OtherType>
-		RangedInteger(OtherType v) : mValue(v) { checkValue(); }
+		RangedInteger(OtherType v) : { CheckValue(v); mValue = static_cast<Type>(v); }
 		RangedInteger& operator=(Type v) { mValue = v; checkValue(); return *this; }
 		template<typename OtherType>
-		RangedInteger& operator=(OtherType v) { mValue = v; checkValue(); return *this; }
+		RangedInteger& operator=(OtherType v) { CheckValue(v); mValue = static_cast<Type>(v); return *this; }
 
 		static constexpr bool IsWithinRange(Type v) { return (v >= Min() && v <= Max()); }
 		template<typename OtherType>
@@ -38,6 +38,8 @@ namespace Bousk
 
 	private:
 		void checkValue() { assert(IsWithinRange(mValue)); }
+		template<typename OtherType>
+		void CheckValue(OtherType v) { assert(IsWithinRange(v)); }
 
 	private:
 		Type mValue{ Min() };
