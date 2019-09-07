@@ -86,7 +86,7 @@ void Serialization_Test::TestBasics()
 	}
 }
 
-void Serialization_Test::TestAdvanced()
+void Serialization_Test::TestBits()
 {
 	{
 		Bousk::Serialization::Serializer serializer;

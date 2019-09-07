@@ -6,10 +6,10 @@ public:
 	static void Test()
 	{
 		TestBasics();
-		TestAdvanced();
+		TestBits();
 	}
 
 private:
 	static void TestBasics();
-	static void TestAdvanced();
+	static void TestBits();
 };
