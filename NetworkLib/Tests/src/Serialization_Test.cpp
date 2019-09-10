@@ -159,7 +159,7 @@ void Serialization_Test::TestBits()
 		CHECK(deserializer.mBytesRead == 2);
 		CHECK(deserializer.mBitsRead == 1);
 		CHECK(deserializer.bufferReadBits() == 17);
-		// Write a couple bools
+		// Read a couple bools
 		READ_AND_CHECK_BOOL(true);
 		CHECK(deserializer.mBytesRead == 2);
 		CHECK(deserializer.mBitsRead == 2);
