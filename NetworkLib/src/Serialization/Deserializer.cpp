@@ -18,11 +18,11 @@ namespace Bousk
 
 			uint8 totalReadBits = 0;
 			const size_t bufferBytesToWriteTo = (nbBits / 8) + (nbBits % 8 == 0 ? 0 : 1);
-			// buffer here is in network/big endian, so bits must be write right (buffer + bufferBytesToWriteTo - 1) to left (buffer)
+			// buffer here must be in network/big endian, so bytes must be written right (buffer + bufferBytesToWriteTo - 1) to left (buffer)
 			for (uint8 writingBytesOffset = 1; writingBytesOffset <= bufferSize && totalReadBits < nbBits; ++writingBytesOffset)
 			{
 				uint8& dstByte = *(buffer + bufferBytesToWriteTo - writingBytesOffset);
-				const uint8 bitsToRead = std::min(8, nbBits - totalReadBits);
+				const uint8 bitsToRead = std::min(8_u8, static_cast<uint8>(nbBits - totalReadBits));
 				uint8 bitsRead = 0;
 				{
 					const uint8 srcByte = *(mBuffer + mBytesRead);

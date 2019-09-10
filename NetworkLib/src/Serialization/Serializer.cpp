@@ -13,7 +13,7 @@ namespace Bousk
 		{
 			static_assert(CHAR_BIT == 8, "");
 			uint8 totalWrittenBits = 0;
-			// buffer here is in network/big endian, so bits to write must be read right (buffer + buffersize - 1) to left (buffer)
+			// buffer here is in network/big endian, so bytes to write must be read right (buffer + buffersize - 1) to left (buffer)
 			for (uint8 readingBytesOffset = 1; readingBytesOffset <= buffersize && totalWrittenBits < nbBits; ++readingBytesOffset)
 			{
 				const uint8 srcByte = *(buffer + buffersize - readingBytesOffset);
