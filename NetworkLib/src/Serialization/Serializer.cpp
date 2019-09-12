@@ -17,7 +17,7 @@ namespace Bousk
 			for (uint8 readingBytesOffset = 1; readingBytesOffset <= buffersize && totalWrittenBits < nbBits; ++readingBytesOffset)
 			{
 				const uint8 srcByte = *(buffer + buffersize - readingBytesOffset);
-				const uint8 bitsToWrite = std::min(8, nbBits - totalWrittenBits);
+				const uint8 bitsToWrite = static_cast<uint8>(std::min(8, nbBits - totalWrittenBits));
 				uint8 writtenBits = 0;
 				if (mUsedBits)
 				{

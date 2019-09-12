@@ -8,7 +8,7 @@ void Types_Test::Test()
 {
 	CHECK(Bousk::UInt8<0, 255>::Min() == 0);
 	CHECK(Bousk::UInt8<0, 255>::Max() == 255);
-	//Bousk::UInt8<0, 352> impossibleVariable;
+	//Bousk::UInt8<0, 352> impossibleVariable; // Compile error if uncommented
 	CHECK(!Bousk::UInt8<0, 42>::IsWithinRange(51));
 
 	{
@@ -16,21 +16,27 @@ void Types_Test::Test()
 		var = 13;
 		//var = 51; // Runtime error
 	}
+	{
+		using namespace Bousk::Literals;
+		Bousk::int8 value1 = -8_i8;
+		CHECK(value1 == -8);
+		STATIC_CHECK(-42_i8 == -42);
+	}
 
-	CHECK(Bousk::NbBits<1>::Value == 1);
-	CHECK(Bousk::NbBits<3>::Value == 2);
-	CHECK(Bousk::NbBits<4>::Value == 3);
-	CHECK(Bousk::NbBits<5>::Value == 3);
-	CHECK(Bousk::NbBits<8>::Value == 4);
-	CHECK(Bousk::NbBits<12>::Value == 4);
-	CHECK(Bousk::NbBits<16>::Value == 5);
-	CHECK(Bousk::NbBits<127>::Value == 7);
-	CHECK(Bousk::NbBits<255>::Value == 8);
-	CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint16>::max()>::Value == 16);
-	CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint16>::max() / 2>::Value == 15);
-	CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint16>::max() / 2 + 1>::Value == 16);
-	CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint32>::max()>::Value == 32);
-	CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint64>::max()>::Value == 64);
+	STATIC_CHECK(Bousk::NbBits<1>::Value == 1);
+	STATIC_CHECK(Bousk::NbBits<3>::Value == 2);
+	STATIC_CHECK(Bousk::NbBits<4>::Value == 3);
+	STATIC_CHECK(Bousk::NbBits<5>::Value == 3);
+	STATIC_CHECK(Bousk::NbBits<8>::Value == 4);
+	STATIC_CHECK(Bousk::NbBits<12>::Value == 4);
+	STATIC_CHECK(Bousk::NbBits<16>::Value == 5);
+	STATIC_CHECK(Bousk::NbBits<127>::Value == 7);
+	STATIC_CHECK(Bousk::NbBits<255>::Value == 8);
+	STATIC_CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint16>::max()>::Value == 16);
+	STATIC_CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint16>::max() / 2>::Value == 15);
+	STATIC_CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint16>::max() / 2 + 1>::Value == 16);
+	STATIC_CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint32>::max()>::Value == 32);
+	STATIC_CHECK(Bousk::NbBits<std::numeric_limits<Bousk::uint64>::max()>::Value == 64);
 
 	{
 		Bousk::Float<Bousk::float32, 0, 1, 2> f;

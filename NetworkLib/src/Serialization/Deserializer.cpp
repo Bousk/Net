@@ -22,7 +22,7 @@ namespace Bousk
 			for (uint8 writingBytesOffset = 1; writingBytesOffset <= bufferSize && totalReadBits < nbBits; ++writingBytesOffset)
 			{
 				uint8& dstByte = *(buffer + bufferBytesToWriteTo - writingBytesOffset);
-				const uint8 bitsToRead = std::min(8_u8, static_cast<uint8>(nbBits - totalReadBits));
+				const uint8 bitsToRead = static_cast<uint8>(std::min(8, nbBits - totalReadBits));
 				uint8 bitsRead = 0;
 				{
 					const uint8 srcByte = *(mBuffer + mBytesRead);
