@@ -22,7 +22,7 @@ namespace Bousk
 				return false;
 
 			uint8 totalReadBits = 0;
-			// buffer here must be in network/big endian, so bytes must be written right (buffer + bufferBytesToWriteTo - 1) to left (buffer)
+			// buffer here must be in network/big endian, so bytes must be written right (buffer + bufferSize - 1) to left (buffer)
 			for (uint8 writingBytesOffset = 1; writingBytesOffset <= bufferSize && totalReadBits < nbBits; ++writingBytesOffset)
 			{
 				uint8& dstByte = *(buffer + bufferSize - writingBytesOffset);
