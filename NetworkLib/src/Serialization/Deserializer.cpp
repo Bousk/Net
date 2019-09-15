@@ -9,6 +9,11 @@ namespace Bousk
 {
 	namespace Serialization
 	{
+		bool Deserializer::read(Serializable& data)
+		{
+			return data.read(*this);
+		}
+
 		bool Deserializer::readBits(const uint8 nbBits, uint8* const buffer, const uint8 bufferSize)
 		{
 			static_assert(CHAR_BIT == 8, "");
@@ -17,11 +22,10 @@ namespace Bousk
 				return false;
 
 			uint8 totalReadBits = 0;
-			const size_t bufferBytesToWriteTo = (nbBits / 8) + (nbBits % 8 == 0 ? 0 : 1);
 			// buffer here must be in network/big endian, so bytes must be written right (buffer + bufferBytesToWriteTo - 1) to left (buffer)
 			for (uint8 writingBytesOffset = 1; writingBytesOffset <= bufferSize && totalReadBits < nbBits; ++writingBytesOffset)
 			{
-				uint8& dstByte = *(buffer + bufferBytesToWriteTo - writingBytesOffset);
+				uint8& dstByte = *(buffer + bufferSize - writingBytesOffset);
 				const uint8 bitsToRead = static_cast<uint8>(std::min(8, nbBits - totalReadBits));
 				uint8 bitsRead = 0;
 				{

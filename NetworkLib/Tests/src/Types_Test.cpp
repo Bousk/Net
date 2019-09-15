@@ -9,7 +9,8 @@ void Types_Test::Test()
 	CHECK(Bousk::UInt8<0, 255>::Min() == 0);
 	CHECK(Bousk::UInt8<0, 255>::Max() == 255);
 	//Bousk::UInt8<0, 352> impossibleVariable; // Compile error if uncommented
-	CHECK(!Bousk::UInt8<0, 42>::IsWithinRange(51));
+	STATIC_CHECK(!Bousk::UInt8<0, 42>::IsWithinRange(51));
+	//STATIC_CHECK(Bousk::UInt8<0, 42>::IsWithinRange(-8)); // Compile error if uncommented
 
 	{
 		Bousk::UInt8<0, 42> var;
@@ -21,6 +22,12 @@ void Types_Test::Test()
 		Bousk::int8 value1 = -8_i8;
 		CHECK(value1 == -8);
 		STATIC_CHECK(-42_i8 == -42);
+		Bousk::UInt16<42, 666> value2;
+		//value2 = value1; // Runtime error
+		//Bousk::int32 value3 = 12345;
+		//value2 = value3; // Runtime error
+		Bousk::int32 value4 = 55;
+		value2 = value4;
 	}
 
 	STATIC_CHECK(Bousk::NbBits<1>::Value == 1);

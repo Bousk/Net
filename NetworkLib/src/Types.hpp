@@ -73,4 +73,39 @@ namespace Bousk
 		};
 		static constexpr uint32 Value = InternalPow<EXPONENT>::Value;
 	};
+
+	template<char...> struct ToInt;
+	template<>
+	struct ToInt<>
+	{
+		static constexpr int Value = 0;
+	};
+	template<char C>
+	struct ToInt<C>
+	{
+		static_assert(C == '0' || C == '1' || C == '2' || C == '3' || C == '4' || C == '5' || C == '6' || C == '7' || C == '8' || C == '9', "Unexpected value");
+		static constexpr int Value = C - '0';
+	};
+	template<char C, char... VALUES>
+	struct ToInt<C, VALUES...>
+	{
+		static constexpr int Value = ToInt<C>::Value * Pow<10, sizeof...(VALUES)>::Value + ToInt<VALUES...>::Value;
+	};
+
+#define DEFINE_INTEGER_LITERAL(SUFFIX, INTERNALTYPE)	\
+	template<char... VALUES>							\
+	constexpr INTERNALTYPE operator "" SUFFIX() { static_assert(ToInt<VALUES...>::Value >= std::numeric_limits<INTERNALTYPE>::min() && ToInt<VALUES...>::Value <= std::numeric_limits<INTERNALTYPE>::max(), ""); return static_cast<INTERNALTYPE>(ToInt<VALUES...>::Value); }
+
+	namespace Literals
+	{
+		DEFINE_INTEGER_LITERAL(_i8, int8);
+		DEFINE_INTEGER_LITERAL(_i16, int16);
+		DEFINE_INTEGER_LITERAL(_i32, int32);
+
+		DEFINE_INTEGER_LITERAL(_u8, uint8);
+		DEFINE_INTEGER_LITERAL(_u16, uint16);
+		DEFINE_INTEGER_LITERAL(_u32, uint32);
+	}
+
+#undef DEFINE_INTEGER_LITERAL
 }

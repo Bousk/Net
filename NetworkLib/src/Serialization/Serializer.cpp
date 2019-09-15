@@ -9,6 +9,11 @@ namespace Bousk
 {
 	namespace Serialization
 	{
+		bool Serializer::write(const Serializable& serializable)
+		{
+			return serializable.write(*this);
+		}
+
 		bool Serializer::writeBits(const uint8* const buffer, const uint8 buffersize, const uint8 nbBits)
 		{
 			static_assert(CHAR_BIT == 8, "");

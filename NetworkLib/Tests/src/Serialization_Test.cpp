@@ -5,6 +5,8 @@
 
 #include <Serialization/Serializer.hpp>
 #include <Serialization/Deserializer.hpp>
+#include <RangedInteger.hpp>
+#include <Float.hpp>
 
 #include <string>
 #include <vector>
@@ -175,5 +177,24 @@ void Serialization_Test::TestBits()
 		CHECK(deserializer.bufferReadBits() == 32);
 #undef READ_AND_CHECK
 #undef READ_AND_CHECK_BOOL
+	}
+}
+
+void Serialization_Test::TestAdvanced()
+{
+	{
+		Bousk::Serialization::Serializer serializer;
+		std::vector<Bousk::UInt8<0, 42>> vec{ 0, 2, 4, 8, 16, 32 };
+		Bousk::Float<Bousk::float32, -5, 5, 3> fv = -2.048f;
+		CHECK(serializer.write(vec));
+		CHECK(serializer.write(fv));
+
+		Bousk::Serialization::Deserializer deserializer(serializer.buffer(), serializer.bufferSize());
+		std::vector<Bousk::UInt8<0, 42>> vec2;
+		Bousk::Float<Bousk::float32, -5, 5, 3> fv2;
+		CHECK(deserializer.read(vec2));
+		CHECK(deserializer.read(fv2));
+		CHECK(vec == vec2);
+		CHECK(fv == fv2);
 	}
 }

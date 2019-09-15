@@ -7,9 +7,11 @@ public:
 	{
 		TestBasics();
 		TestBits();
+		TestAdvanced();
 	}
 
 private:
 	static void TestBasics();
 	static void TestBits();
+	static void TestAdvanced();
 };

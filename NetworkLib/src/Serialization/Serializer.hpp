@@ -10,11 +10,14 @@ namespace Bousk
 {
 	namespace Serialization
 	{
+		class Serializable;
 		class Serializer
 		{
 			friend class Serialization_Test;
 		public:
 			Serializer() = default;
+
+			bool write(const Serializable& serializable);
 
 			bool write(uint8 data, uint8 minValue, uint8 maxValue);
 			bool write(uint16 data, uint16 minValue, uint16 maxValue);

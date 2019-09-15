@@ -10,6 +10,7 @@ namespace Bousk
 {
 	namespace Serialization
 	{
+		class Serializable;
 		class Deserializer
 		{
 			friend class Serialization_Test;
@@ -18,6 +19,8 @@ namespace Bousk
 				: mBuffer(buffer)
 				, mBufferSize(bufferSize)
 			{}
+
+			bool read(Serializable& data);
 
 			bool read(uint8& data, uint8 minValue, uint8 maxValue);
 			bool read(uint16& data, uint16 minValue, uint16 maxValue);
