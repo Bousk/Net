@@ -145,6 +145,16 @@ void Serialization_Test::TestBits()
 		CHECK(serializer.mBuffer[1] == 0b10100010);
 		CHECK(serializer.mBuffer[2] == 0b11011010);
 		CHECK(serializer.mBuffer[3] == 0b10011101);
+		// Write a 9 bits uint32
+		CHECK(WRITE_AS(Bousk::uint32, 123, 0, 256));
+		CHECK(serializer.bufferSize() == 6);
+		CHECK(serializer.mUsedBits == 1);
+		CHECK(serializer.mBuffer[0] == 0b00000101);
+		CHECK(serializer.mBuffer[1] == 0b10100010);
+		CHECK(serializer.mBuffer[2] == 0b11011010);
+		CHECK(serializer.mBuffer[3] == 0b10011101);
+		CHECK(serializer.mBuffer[4] == 0b01111011);
+		CHECK(serializer.mBuffer[5] == 0b00000000);
 #undef WRITE_AS
 
 		Bousk::Serialization::Deserializer deserializer(serializer.buffer(), serializer.bufferSize());
@@ -187,6 +197,11 @@ void Serialization_Test::TestBits()
 		CHECK(deserializer.mBytesRead == 4);
 		CHECK(deserializer.mBitsRead == 0);
 		CHECK(deserializer.bufferReadBits() == 32);
+		// 9 bits uint32
+		READ_AND_CHECK(Bousk::int32, 123, 0, 256);
+		CHECK(deserializer.mBytesRead == 5);
+		CHECK(deserializer.mBitsRead == 1);
+		CHECK(deserializer.bufferReadBits() == 41);
 #undef READ_AND_CHECK
 #undef READ_AND_CHECK_BOOL
 	}
