@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Settings.hpp>
 #include <Types.hpp>
 
 #include <string>
@@ -35,7 +36,9 @@ namespace Bousk
 
 			inline bool write(bool data) { return write(data ? BoolTrue : BoolFalse, static_cast<uint8>(0), static_cast<uint8>(1)); }
 			
+		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 			bool write(float32 data);
+		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 
 			template<class T>
 			inline bool write(const std::vector<T>& data) { return writeContainer(data); }

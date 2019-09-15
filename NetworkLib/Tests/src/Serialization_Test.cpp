@@ -42,7 +42,9 @@ void Serialization_Test::TestBasics()
 		{
 			Bousk::int8 value1;
 			Bousk::uint32 value2;
+		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 			Bousk::float32 value3;
+		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 			std::vector<Bousk::uint16> vector;
 			std::string string;
 			std::vector<std::string> vecStr;
@@ -50,7 +52,9 @@ void Serialization_Test::TestBasics()
 			{
 				return serializer.write(value1)
 					&& serializer.write(value2)
+				#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 					&& serializer.write(value3)
+				#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 					&& serializer.write(vector)
 					&& serializer.write(string)
 					&& serializer.write(vecStr);
@@ -59,7 +63,9 @@ void Serialization_Test::TestBasics()
 			{
 				return deserializer.read(value1)
 					&& deserializer.read(value2)
+				#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 					&& deserializer.read(value3)
+				#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 					&& deserializer.read(vector)
 					&& deserializer.read(string)
 					&& deserializer.read(vecStr);
@@ -68,14 +74,20 @@ void Serialization_Test::TestBasics()
 			{
 				return value1 == other.value1
 					&& value2 == other.value2
+				#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 					&& std::abs(value3 - other.value3) <= std::numeric_limits<Bousk::float32>::epsilon()
+				#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 					&& vector == other.vector
 					&& string == other.string
 					&& vecStr == other.vecStr;
 			}
 		};
 
-		const MyFirstMessage origin_msg = { -37, 123456, 13.589f, {42, 349, 2895, 16578}, "toto va se baigner", {"toto", "mange", "un", "bonbon"} };
+		const MyFirstMessage origin_msg = { -37, 123456
+		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+			, 13.589f
+		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+			, {42, 349, 2895, 16578}, "toto va se baigner", {"toto", "mange", "un", "bonbon"} };
 
 		Bousk::Serialization::Serializer serializer;
 		CHECK(origin_msg.serialize(serializer));

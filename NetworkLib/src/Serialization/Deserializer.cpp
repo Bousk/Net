@@ -171,6 +171,7 @@ namespace Bousk
 			return false;
 		}
 
+	#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 		bool Deserializer::read(float32& data)
 		{
 			uint32 conv = 0;
@@ -181,5 +182,6 @@ namespace Bousk
 			}
 			return false;
 		}
+	#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 	}
 }

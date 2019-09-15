@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Settings.hpp>
 #include <Types.hpp>
 
 #include <string>
@@ -38,7 +39,9 @@ namespace Bousk
 
 			bool read(bool& data);
 
+		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 			bool read(float32& data);
+		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 
 			template<class T>
 			inline bool read(std::vector<T>& data) { return readContainer(data); }
