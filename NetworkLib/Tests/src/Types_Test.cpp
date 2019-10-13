@@ -11,11 +11,15 @@ void Types_Test::Test()
 	//Bousk::UInt8<0, 352> impossibleVariable; // Compile error if uncommented
 	STATIC_CHECK(!Bousk::UInt8<0, 42>::IsWithinRange(51));
 	//STATIC_CHECK(Bousk::UInt8<0, 42>::IsWithinRange(-8)); // Compile error if uncommented
+	STATIC_CHECK(Bousk::UInt8<>::Min() == std::numeric_limits<Bousk::uint8>::min());
+	STATIC_CHECK(Bousk::UInt8<>::Max() == std::numeric_limits<Bousk::uint8>::max());
 
 	{
 		Bousk::UInt8<0, 42> var;
 		var = 13;
 		//var = 51; // Runtime error
+		Bousk::UInt8<> u8;
+		u8 = 66;
 	}
 	{
 		using namespace Bousk::Literals;

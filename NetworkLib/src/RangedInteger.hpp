@@ -9,7 +9,7 @@ namespace Bousk
 	template<typename INTERNAL_TYPE, int64 MIN, int64 MAX>
 	class RangedInteger : public Serialization::Serializable
 	{
-		static_assert(MIN < MAX, "Min & Max values must be strictly ordered.");
+		static_assert(MIN < MAX, "Min & Max values must be strictly ordered");
 		static_assert(MIN >= std::numeric_limits<INTERNAL_TYPE>::min(), "Min value out of bound");
 		static_assert(MAX <= std::numeric_limits<INTERNAL_TYPE>::max(), "Max value out of bound");
 		static constexpr bool IsInternalTypeValid = std::is_same<INTERNAL_TYPE, int8>::value
@@ -57,8 +57,8 @@ namespace Bousk
 		Type mValue{ Min() };
 	};
 
-#define DEFINE_RANGED_TYPE(NAME, INTERNALTYPE)			\
-	template<int64 MIN, int64 MAX>						\
+#define DEFINE_RANGED_TYPE(NAME, INTERNALTYPE)																				\
+	template<int64 MIN = std::numeric_limits<INTERNALTYPE>::min(), int64 MAX = std::numeric_limits<INTERNALTYPE>::max()>	\
 	using NAME = RangedInteger<INTERNALTYPE, MIN, MAX>
 
 	DEFINE_RANGED_TYPE(Int8, int8);

@@ -10,10 +10,11 @@ namespace Bousk
 	template<class FLOATTYPE, int32 MIN, int32 MAX, uint8 NBDECIMALS, uint8 STEP = 1 >
 	class Float : public Serialization::Serializable
 	{
-		static_assert(NBDECIMALS > 0, "At least 1 decimal.");
-		static_assert(NBDECIMALS < 10, "Maximum 10 decimals.");
-		static_assert(STEP != 0, "Step must not be 0.");
-		static_assert(STEP % 10 != 0, "Step should not be a multiple of 10. Remove a decimal.");
+		static_assert(std::is_same_v<FLOATTYPE, float32> || std::is_same_v<FLOATTYPE, float64>, "Float can only be used with float32 or float64");
+		static_assert(NBDECIMALS > 0, "At least 1 decimal");
+		static_assert(NBDECIMALS < 10, "Maximum 10 decimals");
+		static_assert(STEP != 0, "Step must not be 0");
+		static_assert(STEP % 10 != 0, "Step should not be a multiple of 10. Remove a decimal");
 		using FloatType = FLOATTYPE;
 		static constexpr int32 Min = MIN;
 		static constexpr int32 Max = MAX;
