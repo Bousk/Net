@@ -210,18 +210,28 @@ void Serialization_Test::TestBits()
 void Serialization_Test::TestAdvanced()
 {
 	{
+		enum Enum1 { Min, Entry1 = Min, Entry2, Entry3, Entry4, Max = Entry4 };
+		enum class Enum2 : Bousk::uint8 { Min, Entry1 = Min, Entry2, Entry3, Entry4, Max = Entry4 };
 		Bousk::Serialization::Serializer serializer;
 		std::vector<Bousk::UInt8<0, 42>> vec{ 0, 2, 4, 8, 16, 32 };
 		Bousk::Float<Bousk::float32, -5, 5, 3> fv = -2.048f;
 		CHECK(serializer.write(vec));
 		CHECK(serializer.write(fv));
+		CHECK(serializer.write(Enum1::Entry1));
+		CHECK(serializer.write(Enum2::Entry3));
 
 		Bousk::Serialization::Deserializer deserializer(serializer.buffer(), serializer.bufferSize());
 		std::vector<Bousk::UInt8<0, 42>> vec2;
-		Bousk::Float<Bousk::float32, -5, 5, 3> fv2;
 		CHECK(deserializer.read(vec2));
-		CHECK(deserializer.read(fv2));
 		CHECK(vec == vec2);
+		Bousk::Float<Bousk::float32, -5, 5, 3> fv2;
+		CHECK(deserializer.read(fv2));
 		CHECK(fv == fv2);
+		Enum1 e1;
+		CHECK(deserializer.read(e1));
+		CHECK(e1 == Enum1::Entry1);
+		Enum2 e2;
+		CHECK(deserializer.read(e2));
+		CHECK(e2 == Enum2::Entry3);
 	}
 }

@@ -39,6 +39,19 @@ namespace Bousk
 
 			bool read(bool& data);
 
+			template<class E>
+			typename std::enable_if<std::is_enum<E>::value, bool>::type read(E& data)
+			{
+				using T = std::underlying_type<E>::type;
+				T temp{};
+				if (read(temp, static_cast<T>(E::Min), static_cast<T>(E::Max)))
+				{
+					data = static_cast<E>(temp);
+					return true;
+				}
+				return false;
+			}
+
 		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 			bool read(float32& data);
 		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION

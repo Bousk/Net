@@ -35,6 +35,13 @@ namespace Bousk
 			inline bool write(int32 data) { return write(data, std::numeric_limits<int32>::min(), std::numeric_limits<int32>::max()); }
 
 			inline bool write(bool data) { return write(data ? BoolTrue : BoolFalse, static_cast<uint8>(0), static_cast<uint8>(1)); }
+
+			template<class E>
+			typename std::enable_if<std::is_enum<E>::value, bool>::type write(E value)
+			{
+				using T = std::underlying_type<E>::type;
+				return write(static_cast<T>(value), static_cast<T>(E::Min), static_cast<T>(E::Max));
+			}
 			
 		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
 			bool write(float32 data);
