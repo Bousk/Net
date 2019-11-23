@@ -123,6 +123,23 @@ namespace Bousk
 			return false;
 		}
 
+		bool Deserializer::read(uint64& data, uint64 minValue, uint64 maxValue)
+		{
+			assert(minValue < maxValue);
+			const uint64 range = maxValue - minValue;
+			uint8 bytesRead[8]{ 0 };
+			if (readBits(Utils::CountNeededBits(range), bytesRead, 8))
+			{
+				Conversion::ToLocal(bytesRead, data);
+				if (data <= range)
+				{
+					data += minValue;
+					return true;
+				}
+			}
+			return false;
+		}
+
 		bool Deserializer::read(int8& data, const int8 minValue, const int8 maxValue)
 		{
 			static_assert(sizeof(int8) == sizeof(uint8), "");
@@ -153,6 +170,18 @@ namespace Bousk
 			assert(minValue < maxValue);
 			const uint32 range = static_cast<uint32>(maxValue - minValue);
 			if (read(reinterpret_cast<uint32&>(data), 0, range))
+			{
+				data += minValue;
+				return true;
+			}
+			return false;
+		}
+		bool Deserializer::read(int64& data, int64 minValue, int64 maxValue)
+		{
+			static_assert(sizeof(int64) == sizeof(uint64), "");
+			assert(minValue < maxValue);
+			const uint64 range = static_cast<uint64>(maxValue - minValue);
+			if (read(reinterpret_cast<uint64&>(data), 0, range))
 			{
 				data += minValue;
 				return true;

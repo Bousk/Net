@@ -71,9 +71,9 @@ namespace Bousk
 			assert(minValue <= data && data <= maxValue);
 			const uint16 rangedData = data - minValue;
 			const uint16 range = maxValue - minValue;
-			uint16 conv;
+			uint8 conv[2];
 			Conversion::ToNetwork(rangedData, conv);
-			return writeBits(reinterpret_cast<const uint8*>(&conv), 2, Utils::CountNeededBits(range));
+			return writeBits(conv, 2, Utils::CountNeededBits(range));
 		}
 		bool Serializer::write(const uint32 data, const uint32 minValue, const uint32 maxValue)
 		{
@@ -81,9 +81,19 @@ namespace Bousk
 			assert(minValue <= data && data <= maxValue);
 			const uint32 rangedData = data - minValue;
 			const uint32 range = maxValue - minValue;
-			uint32 conv;
+			uint8 conv[4];
 			Conversion::ToNetwork(rangedData, conv);
-			return writeBits(reinterpret_cast<const uint8*>(&conv), 4, Utils::CountNeededBits(range));
+			return writeBits(conv, 4, Utils::CountNeededBits(range));
+		}
+		bool Serializer::write(uint64 data, uint64 minValue, uint64 maxValue)
+		{
+			assert(minValue < maxValue);
+			assert(minValue <= data && data <= maxValue);
+			const uint64 rangedData = data - minValue;
+			const uint64 range = maxValue - minValue;
+			uint8 conv[8];
+			Conversion::ToNetwork(rangedData, conv);
+			return writeBits(conv, 8, Utils::CountNeededBits(range));
 		}
 
 		bool Serializer::write(const int8 data, const int8 minValue, const int8 maxValue)
@@ -112,6 +122,15 @@ namespace Bousk
 			const uint32 rangedData = static_cast<uint32>(data - minValue);
 			const uint32 range = static_cast<uint32>(maxValue - minValue);
 			return write(rangedData, static_cast<uint32>(0), range);
+		}
+		bool Serializer::write(int64 data, int64 minValue, int64 maxValue)
+		{
+			static_assert(sizeof(int64) == sizeof(uint64), "");
+			assert(minValue < maxValue);
+			assert(minValue <= data && data <= maxValue);
+			const uint64 rangedData = static_cast<uint64>(data - minValue);
+			const uint64 range = static_cast<uint64>(maxValue - minValue);
+			return write(rangedData, static_cast<uint64>(0), range);
 		}
 
 	#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION

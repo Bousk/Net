@@ -21,6 +21,18 @@ namespace Bousk
 			{
 				to = htonl(from);
 			}
+			void ToNetwork(uint64 in, uint64& out)
+			{
+				out = static_cast<uint8>((in >> 56) & 0xFF)
+					| static_cast<uint8>((in >> 48) & 0xFF)
+					| static_cast<uint8>((in >> 40) & 0xFF)
+					| static_cast<uint8>((in >> 32) & 0xFF)
+					| static_cast<uint8>((in >> 24) & 0xFF)
+					| static_cast<uint8>((in >> 16) & 0xFF)
+					| static_cast<uint8>((in >> 8) & 0xFF)
+					| static_cast<uint8>((in >> 0) & 0xFF)
+					;
+			}
 			
 			void ToNetwork(const uint16 in, uint8 out[2])
 			{
@@ -34,6 +46,17 @@ namespace Bousk
 				out[2] = static_cast<uint8>((in >> 8) & 0xFF);
 				out[3] = static_cast<uint8>((in >> 0) & 0xFF);
 			}
+			void ToNetwork(uint64 in, uint8 out[8])
+			{
+				out[0] = static_cast<uint8>((in >> 56) & 0xFF);
+				out[1] = static_cast<uint8>((in >> 48) & 0xFF);
+				out[2] = static_cast<uint8>((in >> 40) & 0xFF);
+				out[3] = static_cast<uint8>((in >> 32) & 0xFF);
+				out[4] = static_cast<uint8>((in >> 24) & 0xFF);
+				out[5] = static_cast<uint8>((in >> 16) & 0xFF);
+				out[6] = static_cast<uint8>((in >> 8) & 0xFF);
+				out[7] = static_cast<uint8>((in >> 0) & 0xFF);
+			}
 
 			void ToLocal(const uint16 from, uint16& to)
 			{
@@ -42,6 +65,19 @@ namespace Bousk
 			void ToLocal(const uint32 from, uint32& to)
 			{
 				to = ntohl(from);
+			}
+			void ToLocal(uint64 in, uint64& out)
+			{
+				const uint8* inBuffer = reinterpret_cast<const uint8*>(&in);
+				out = static_cast<uint64>(inBuffer[0]) << 56
+					| static_cast<uint64>(inBuffer[1]) << 48
+					| static_cast<uint64>(inBuffer[2]) << 40
+					| static_cast<uint64>(inBuffer[3]) << 32
+					| static_cast<uint64>(inBuffer[4]) << 24
+					| static_cast<uint64>(inBuffer[5]) << 16
+					| static_cast<uint64>(inBuffer[6]) << 8
+					| static_cast<uint64>(inBuffer[7]) << 0
+					;
 			}
 
 			// Buffers from network are always Big-Endian (Network-Endian)
@@ -55,6 +91,12 @@ namespace Bousk
 			{
 				uint32 tmp;
 				memcpy(&tmp, in, 4);
+				ToLocal(tmp, out);
+			}
+			void ToLocal(const uint8 in[8], uint64& out)
+			{
+				uint64 tmp;
+				memcpy(&tmp, in, 8);
 				ToLocal(tmp, out);
 			}
 
