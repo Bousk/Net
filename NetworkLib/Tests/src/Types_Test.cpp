@@ -6,19 +6,18 @@
 
 void Types_Test::Test()
 {
-	CHECK(Bousk::UInt8<0, 255>::Min() == 0);
-	CHECK(Bousk::UInt8<0, 255>::Max() == 255);
-	//Bousk::UInt8<0, 352> impossibleVariable; // Compile error if uncommented
-	STATIC_CHECK(!Bousk::UInt8<0, 42>::IsWithinRange(51));
-	//STATIC_CHECK(Bousk::UInt8<0, 42>::IsWithinRange(-8)); // Compile error if uncommented
-	STATIC_CHECK(Bousk::UInt8<>::Min() == std::numeric_limits<Bousk::uint8>::min());
-	STATIC_CHECK(Bousk::UInt8<>::Max() == std::numeric_limits<Bousk::uint8>::max());
+	CHECK(Bousk::RangedInteger<0, 255>::Min() == 0);
+	CHECK(Bousk::RangedInteger<0, 255>::Max() == 255);
+	STATIC_CHECK(!Bousk::RangedInteger<0, 42>::IsWithinRange(51));
+	STATIC_CHECK(!Bousk::RangedInteger<0, 42>::IsWithinRange(-8));
+	STATIC_CHECK(Bousk::UInt8::Min() == std::numeric_limits<Bousk::uint8>::min());
+	STATIC_CHECK(Bousk::UInt8::Max() == std::numeric_limits<Bousk::uint8>::max());
 
 	{
-		Bousk::UInt8<0, 42> var;
+		Bousk::RangedInteger<0, 42> var;
 		var = 13;
 		//var = 51; // Runtime error
-		Bousk::UInt8<> u8;
+		Bousk::UInt8 u8;
 		u8 = 66;
 	}
 	{
@@ -26,7 +25,7 @@ void Types_Test::Test()
 		Bousk::int8 value1 = -8_i8;
 		CHECK(value1 == -8);
 		STATIC_CHECK(-42_i8 == -42);
-		Bousk::UInt16<42, 666> value2;
+		Bousk::RangedInteger<42, 666> value2;
 		//value2 = value1; // Runtime error
 		//Bousk::int32 value3 = 12345;
 		//value2 = value3; // Runtime error

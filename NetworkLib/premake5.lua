@@ -17,6 +17,7 @@ function CreateProject(path)
 	project(prettypath)
 		kind "ConsoleApp"
 		language "C++"
+		cppdialect "c++17"
 		-- architecture "x64"
 		targetdir (path .. "/%{cfg.buildcfg}")
 		files { path.."/*.hpp", path.."/*.cpp", path.."/*.inl" }

@@ -1,5 +1,6 @@
 #pragma once
 
+#define NOMINMAX
 #include <cstdint>
 #include <cassert>
 #include <limits>
@@ -48,9 +49,9 @@ namespace Bousk
 		template<uint8 BIT>
 		struct InternalNbBits
 		{
-			static constexpr uint8 Value = std::conditional<VALUE < (Bit<uint64>::Right << BIT), Return<uint8, BIT>, InternalNbBits<BIT + 1>>::type::Value;
+			static constexpr uint8 Value = std::conditional_t<VALUE < (Bit<uint64>::Right << BIT), Return<uint8, BIT>, InternalNbBits<BIT + 1>>::Value;
 		};
-		static constexpr uint8 Value = std::conditional<VALUE >= (std::numeric_limits<uint64>::max() / 2 + 1), Return<uint8, 64>, InternalNbBits<1>>::type::Value;
+		static constexpr uint8 Value = std::conditional_t<VALUE >= (std::numeric_limits<uint64>::max() / 2 + 1), Return<uint8, 64>, InternalNbBits<1>>::Value;
 	};
 
 	template<uint8 BASE, uint8 EXPONENT>

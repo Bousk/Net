@@ -44,6 +44,6 @@ namespace Bousk
 		bool read(Serialization::Deserializer& deserializer) override { return mQuantizedValue.read(deserializer); }
 
 	private:
-		UInt32<0, Domain> mQuantizedValue;
+		RangedInteger<0, Domain> mQuantizedValue;
 	};
 }

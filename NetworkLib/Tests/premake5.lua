@@ -35,6 +35,7 @@ end
 workspace "NetworkLib_Test"
 	configurations { "Debug", "Release" }
 	architecture "x64"
+	cppdialect "c++17"
 	location("./Projects/" .. _ACTION)
 CreateNetworkLib_Test("../")
 CreateNetworkLib("../")

@@ -209,11 +209,43 @@ void Serialization_Test::TestBits()
 
 void Serialization_Test::TestAdvanced()
 {
+	STATIC_CHECK(std::is_same_v<Bousk::Biggest<Bousk::uint8, Bousk::uint8>::Type, Bousk::uint8>);
+	STATIC_CHECK(std::is_same_v<Bousk::Biggest<Bousk::uint8, Bousk::uint32>::Type, Bousk::uint32>);
+	STATIC_CHECK(std::is_same_v<Bousk::Biggest<Bousk::int16, Bousk::uint64>::Type, Bousk::uint64>);
+	STATIC_CHECK(std::is_same_v<Bousk::HoldingType<Bousk::uint8, Bousk::uint8>::Type, Bousk::uint8>);
+	STATIC_CHECK(std::is_same_v<Bousk::HoldingType<Bousk::uint8, Bousk::uint16>::Type, Bousk::uint16>);
+	STATIC_CHECK(std::is_same_v<Bousk::HoldingType<Bousk::uint8, Bousk::int16>::Type, Bousk::int16>);
+	STATIC_CHECK(std::is_same_v<Bousk::Biggest<Bousk::int8, Bousk::uint16>::Type, Bousk::uint16>);
+	STATIC_CHECK(std::is_same_v<Bousk::HoldingType<Bousk::int8, Bousk::uint16>::Type, Bousk::int32>);
+	STATIC_CHECK(std::is_same_v<Bousk::ExtractType<1, false>::Type, Bousk::int8>);
+	STATIC_CHECK(std::is_same_v<Bousk::ExtractType<1, true>::Type, Bousk::uint8>);
+	STATIC_CHECK(std::is_same_v<Bousk::ExtractType<200, false>::Type, Bousk::int16>);
+	STATIC_CHECK(std::is_same_v<Bousk::ExtractType<200, true>::Type, Bousk::uint8>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<-1, 1>::MinType, Bousk::int8>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<-1, 1>::MaxType, Bousk::int8>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<-1, 1>::Type, Bousk::int8>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<-1, 200>::MinType, Bousk::int8>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<-1, 200>::MaxType, Bousk::int16>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<-1, 200>::Type, Bousk::int16>);
+	STATIC_CHECK(std::is_same_v<Bousk::ExtractType<std::numeric_limits<Bousk::int32>::min(), false>::Type, Bousk::int32>);
+	STATIC_CHECK(std::is_same_v<Bousk::ExtractType<std::numeric_limits<Bousk::int64>::max(), false>::Type, Bousk::int64>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<std::numeric_limits<Bousk::int32>::min(), std::numeric_limits<Bousk::int32>::max()>::Type, Bousk::int32>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<std::numeric_limits<Bousk::int32>::min(), std::numeric_limits<Bousk::int64>::max()>::Type, Bousk::int64>);
+	STATIC_CHECK(std::is_same_v<Bousk::RangedInteger<std::numeric_limits<Bousk::int32>::min(), std::numeric_limits<Bousk::int64>::max()>::Type, Bousk::int64>);
+	STATIC_CHECK(std::is_same_v<Bousk::RangedInteger<std::numeric_limits<Bousk::int64>::min(), std::numeric_limits<Bousk::int64>::max()>::Type, Bousk::int64>);
+	STATIC_CHECK(Bousk::RangedInteger<std::numeric_limits<Bousk::int32>::min(), std::numeric_limits<Bousk::int64>::max()>::IsWithinRange(42));
+	STATIC_CHECK(Bousk::RangedInteger<std::numeric_limits<Bousk::int64>::min(), std::numeric_limits<Bousk::int64>::max()>::IsWithinRange(42));
+	STATIC_CHECK(!Bousk::RangedInteger<std::numeric_limits<Bousk::int64>::min(), std::numeric_limits<Bousk::int64>::max()>::IsWithinRange(std::numeric_limits<Bousk::uint64>::max()));
+	STATIC_CHECK(std::is_same_v<Bousk::HoldingType<Bousk::int64, Bousk::uint64>::Type, void>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<std::numeric_limits<Bousk::int64>::min(), std::numeric_limits<Bousk::uint64>::max()>::MinType, Bousk::int64>);
+	STATIC_CHECK(std::is_same_v<Bousk::FittingType<std::numeric_limits<Bousk::int64>::min(), std::numeric_limits<Bousk::uint64>::max()>::MaxType, Bousk::uint64>);
+	STATIC_CHECK(!Bousk::FittingType<std::numeric_limits<Bousk::int64>::min(), std::numeric_limits<Bousk::uint64>::max()>::IsPossible);
+	//Bousk::RangedInteger<std::numeric_limits<Bousk::int64>::min(), std::numeric_limits<Bousk::uint64>::max()> impossibleVar;
 	{
 		enum Enum1 { Min, Entry1 = Min, Entry2, Entry3, Entry4, Max = Entry4 };
 		enum class Enum2 : Bousk::uint8 { Min, Entry1 = Min, Entry2, Entry3, Entry4, Max = Entry4 };
 		Bousk::Serialization::Serializer serializer;
-		std::vector<Bousk::UInt8<0, 42>> vec{ 0, 2, 4, 8, 16, 32 };
+		std::vector<Bousk::RangedInteger<0, 42>> vec{ 0, 2, 4, 8, 16, 32 };
 		Bousk::Float<Bousk::float32, -5, 5, 3> fv = -2.048f;
 		CHECK(serializer.write(vec));
 		CHECK(serializer.write(fv));
@@ -221,7 +253,7 @@ void Serialization_Test::TestAdvanced()
 		CHECK(serializer.write(Enum2::Entry3));
 
 		Bousk::Serialization::Deserializer deserializer(serializer.buffer(), serializer.bufferSize());
-		std::vector<Bousk::UInt8<0, 42>> vec2;
+		std::vector<Bousk::RangedInteger<0, 42>> vec2;
 		CHECK(deserializer.read(vec2));
 		CHECK(vec == vec2);
 		Bousk::Float<Bousk::float32, -5, 5, 3> fv2;
