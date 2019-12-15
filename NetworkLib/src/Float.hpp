@@ -11,6 +11,7 @@ namespace Bousk
 	class Float : public Serialization::Serializable
 	{
 		static_assert(std::is_same_v<FLOATTYPE, float32> || std::is_same_v<FLOATTYPE, float64>, "Float can only be used with float32 or float64");
+		static_assert(MIN < MAX, "Min & Max values must be strictly ordered");
 		static_assert(NBDECIMALS > 0, "At least 1 decimal");
 		static_assert(NBDECIMALS < 10, "Maximum 10 decimals");
 		static_assert(STEP != 0, "Step must not be 0");
