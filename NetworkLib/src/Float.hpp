@@ -46,4 +46,9 @@ namespace Bousk
 	private:
 		RangedInteger<0, Domain> mQuantizedValue;
 	};
+
+	template<int32 MIN, int32 MAX, uint8 NBDECIMALS, uint8 STEP = 1>
+	using Float32 = Float<float32, MIN, MAX, NBDECIMALS, STEP>;
+	template<int32 MIN, int32 MAX, uint8 NBDECIMALS, uint8 STEP = 1>
+	using Float64 = Float<float64, MIN, MAX, NBDECIMALS, STEP>;
 }
