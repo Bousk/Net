@@ -74,8 +74,8 @@ namespace Bousk
 
 		using MinType = typename ExtractType<MIN, (MIN >= 0)>::Type;
 		using MaxType = typename ExtractType<MAX, (MIN >= 0)>::Type;
-		// < int32 min would need a int64, > int64 max would need a uint64 : impossible
-		static constexpr bool IsPossible = !(MIN < std::numeric_limits<int32>::min() && MAX > std::numeric_limits<int64>::max()) || HoldingType<MinType, MaxType>::IsPossible;
+		// < MAX > int64 max would need a uint64, MIN < 0 would need a signe type : impossible
+		static constexpr bool IsPossible = !(MIN < 0 && MAX > std::numeric_limits<int64>::max()) || HoldingType<MinType, MaxType>::IsPossible;
 					   
 		using Type =
 			std::conditional_t<!IsPossible, void,
