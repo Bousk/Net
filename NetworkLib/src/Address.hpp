@@ -28,13 +28,23 @@ namespace Bousk
 			Address(const std::string& ip, uint16_t port);
 			Address(const sockaddr_storage& addr);
 
-			Type GetType() const { return mType; }
-			uint16 GetPort() const { return mPort; }
+			static Address Any(Type type, uint16 port);
+
+			inline Type GetType() const { return mType; }
+			inline uint16 GetPort() const { return mPort; }
 			std::string ToString() const;
 
 			bool operator==(const Address& other) const;
 
+			// Bind the given socket to the internal address
+			int bind(SOCKET sckt) const;
+			// Send data from the given socket to the internal address
 			int sendTo(SOCKET sckt, const char* data, size_t datalen) const;
+			// Receive data from the given socket then update the internal address with the sender one
+			int recvFrom(SOCKET sckt, uint8* buffer, size_t bufferSize);
+
+		private:
+			void set(const sockaddr_storage& src);
 
 		private:
 			sockaddr_storage mStorage{ 0 };

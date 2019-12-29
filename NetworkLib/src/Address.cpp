@@ -66,7 +66,11 @@ namespace Bousk
 		}
 		Address::Address(const sockaddr_storage& addr)
 		{
-			memcpy(&mStorage, &addr, sizeof(mStorage));
+			set(addr);
+		}
+		void Address::set(const sockaddr_storage& src)
+		{
+			memcpy(&mStorage, &src, sizeof(mStorage));
 			if (mStorage.ss_family == AF_INET)
 			{
 				mType = Type::IPv4;
@@ -81,6 +85,32 @@ namespace Bousk
 			}
 			else
 				mType = Type::None;
+		}
+
+		Address Address::Any(Type type, uint16 port)
+		{
+			switch (type)
+			{
+			case Type::IPv4:
+			{
+				sockaddr_in addr = { 0 };
+				addr.sin_addr.s_addr = INADDR_ANY;
+				addr.sin_port = htons(port);
+				addr.sin_family = AF_INET;
+				return Address(reinterpret_cast<sockaddr_storage&>(addr));
+			}
+			case Type::IPv6:
+			{
+				sockaddr_in6 addr = { 0 };
+				addr.sin6_addr = in6addr_any;
+				addr.sin6_port = htons(port);
+				addr.sin6_family = AF_INET6;
+				return Address(reinterpret_cast<sockaddr_storage&>(addr));
+			}
+			default:
+				assert(false);
+				return Address();
+			}
 		}
 
 		std::string Address::ToString() const
@@ -111,9 +141,24 @@ namespace Bousk
 			return memcmp(&reinterpret_cast<const sockaddr_in6&>(mStorage).sin6_addr, &reinterpret_cast<const sockaddr_in6&>(other.mStorage).sin6_addr, sizeof(IN6_ADDR)) == 0;
 		}
 
+		int Address::bind(SOCKET sckt) const
+		{
+			return ::bind(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage));
+		}
 		int Address::sendTo(SOCKET sckt, const char* data, size_t datalen) const
 		{
 			return sendto(sckt, data, static_cast<int>(datalen), 0, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage));
+		}
+		int Address::recvFrom(SOCKET sckt, uint8* buffer, size_t bufferSize)
+		{
+			sockaddr_in from{ 0 };
+			socklen_t fromlen = sizeof(from);
+			int ret = recvfrom(sckt, reinterpret_cast<char*>(buffer), static_cast<int>(bufferSize), 0, reinterpret_cast<sockaddr*>(&from), &fromlen);
+			if (ret >= 0)
+			{
+				set(reinterpret_cast<sockaddr_storage&>(from));
+			}
+			return ret;
 		}
 	}
 }
