@@ -53,11 +53,8 @@ namespace Bousk
 					return false;
 				}
 
-				sockaddr_in addr;
-				addr.sin_addr.s_addr = INADDR_ANY;
-				addr.sin_port = htons(_port);
-				addr.sin_family = AF_INET;
-				if (bind(mSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
+				Address addr = Address::Any(Address::Type::IPv4, _port);
+				if (!addr.bind(mSocket))
 				{
 					stop();
 					return false;
@@ -83,44 +80,39 @@ namespace Bousk
 				if (mSocket == INVALID_SOCKET)
 					return;
 
-				//!< accept jusqu'à 10 nouveaux clients
+				//!< accept up to 10 new clients each time
 				for (int accepted = 0; accepted < 10; ++accepted)
 				{
-					sockaddr_in addr = { 0 };
-					socklen_t addrlen = sizeof(addr);
-					SOCKET newClientSocket = accept(mSocket, reinterpret_cast<sockaddr*>(&addr), &addrlen);
-					if (newClientSocket == INVALID_SOCKET)
+					Address addr;
+					SOCKET newClientSocket;
+					if (!addr.accept(mSocket, newClientSocket))
 						break;
 					Client newClient;
 					if (newClient.init(std::move(newClientSocket), addr))
 					{
-						auto message = std::make_unique<Messages::Connection>(Messages::Connection::Result::Success);
-						message->idFrom = newClient.id();
-						const auto& from = newClient.destinationAddress();
-						memcpy(&(message->from), &from, sizeof(from));
+						auto message = std::make_unique<Messages::Connection>(newClient.address(), newClient.id(), Messages::Connection::Result::Success);
 						mMessages.push_back(std::move(message));
 						mClients[newClient.id()] = std::move(newClient);
 					}
 				}
 
-				//!< mise à jour des clients connectés
-				//!< réceptionne au plus 1 message par client
-				//!< supprime de la liste les clients déconnectés
+				//!< update connected clients
+				//!< receives up to 1 message per client
+				//!< remove disconnected clients
 				for (auto itClient = mClients.begin(); itClient != mClients.end(); )
 				{
 					auto& client = itClient->second;
 					auto msg = client.poll();
 					if (msg)
 					{
-						const auto& from = itClient->second.destinationAddress();
-						memcpy(&(msg->from), &from, sizeof(from));
-						msg->idFrom = itClient->second.id();
 						if (msg->is<Messages::Disconnection>())
 						{
 							itClient = mClients.erase(itClient);
 						}
 						else
+						{
 							++itClient;
+						}
 						mMessages.push_back(std::move(msg));
 					}
 					else

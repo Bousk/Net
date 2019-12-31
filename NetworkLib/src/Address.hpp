@@ -43,7 +43,7 @@ namespace Bousk
 			// Returns true if a new client has been accepted and set its socket value to newClient. False otherwise
 			bool accept(SOCKET sckt, SOCKET& newClient);
 			// Bind the given socket to the internal address
-			int bind(SOCKET sckt) const;
+			bool bind(SOCKET sckt) const;
 			// Send data from the given socket to the internal address
 			int sendTo(SOCKET sckt, const char* data, size_t datalen) const;
 			// Receive data from the given socket then update the internal address with the sender one

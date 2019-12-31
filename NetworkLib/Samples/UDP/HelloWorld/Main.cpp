@@ -9,19 +9,19 @@ int main()
 {
 	if (!Bousk::Network::Start())
 	{
-		std::cout << "Erreur initialisation WinSock : " << Bousk::Network::Errors::Get();
+		std::cout << "Network lib initialisation error : " << Bousk::Network::Errors::Get();
 		return -1;
 	}
 
 	SOCKET myFirstUdpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (myFirstUdpSocket == SOCKET_ERROR)
 	{
-		std::cout << "Erreur création socket : " << Bousk::Network::Errors::Get();
+		std::cout << "Socket creation error : " << Bousk::Network::Errors::Get();
 		return -2;
 	}
 
 	unsigned short port;
-	std::cout << "Port local ? ";
+	std::cout << "Local port ? ";
 	std::cin >> port;
 
 	sockaddr_in addr;
@@ -30,19 +30,19 @@ int main()
 	addr.sin_family = AF_INET;
 	if (bind(myFirstUdpSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0)
 	{
-		std::cout << "Erreur bind socket : " << Bousk::Network::Errors::Get();
+		std::cout << "Socket bind error : " << Bousk::Network::Errors::Get();
 		return -3;
 	}
 
 	unsigned short portDst;
-	std::cout << "Port du destinataire ? ";
+	std::cout << "Target port ? ";
 	std::cin >> portDst;
 	sockaddr_in to = { 0 };
 	inet_pton(AF_INET, "127.0.0.1", &to.sin_addr.s_addr);
 	to.sin_family = AF_INET;
 	to.sin_port = htons(portDst);
 
-	std::cout << "Entrez le texte a envoyer (vide pour quitter)> ";
+	std::cout << "Text to send (empty to quit)> ";
 	while (1)
 	{
 		std::cin.clear();
@@ -54,7 +54,7 @@ int main()
 		int ret = sendto(myFirstUdpSocket, data.data(), static_cast<int>(data.length()), 0, reinterpret_cast<const sockaddr*>(&to), sizeof(to));
 		if (ret <= 0)
 		{
-			std::cout << "Erreur envoi de données : " << Bousk::Network::Errors::Get() << ". Fermeture du programme.";
+			std::cout << "Data send error : " << Bousk::Network::Errors::Get() << ". Closing program.";
 			break;
 		}
 		char buff[1500] = { 0 };
@@ -63,10 +63,10 @@ int main()
 		ret = recvfrom(myFirstUdpSocket, buff, 1499, 0, reinterpret_cast<sockaddr*>(&from), &fromlen);
 		if (ret <= 0)
 		{
-			std::cout << "Erreur réception de données : " << Bousk::Network::Errors::Get() << ". Fermeture du programme.";
+			std::cout << "Data reception error : " << Bousk::Network::Errors::Get() << ". Closing program.";
 			break;
 		}
-		std::cout << "Recu : " << buff << " de " << Bousk::Network::GetAddress(from) << ":" << Bousk::Network::GetPort(from) << std::endl;
+		std::cout << "Received : " << buff << " from " << Bousk::Network::GetAddress(from) << ":" << Bousk::Network::GetPort(from) << std::endl;
 	}
 
 	Bousk::Network::CloseSocket(myFirstUdpSocket);

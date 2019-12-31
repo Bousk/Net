@@ -1,6 +1,7 @@
 #include "TCP/Client.hpp"
 
 #include "Sockets.hpp"
+#include "Address.hpp"
 #include "Messages.hpp"
 #include "Errors.hpp"
 
@@ -21,27 +22,22 @@ namespace Bousk
 			{
 			public:
 				ConnectionHandler() = default;
-				bool connect(SOCKET sckt, const std::string& address, unsigned short port);
+				bool connect(SOCKET sckt, const Address& address);
 				std::unique_ptr<Messages::Connection> poll();
-				const sockaddr_in& connectedAddress() const { return mConnectedAddress; }
+				const Address& connectedAddress() const { return mAddress; }
 
 			private:
 				pollfd mFd{ 0 };
-				sockaddr_in mConnectedAddress;
-				std::string mAddress;
-				unsigned short mPort;
+				Address mAddress;
 			};
-			bool ConnectionHandler::connect(SOCKET sckt, const std::string& address, unsigned short port)
+			bool ConnectionHandler::connect(SOCKET sckt, const Address& address)
 			{
 				assert(sckt != INVALID_SOCKET);
+				assert(address.isValid());
 				mAddress = address;
-				mPort = port;
 				mFd.fd = sckt;
 				mFd.events = POLLOUT;
-				inet_pton(AF_INET, mAddress.c_str(), &mConnectedAddress.sin_addr.s_addr);
-				mConnectedAddress.sin_family = AF_INET;
-				mConnectedAddress.sin_port = htons(mPort);
-				if (::connect(sckt, (const sockaddr*)&mConnectedAddress, sizeof(mConnectedAddress)) != 0)
+				if (mAddress.connect(sckt) != 0)
 				{
 					int err = Errors::Get();
 					if (err != Errors::INPROGRESS && err != Errors::WOULDBLOCK)
@@ -53,23 +49,23 @@ namespace Bousk
 			{
 				int res = ::poll(&mFd, 1, 0);
 				if (res < 0)
-					return std::make_unique<Messages::Connection>(Messages::Connection::Result::Failed);
+					return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
 				else if (res > 0)
 				{
 					if (mFd.revents & POLLOUT)
 					{
-						return std::make_unique<Messages::Connection>(Messages::Connection::Result::Success);
+						return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Success);
 					}
 					else if (mFd.revents & (POLLHUP | POLLNVAL))
 					{
-						return std::make_unique<Messages::Connection>(Messages::Connection::Result::Failed);
+						return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
 					}
 					else if (mFd.revents & POLLERR)
 					{
-						return std::make_unique<Messages::Connection>(Messages::Connection::Result::Failed);
+						return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
 					}
 				}
-				//!< action non terminée
+				//!< still in progress
 				return nullptr;
 			}
 			////////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +81,7 @@ namespace Bousk
 				};
 			public:
 				ReceptionHandler() = default;
-				void init(SOCKET sckt);
+				void init(SOCKET sckt, const Address& addr);
 				std::unique_ptr<Messages::Base> recv();
 
 			private:
@@ -97,14 +93,16 @@ namespace Bousk
 
 			private:
 				std::vector<unsigned char> mBuffer;
-				unsigned int mReceived;
+				unsigned int mReceived{ 0 };
 				SOCKET mSckt{ INVALID_SOCKET };
+				Address mAddress;
 				State mState;
 			};
-			void ReceptionHandler::init(SOCKET sckt)
+			void ReceptionHandler::init(SOCKET sckt, const Address& addr)
 			{
 				assert(sckt != INVALID_SOCKET);
 				mSckt = sckt;
+				mAddress = addr;
 				startHeaderReception();
 			}
 			void ReceptionHandler::startHeaderReception()
@@ -137,14 +135,14 @@ namespace Bousk
 					{
 						if (mState == State::Data)
 						{
-							std::unique_ptr<Messages::Base> msg = std::make_unique<Messages::UserData>(std::move(mBuffer));
+							std::unique_ptr<Messages::Base> msg = std::make_unique<Messages::UserData>(mAddress, static_cast<uint64>(mSckt), std::move(mBuffer));
 							startHeaderReception();
 							return msg;
 						}
 						else
 						{
 							startDataReception();
-							//!< si jamais les données sont déjà disponibles elles seront ainsi retournées directement
+							//!< if any data are already available they will then be returned
 							return recv();
 						}
 					}
@@ -152,12 +150,12 @@ namespace Bousk
 				}
 				else if (ret == 0)
 				{
-					//!< connexion terminée correctement
-					return std::make_unique<Messages::Disconnection>(Messages::Disconnection::Reason::Disconnected);
+					//!< connection ended properly
+					return std::make_unique<Messages::Disconnection>(mAddress, static_cast<uint64>(mSckt), Messages::Disconnection::Reason::Disconnected);
 				}
 				else // ret < 0
 				{
-					//!< traitement d'erreur
+					//!< error handling
 					int error = Errors::Get();
 					if (error == Errors::WOULDBLOCK || error == Errors::AGAIN)
 					{
@@ -165,7 +163,7 @@ namespace Bousk
 					}
 					else
 					{
-						return std::make_unique<Messages::Disconnection>(Messages::Disconnection::Reason::Lost);
+						return std::make_unique<Messages::Disconnection>(mAddress, static_cast<uint64>(mSckt), Messages::Disconnection::Reason::Lost);
 					}
 				}
 			}
@@ -246,19 +244,19 @@ namespace Bousk
 				if (mSendingBuffer.empty())
 					return true;
 
-				//!< envoi des données restantes du dernier envoi
+				//!< send remaining data from last send
 				int sent = ::send(mSocket, reinterpret_cast<char*>(mSendingBuffer.data()), static_cast<int>(mSendingBuffer.size()), 0);
 				if (sent > 0)
 				{
 					if (sent == mSendingBuffer.size())
 					{
-						//!< toutes les données ont été envoyées
+						//!< everything has been sent
 						mSendingBuffer.clear();
 						return true;
 					}
 					else
 					{
-						//!< envoi partiel
+						//!< partially sent
 						memmove(mSendingBuffer.data() + sent, mSendingBuffer.data(), sent);
 						mSendingBuffer.erase(mSendingBuffer.cbegin() + sent, mSendingBuffer.cend());
 					}
@@ -308,23 +306,25 @@ namespace Bousk
 				ClientImpl() = default;
 				~ClientImpl();
 
-				bool init(SOCKET&& sckt, const sockaddr_in& addr);
-				bool connect(const std::string& ipaddress, unsigned short port);
+				// Distant client initialisation : client on a server
+				bool init(SOCKET&& sckt, const Address& addr);
+				// Local client initialisation : connect to a server
+				bool connect(const Address& address);
 				void disconnect();
 				bool send(const unsigned char* data, unsigned int len);
 				std::unique_ptr<Messages::Base> poll();
 
-				uint64_t id() const { return static_cast<uint64_t>(mSocket); }
-				const sockaddr_in& destinationAddress() const { return mAddress; }
+				uint64 id() const { return static_cast<uint64>(mSocket); }
+				const Address& destinationAddress() const { return mAddress; }
 
 			private:
-				void onConnected(const sockaddr_in& addr);
+				void onConnected(const Address& addr);
 
 			private:
 				ConnectionHandler mConnectionHandler;
 				SendingHandler mSendingHandler;
 				ReceptionHandler mReceivingHandler;
-				sockaddr_in mAddress{ 0 };
+				Address mAddress;
 				SOCKET mSocket{ INVALID_SOCKET };
 				State mState{ State::Disconnected };
 			};
@@ -332,7 +332,7 @@ namespace Bousk
 			{
 				disconnect();
 			}
-			bool ClientImpl::init(SOCKET&& sckt, const sockaddr_in& addr)
+			bool ClientImpl::init(SOCKET&& sckt, const Address& addr)
 			{
 				assert(sckt != INVALID_SOCKET);
 				if (sckt == INVALID_SOCKET)
@@ -352,7 +352,7 @@ namespace Bousk
 				onConnected(addr);
 				return true;
 			}
-			bool ClientImpl::connect(const std::string& ipaddress, unsigned short port)
+			bool ClientImpl::connect(const Address& address)
 			{
 				assert(mState == State::Disconnected);
 				assert(mSocket == INVALID_SOCKET);
@@ -368,7 +368,7 @@ namespace Bousk
 					disconnect();
 					return false;
 				}
-				if (mConnectionHandler.connect(mSocket, ipaddress, port))
+				if (mConnectionHandler.connect(mSocket, address))
 				{
 					mState = State::Connecting;
 					return true;
@@ -427,11 +427,11 @@ namespace Bousk
 				}
 				return nullptr;
 			}
-			void ClientImpl::onConnected(const sockaddr_in& addr)
+			void ClientImpl::onConnected(const Address& addr)
 			{
 				mAddress = addr;
 				mSendingHandler.init(mSocket);
-				mReceivingHandler.init(mSocket);
+				mReceivingHandler.init(mSocket, mAddress);
 				mState = State::Connected;
 			}
 			////////////////////////////////////////////////////////////////////////////////////
@@ -449,23 +449,23 @@ namespace Bousk
 				mImpl = std::move(other.mImpl);
 				return *this;
 			}
-			bool Client::init(SOCKET&& sckt, const sockaddr_in& addr)
+			bool Client::init(SOCKET&& sckt, const Address& addr)
 			{
 				if (!mImpl)
 					mImpl = std::make_unique<ClientImpl>();
 				return mImpl && mImpl->init(std::move(sckt), addr);
 			}
-			bool Client::connect(const std::string& ipaddress, unsigned short port)
+			bool Client::connect(const Address& address)
 			{
 				if (!mImpl)
 					mImpl = std::make_unique<ClientImpl>();
-				return mImpl && mImpl->connect(ipaddress, port);
+				return mImpl && mImpl->connect(address);
 			}
 			void Client::disconnect() { if (mImpl) mImpl->disconnect(); mImpl = nullptr; }
 			bool Client::send(const unsigned char* data, unsigned int len) { return mImpl && mImpl->send(data, len); }
 			std::unique_ptr<Messages::Base> Client::poll() { return mImpl ? mImpl->poll() : nullptr; }
-			uint64_t Client::id() const { return mImpl ? mImpl->id() : -1; }
-			const sockaddr_in& Client::destinationAddress() const { static sockaddr_in empty{ 0 }; return mImpl ? mImpl->destinationAddress() : empty; }
+			uint64 Client::id() const { return mImpl ? mImpl->id() : std::numeric_limits<uint64>::max(); }
+			const Address& Client::address() const { static Address empty; return mImpl ? mImpl->destinationAddress() : empty; }
 		}
 	}
 }

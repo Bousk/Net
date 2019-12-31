@@ -160,9 +160,9 @@ namespace Bousk
 			newClient = newClientSocket;
 			return true;
 		}
-		int Address::bind(SOCKET sckt) const
+		bool Address::bind(SOCKET sckt) const
 		{
-			return ::bind(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage));
+			return ::bind(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage)) == 0;
 		}
 		int Address::sendTo(SOCKET sckt, const char* data, size_t datalen) const
 		{

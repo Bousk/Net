@@ -1,6 +1,9 @@
 #pragma once
-#include <vector>
+#include "Address.hpp"
+
 #include <cassert>
+#include <numeric>
+#include <vector>
 
 namespace Bousk
 {
@@ -8,6 +11,8 @@ namespace Bousk
 	{
 		namespace Messages
 		{
+			static constexpr uint64 InvalidEmitter = std::numeric_limits<uint64>::max();
+
 			#define DECLARE_MESSAGE(name) friend class Base; static const Base::Type StaticType = Base::Type::name
 			class Base
 			{
@@ -17,8 +22,8 @@ namespace Bousk
 				template<class M>
 				const M* as() const { assert(is<M>()); return static_cast<const M*>(this); }
 
-				sockaddr_storage from;
-				uint64_t idFrom;
+				const Address& emitter() const { return mEmitter; }
+				uint64 emmiterId() const { return mEmitterId; }
 
 			protected:
 				enum class Type {
@@ -26,10 +31,14 @@ namespace Bousk
 					Disconnection,
 					UserData,
 				};
-				Base(Type type)
+				Base(Type type, const Address& emitter, uint64 emitterid)
 					: mType(type)
+					, mEmitter(emitter)
+					, mEmitterId(emitterid)
 				{}
 			private:
+				Address mEmitter;
+				uint64 mEmitterId{ InvalidEmitter };
 				Type mType;
 			};
 			class Connection : public Base
@@ -40,8 +49,8 @@ namespace Bousk
 					Success,
 					Failed,
 				};
-				Connection(Result r)
-					: Base(Type::Connection)
+				Connection(const Address& emitter, uint64 emitterid, Result r)
+					: Base(Type::Connection, emitter, emitterid)
 					, result(r)
 				{}
 				Result result;
@@ -54,8 +63,8 @@ namespace Bousk
 					Disconnected,
 					Lost,
 				};
-				Disconnection(Reason r)
-					: Base(Type::Disconnection)
+				Disconnection(const Address& emitter, uint64 emitterid, Reason r)
+					: Base(Type::Disconnection, emitter, emitterid)
 					, reason(r)
 				{}
 				Reason reason;
@@ -64,8 +73,8 @@ namespace Bousk
 			{
 				DECLARE_MESSAGE(UserData);
 			public:
-				UserData(std::vector<unsigned char>&& d)
-					: Base(Type::UserData)
+				UserData(const Address& emitter, uint64 emitterid, std::vector<unsigned char>&& d)
+					: Base(Type::UserData, emitter, emitterid)
 					, data(std::move(d))
 				{}
 				std::vector<unsigned char> data;

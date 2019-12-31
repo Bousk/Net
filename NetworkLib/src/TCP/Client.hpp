@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sockets.hpp"
+#include "Types.hpp"
 
 #include <string>
 #include <memory>
@@ -9,6 +10,7 @@ namespace Bousk
 {
 	namespace Network
 	{
+		class Address;
 		namespace Messages {
 			class Base;
 		}
@@ -27,14 +29,14 @@ namespace Bousk
 				Client& operator=(Client&&);
 				~Client();
 
-				bool init(SOCKET&& sckt, const sockaddr_in& addr);
-				bool connect(const std::string& ipaddress, unsigned short port);
+				bool init(SOCKET&& sckt, const Address& addr);
+				bool connect(const Address& address);
 				void disconnect();
 				bool send(const unsigned char* data, unsigned int len);
 				std::unique_ptr<Messages::Base> poll();
 
-				uint64_t id() const;
-				const sockaddr_in& destinationAddress() const;
+				uint64 id() const;
+				const Address& address() const;
 
 			private:
 				std::unique_ptr<ClientImpl> mImpl;

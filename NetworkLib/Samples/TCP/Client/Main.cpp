@@ -9,17 +9,23 @@ int main()
 {
 	if ( !Bousk::Network::Start() )
 	{
-		std::cout << "Error starting sockets : " << Bousk::Network::Errors::Get() << std::endl;
+		std::cout << "Network lib initialisation error : " << Bousk::Network::Errors::Get();
 		return -1;
 	}
 
 	Bousk::Network::TCP::Client client;
 	int port;
-	std::cout << "Port du serveur ? ";
+	std::cout << "Server port ? ";
 	std::cin >> port;
-	if (!client.connect("127.0.0.1", port))
+	if (!(port > 0 && port < std::numeric_limits<Bousk::uint16>::max()))
 	{
-		std::cout << "Impossible de se connecter au serveur [127.0.0.1:" << port << "] : " << Bousk::Network::Errors::Get() << std::endl;
+		std::cout << "Invalid port" << std::endl;
+		return -2;
+	}
+	Bousk::Network::Address serverAddress("127.0.0.1", static_cast<Bousk::uint16>(port));
+	if (!client.connect(serverAddress))
+	{
+		std::cout << "Unable to connect to server [127.0.0.1:" << port << "] : " << Bousk::Network::Errors::Get() << std::endl;
 	}
 	else
 	{
@@ -33,19 +39,19 @@ int main()
 					if (connection->result == Bousk::Network::Messages::Connection::Result::Success)
 					{
 						std::cin.ignore();
-						std::cout << "Connecte!" << std::endl;
-						std::cout << "Entrez une phrase >";
+						std::cout << "Connected!" << std::endl;
+						std::cout << "Enter a sentence >";
 						std::string phrase;
 						std::getline(std::cin, phrase);
 						if (!client.send(reinterpret_cast<const unsigned char*>(phrase.c_str()), static_cast<unsigned int>(phrase.length())))
 						{
-							std::cout << "Erreur envoi : " << Bousk::Network::Errors::Get() << std::endl;
+							std::cout << "Send error : " << Bousk::Network::Errors::Get() << std::endl;
 							break;
 						}
 					}
 					else
 					{
-						std::cout << "Connexion echoue : " << static_cast<int>(connection->result) << std::endl;
+						std::cout << "Connection failed : " << static_cast<int>(connection->result) << std::endl;
 						break;
 					}
 				}
@@ -53,20 +59,20 @@ int main()
 				{
 					auto userdata = msg->as<Bousk::Network::Messages::UserData>();
 					std::string reply(reinterpret_cast<const char*>(userdata->data.data()), userdata->data.size());
-					std::cout << "Reponse du serveur : " << reply << std::endl;
+					std::cout << "From server : " << reply << std::endl;
 					std::cout << ">";
 					std::string phrase;
 					std::getline(std::cin, phrase);
 					if (!client.send(reinterpret_cast<const unsigned char*>(phrase.c_str()), static_cast<unsigned int>(phrase.length())))
 					{
-						std::cout << "Erreur envoi : " << Bousk::Network::Errors::Get() << std::endl;
+						std::cout << "Send error : " << Bousk::Network::Errors::Get() << std::endl;
 						break;
 					}
 				}
 				else if (msg->is<Bousk::Network::Messages::Disconnection>())
 				{
 					auto disconnection = msg->as<Bousk::Network::Messages::Disconnection>();
-					std::cout << "Deconnecte : " << static_cast<int>(disconnection->reason) << std::endl;
+					std::cout << "Disconnected : " << static_cast<int>(disconnection->reason) << std::endl;
 					break;
 				}
 			}
