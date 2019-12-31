@@ -46,6 +46,7 @@ namespace Bousk
 					in_addr& inaddr = addrin.sin_addr;
 					if (inet_pton(AF_INET, ip.c_str(), &inaddr) == 1)
 					{
+						mType = Type::IPv4;
 						addrin.sin_family = AF_INET;
 						Serialization::Conversion::ToNetwork(mPort, addrin.sin_port);
 						return;
@@ -57,6 +58,7 @@ namespace Bousk
 					in_addr6& inaddr = addrin.sin6_addr;
 					if (inet_pton(AF_INET6, ip.c_str(), &inaddr) == 1)
 					{
+						mType = Type::IPv6;
 						addrin.sin6_family = AF_INET6;
 						Serialization::Conversion::ToNetwork(mPort, addrin.sin6_port);
 						return;
@@ -113,7 +115,7 @@ namespace Bousk
 			}
 		}
 
-		std::string Address::ToString() const
+		std::string Address::toString() const
 		{
 			if (mType == Type::None)
 				return "";
@@ -141,6 +143,23 @@ namespace Bousk
 			return memcmp(&reinterpret_cast<const sockaddr_in6&>(mStorage).sin6_addr, &reinterpret_cast<const sockaddr_in6&>(other.mStorage).sin6_addr, sizeof(IN6_ADDR)) == 0;
 		}
 
+		int Address::connect(SOCKET sckt) const
+		{
+			return ::connect(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage));
+		}
+		bool Address::accept(SOCKET sckt, SOCKET& newClient)
+		{
+			sockaddr_in addr = { 0 };
+			socklen_t addrlen = sizeof(addr);
+			SOCKET newClientSocket = ::accept(sckt, reinterpret_cast<sockaddr*>(&addr), &addrlen);
+			if (newClientSocket == INVALID_SOCKET)
+			{
+				return false;
+			}
+			set(reinterpret_cast<sockaddr_storage&>(addr));
+			newClient = newClientSocket;
+			return true;
+		}
 		int Address::bind(SOCKET sckt) const
 		{
 			return ::bind(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage));
