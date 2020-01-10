@@ -11,8 +11,6 @@ namespace Bousk
 	{
 		namespace Messages
 		{
-			static constexpr uint64 InvalidEmitter = std::numeric_limits<uint64>::max();
-
 			#define DECLARE_MESSAGE(name) friend class Base; static const Base::Type StaticType = Base::Type::name
 			class Base
 			{
@@ -38,7 +36,7 @@ namespace Bousk
 				{}
 			private:
 				Address mEmitter;
-				uint64 mEmitterId{ InvalidEmitter };
+				uint64 mEmitterId;
 				Type mType;
 			};
 			class Connection : public Base

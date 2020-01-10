@@ -20,12 +20,17 @@ void DistantClient_Test::Test()
 	static constexpr uint64_t MASK_LAST_ACKED = (MASK_FIRST_ACKED << 63);
 
 	Bousk::Network::UDP::Client client; //!< We need a client to test DistantClient
-	sockaddr_in localAddress;
-	localAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK); //!< Pretend we're a loopback distant client
-	localAddress.sin_family = AF_INET;
-	localAddress.sin_port = htons(8888);
-	Bousk::Network::UDP::DistantClient distantClient(client, reinterpret_cast<const sockaddr_storage&>(localAddress));
+	Bousk::Network::Address localAddress = Bousk::Network::Address::Loopback(Bousk::Network::Address::Type::IPv4, 8888); //!< Pretend we're a loopback distant client
+	Bousk::Network::UDP::DistantClient distantClient(client, localAddress, 0);
 	distantClient.registerChannel<Bousk::Network::UDP::Protocols::UnreliableOrdered>();
+	distantClient.onConnected();
+	// Consume connection message
+	{
+		auto polledMessages = client.poll();
+		CHECK(polledMessages.size() == 1);
+		const auto& msg = polledMessages[0];
+		CHECK(msg->is<Bousk::Network::Messages::Connection>());
+	}
 
 	CHECK(distantClient.mNextDatagramIdToSend == 0);
 	CHECK(distantClient.mReceivedAcks.lastAck() == std::numeric_limits<uint16_t>::max());
@@ -33,17 +38,17 @@ void DistantClient_Test::Test()
 	constexpr const char TestString[] = "Test data";
 	constexpr size_t TestStringLength = sizeof(TestString);
 
-	distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength), 0);
 	//!< Craft the datagram to check reception
 	Bousk::Network::UDP::Datagram datagram;
-	distantClient.fillDatagram(datagram);
-	CHECK(distantClient.mNextDatagramIdToSend == 1);
 
 	auto QueueDatagram = [&]() {
 		distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength), 0);
-		distantClient.mChannelsHandler.serialize(datagram.data.data(), Bousk::Network::UDP::Datagram::DataMaxSize, 0);
+		datagram.datasize = distantClient.mChannelsHandler.serialize(datagram.data.data(), Bousk::Network::UDP::Datagram::DataMaxSize, distantClient.mNextDatagramIdToSend);
+		distantClient.fillDatagramHeader(datagram, Bousk::Network::UDP::Datagram::Type::ConnectedData);
 	};
 
+	QueueDatagram();
+	CHECK(distantClient.mNextDatagramIdToSend == 1);
 	CHECK(datagram.header.id == 0);
 	CHECK(datagram.datasize == TestStringLength + Bousk::Network::UDP::Packet::HeaderSize + Bousk::Network::UDP::ChannelHeader::Size);
 
@@ -73,8 +78,8 @@ void DistantClient_Test::Test()
 	}
 
 	//!< Receive datagram #2, #1 is now missing
-	datagram.header.id = htons(2);
 	QueueDatagram();
+	datagram.header.id = htons(2);
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 2);
@@ -90,8 +95,8 @@ void DistantClient_Test::Test()
 	}
 
 	//!< Now receive datagram #1
-	datagram.header.id = htons(1);
 	QueueDatagram();
+	datagram.header.id = htons(1);
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 2);
@@ -109,8 +114,8 @@ void DistantClient_Test::Test()
 	}
 
 	//!< Jump 64 packets ahead, all missed in between
-	datagram.header.id = htons(66);
 	QueueDatagram();
+	datagram.header.id = htons(66);
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 66);
@@ -128,8 +133,8 @@ void DistantClient_Test::Test()
 	}
 
 	//!< Receive next one and everything is missing in between
-	datagram.header.id = htons(67);
 	QueueDatagram();
+	datagram.header.id = htons(67);
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 67);
@@ -147,8 +152,8 @@ void DistantClient_Test::Test()
 	}
 
 	//!< Receive next one, #3 is now lost
-	datagram.header.id = htons(68);
 	QueueDatagram();
+	datagram.header.id = htons(68);
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 68);
@@ -165,8 +170,8 @@ void DistantClient_Test::Test()
 	}
 
 	//!< Receive datagram #3 : too old, ignored
-	datagram.header.id = htons(3);
 	QueueDatagram();
+	datagram.header.id = htons(3);
 	{
 		distantClient.onDatagramReceived(std::move(datagram));
 		CHECK(distantClient.mReceivedAcks.lastAck() == 68);

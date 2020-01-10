@@ -1,5 +1,6 @@
 #include "UDP/UDPClient.hpp"
 #include "UDP/DistantClient.hpp"
+#include "Address.hpp"
 #include "Messages.hpp"
 #include "Errors.hpp"
 
@@ -12,6 +13,15 @@ namespace Bousk
 	{
 		namespace UDP
 		{
+			void Client::SetTimeout(std::chrono::milliseconds timeout)
+			{
+				DistantClient::SetTimeout(timeout);
+			}
+			std::chrono::milliseconds Client::GetTimeout()
+			{
+				return DistantClient::GetTimeout();
+			}
+
 			Client::Client()
 			{}
 			Client::~Client()
@@ -26,17 +36,14 @@ namespace Bousk
 				if (mSocket == INVALID_SOCKET)
 					return false;
 
-				sockaddr_in addr;
-				addr.sin_addr.s_addr = INADDR_ANY;
-				addr.sin_port = htons(port);
-				addr.sin_family = AF_INET;
-				int res = bind(mSocket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
-				if (res != 0)
+				Address addr = Address::Any(Address::Type::IPv4, port);
+				if (!addr.bind(mSocket))
 					return false;
 
 				if (!SetNonBlocking(mSocket))
 					return false;
 
+				mClientIdsGenerator = 0;
 				return true;
 			}
 			void Client::release()
@@ -45,10 +52,18 @@ namespace Bousk
 					CloseSocket(mSocket);
 				mSocket = INVALID_SOCKET;
 			}
+			bool Client::connect(const Address& addr)
+			{
+				return false;
+			}
+			void Client::disconnect(const Address& addr)
+			{
+				;
+			}
 			void Client::sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data, const uint32_t canalIndex)
 			{
-				auto& client = getClient(target);
-				client.send(std::move(data), canalIndex);
+				if (auto client = getClient(target))
+					client->send(std::move(data), canalIndex);
 			}
 			void Client::processSend()
 			{
@@ -60,16 +75,16 @@ namespace Bousk
 				for (;;)
 				{
 					Datagram datagram;
-					sockaddr_in from{ 0 };
-					socklen_t fromlen = sizeof(from);
-					int ret = recvfrom(mSocket, reinterpret_cast<char*>(&datagram), Datagram::BufferMaxSize, 0, reinterpret_cast<sockaddr*>(&from), &fromlen);
+					Address from;
+					int ret = from.recvFrom(mSocket, reinterpret_cast<uint8*>(&datagram), Datagram::BufferMaxSize);
 					if (ret > 0)
 					{
-						if (ret > Datagram::HeaderSize)
+						const size_t receivedSize = static_cast<size_t>(ret);
+						if (receivedSize > Datagram::HeaderSize)
 						{
-							datagram.datasize = ret - Datagram::HeaderSize;
-							auto& client = getClient(reinterpret_cast<sockaddr_storage&>(from));
-							client.onDatagramReceived(std::move(datagram));
+							datagram.datasize = receivedSize - Datagram::HeaderSize;
+							if (auto client = getClient(from, true))
+								client->onDatagramReceived(std::move(datagram));
 						}
 						else
 						{
@@ -93,18 +108,23 @@ namespace Bousk
 			}
 			std::vector<std::unique_ptr<Messages::Base>> Client::poll()
 			{
+				MessagesLock lock(mMessagesLock);
 				return std::move(mMessages);
 			}
 
-			DistantClient& Client::getClient(const sockaddr_storage& clientAddr)
+			DistantClient* Client::getClient(const Address& clientAddr, bool create /*= false*/)
 			{
-				auto itClient = std::find_if(mClients.begin(), mClients.end(), [&](const std::unique_ptr<DistantClient>& client) { return memcmp(&(client->address()), &clientAddr, sizeof(sockaddr_storage)); });
+				auto itClient = std::find_if(mClients.begin(), mClients.end(), [&](const std::unique_ptr<DistantClient>& client) { return client->address() == clientAddr; });
 				if (itClient != mClients.end())
-					return *(itClient->get());
-
-				mClients.emplace_back(std::make_unique<DistantClient>(*this, clientAddr));
-				setupChannels(*(mClients.back()));
-				return *(mClients.back());
+					return itClient->get();
+				else if (create)
+				{
+					mClients.emplace_back(std::make_unique<DistantClient>(*this, clientAddr, mClientIdsGenerator++));
+					setupChannels(*(mClients.back()));
+					return mClients.back().get();
+				}
+				else
+					return nullptr;
 			}
 			void Client::setupChannels(DistantClient& client)
 			{
@@ -113,6 +133,7 @@ namespace Bousk
 			}
 			void Client::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{
+				MessagesLock lock(mMessagesLock);
 				mMessages.push_back(std::move(msg));
 			}
 		}

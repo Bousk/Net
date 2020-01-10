@@ -29,6 +29,7 @@ namespace Bousk
 			Address(const sockaddr_storage& addr);
 
 			static Address Any(Type type, uint16 port);
+			static Address Loopback(Type type, uint16 port);
 
 			inline bool isValid() const { return mType != Type::None; }
 			inline Type type() const { return mType; }

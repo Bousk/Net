@@ -114,6 +114,27 @@ namespace Bousk
 				return Address();
 			}
 		}
+		Address Address::Loopback(Type type, uint16 port)
+		{
+			switch (type)
+			{
+			case Type::IPv4:
+			{
+				sockaddr_in addr = { 0 };
+				addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+				addr.sin_port = htons(port);
+				addr.sin_family = AF_INET;
+				return Address(reinterpret_cast<sockaddr_storage&>(addr));
+			}
+			case Type::IPv6:
+			{
+				// TODO
+			}
+			default:
+				assert(false);
+				return Address();
+			}
+		}
 
 		std::string Address::toString() const
 		{
