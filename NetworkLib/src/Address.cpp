@@ -2,31 +2,32 @@
 #include "Serialization/Convert.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 namespace Bousk
 {
 	namespace Network
 	{
-		Address::Address(const Address& src)
+		Address::Address(const Address& src) noexcept
 			: mPort(src.mPort)
 			, mType(src.mType)
 		{
 			memcpy(&mStorage, &(src.mStorage), sizeof(mStorage));
 		}
-		Address::Address(Address&& src)
+		Address::Address(Address&& src) noexcept
 			: mPort(src.mPort)
 			, mType(src.mType)
 		{
 			memcpy(&mStorage, &(src.mStorage), sizeof(mStorage));
 		}
-		Address& Address::operator=(const Address& src)
+		Address& Address::operator=(const Address& src) noexcept
 		{
 			mPort = src.mPort;
 			mType = src.mType;
 			memcpy(&mStorage, &(src.mStorage), sizeof(mStorage));
 			return *this;
 		}
-		Address& Address::operator=(Address&& src)
+		Address& Address::operator=(Address&& src) noexcept
 		{
 			mPort = src.mPort;
 			mType = src.mType;
@@ -34,7 +35,7 @@ namespace Bousk
 			return *this;
 		}
 
-		Address::Address(const std::string& ip, uint16_t port)
+		Address::Address(const std::string& ip, uint16_t port) noexcept
 			: mPort(port)
 		{
 			memset(&mStorage, 0, sizeof(mStorage));
@@ -66,7 +67,7 @@ namespace Bousk
 				}
 			}
 		}
-		Address::Address(const sockaddr_storage& addr)
+		Address::Address(const sockaddr_storage& addr) noexcept
 		{
 			set(addr);
 		}
@@ -136,16 +137,24 @@ namespace Bousk
 			}
 		}
 
-		std::string Address::toString() const
+		std::string Address::address() const
 		{
 			if (mType == Type::None)
-				return "";
+				return "<None>";
 			static constexpr int MaxBufferSize = std::max(INET_ADDRSTRLEN, INET6_ADDRSTRLEN);
 			char buffer[MaxBufferSize];
 			// Use a const_cast because of some Windows API... the object is not changed so it's okay
-			if (inet_ntop(mStorage.ss_family, const_cast<sockaddr_storage*>(&mStorage), buffer, MaxBufferSize) != nullptr)
+			if (mStorage.ss_family == AF_INET && inet_ntop(mStorage.ss_family, &reinterpret_cast<sockaddr_in*>(const_cast<sockaddr_storage*>(&mStorage))->sin_addr, buffer, MaxBufferSize) != nullptr)
 				return buffer;
-			return "";
+			if (mStorage.ss_family == AF_INET6 && inet_ntop(mStorage.ss_family, &reinterpret_cast<sockaddr_in6*>(const_cast<sockaddr_storage*>(&mStorage))->sin6_addr, buffer, MaxBufferSize) != nullptr)
+				return buffer;
+			return "<Unknown>";
+		}
+		std::string Address::toString() const
+		{
+			std::ostringstream str;
+			str << address() << ":" << port();
+			return str.str();
 		}
 
 		bool Address::operator==(const Address& other) const

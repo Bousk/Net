@@ -19,24 +19,27 @@ namespace Bousk
 			};
 		public:
 			Address() = default;
-			Address(const Address&);
-			Address(Address&&);
-			Address& operator=(const Address&);
-			Address& operator=(Address&&);
+			Address(const Address&) noexcept;
+			Address(Address&&) noexcept;
+			Address& operator=(const Address&) noexcept;
+			Address& operator=(Address&&) noexcept;
 			~Address() = default;
 
-			Address(const std::string& ip, uint16_t port);
-			Address(const sockaddr_storage& addr);
+			Address(const std::string& ip, uint16_t port) noexcept;
+			Address(const sockaddr_storage& addr) noexcept;
 
 			static Address Any(Type type, uint16 port);
 			static Address Loopback(Type type, uint16 port);
 
 			inline bool isValid() const { return mType != Type::None; }
 			inline Type type() const { return mType; }
+			std::string address() const;
 			inline uint16 port() const { return mPort; }
+			// Return a formatted string <address>:<port>
 			std::string toString() const;
 
 			bool operator==(const Address& other) const;
+			bool operator!=(const Address& other) const { return !(*this == other); }
 
 			// Connect the given socket to the internal address
 			int connect(SOCKET sckt) const;
