@@ -27,7 +27,7 @@ namespace Bousk
 			Client::~Client()
 			{}
 
-			bool Client::init(const uint16_t port)
+			bool Client::init(const uint16 port)
 			{
 				assert(!mRegisteredChannels.empty()); // Initializing without any channel doesn't make sense..
 
@@ -52,23 +52,60 @@ namespace Bousk
 					CloseSocket(mSocket);
 				mSocket = INVALID_SOCKET;
 			}
-			bool Client::connect(const Address& addr)
+			void Client::connect(const Address& addr)
 			{
-				return false;
+				OperationsLock lock(mOperationsLock);
+				mPendingOperations.push_back(Operation::Connect(addr));
 			}
 			void Client::disconnect(const Address& addr)
 			{
-				;
+				OperationsLock lock(mOperationsLock);
+				mPendingOperations.push_back(Operation::Disconnect(addr));
 			}
-			void Client::sendTo(const sockaddr_storage& target, std::vector<uint8_t>&& data, const uint32_t canalIndex)
+			void Client::sendTo(const Address& target, std::vector<uint8>&& data, const uint32 channelIndex)
 			{
-				if (auto client = getClient(target))
-					client->send(std::move(data), canalIndex);
+				OperationsLock lock(mOperationsLock);
+				mPendingOperations.push_back(Operation::SendTo(target, std::move(data), channelIndex));
 			}
 			void Client::processSend()
 			{
+				// Process pending operations
+				std::vector<Operation> operations;
+				{
+					OperationsLock lock(mOperationsLock);
+					operations.swap(mPendingOperations);
+				}
+				for (Operation& op : operations)
+				{
+					switch (op.mType)
+					{
+						case Operation::Type::Connect:
+						{
+							if (auto client = getClient(op.mTarget, true))
+								client->connect();
+						} break;
+						case Operation::Type::SendTo:
+						{
+							if (auto client = getClient(op.mTarget, true))
+								client->send(std::move(op.mData), op.mChannel);
+						} break;
+						case Operation::Type::Disconnect:
+						{
+							if (auto client = getClient(op.mTarget))
+								client->disconnect();
+						} break;
+					}
+				}
+
+				// Do send data to clients
 				for (auto& client : mClients)
 					client->processSend();
+
+				// Remove disconnected clients
+				mClients.erase(
+					std::remove_if(mClients.begin(), mClients.end(), [](const std::unique_ptr<DistantClient>& client) { return client->isDisconnected(); })
+					, mClients.end()
+				);
 			}
 			void Client::receive()
 			{
@@ -80,7 +117,7 @@ namespace Bousk
 					if (ret > 0)
 					{
 						const size_t receivedSize = static_cast<size_t>(ret);
-						if (receivedSize > Datagram::HeaderSize)
+						if (receivedSize >= Datagram::HeaderSize)
 						{
 							datagram.datasize = receivedSize - Datagram::HeaderSize;
 							if (auto client = getClient(from, true))
