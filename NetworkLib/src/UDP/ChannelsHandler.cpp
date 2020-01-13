@@ -16,12 +16,12 @@ namespace Bousk
 			ChannelsHandler::~ChannelsHandler() = default;
 
 			// Multiplexer
-			void ChannelsHandler::queue(std::vector<uint8_t>&& msgData, const uint32_t canalIndex)
+			void ChannelsHandler::queue(std::vector<uint8>&& msgData, const uint32 channelIndex)
 			{
-				assert(canalIndex < mChannels.size());
-				mChannels[canalIndex]->queue(std::move(msgData));
+				assert(channelIndex < mChannels.size());
+				mChannels[channelIndex]->queue(std::move(msgData));
 			}
-			size_t ChannelsHandler::serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID datagramId)
+			size_t ChannelsHandler::serialize(uint8* buffer, const size_t buffersize, const Datagram::ID datagramId)
 			{
 				size_t remainingBuffersize = buffersize;
 				for (uint32_t channelId = 0; channelId < mChannels.size(); ++channelId)

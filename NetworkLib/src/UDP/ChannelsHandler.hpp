@@ -26,8 +26,8 @@ namespace Bousk
 				void registerChannel();
 
 				// Multiplexer
-				void queue(std::vector<uint8_t>&& msgData, uint32_t canalIndex);
-				size_t serialize(uint8_t* buffer, size_t buffersize, Datagram::ID datagramId);
+				void queue(std::vector<uint8>&& msgData, uint32 channelIndex);
+				size_t serialize(uint8* buffer, size_t buffersize, Datagram::ID datagramId);
 
 				void onDatagramAcked(Datagram::ID datagramId);
 				void onDatagramLost(Datagram::ID datagramId);
