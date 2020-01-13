@@ -47,15 +47,16 @@ namespace Bousk
 
 				inline bool isConnecting() const { return mState == State::ConnectionSent || mState == State::ConnectionReceived; }
 				inline bool isConnected() const { return mState == State::Connected; }
+				inline bool isDisconnecting() const { return mState == State::Disconnecting; }
+				inline bool isDisconnected() const { return mState == State::Disconnected; }
 
 				template<class T>
 				void registerChannel();
 
-				void onConnectionSent();
-				void onConnectionReceived();
+				void connect();
 				void disconnect();
 
-				void send(std::vector<uint8>&& data, uint32_t canalIndex);
+				void send(std::vector<uint8>&& data, uint32 channelIndex);
 				void processSend(size_t maxDatagrams = 0);
 				void onDatagramReceived(Datagram&& datagram);
 
@@ -63,12 +64,19 @@ namespace Bousk
 
 			private:
 				void maintainConnection();
+				void onConnectionSent();
+				void onConnectionReceived();
 				void onConnected();
+				void onConnectionLost();
+
 				void onDatagramSentAcked(Datagram::ID datagramId);
 				void onDatagramSentLost(Datagram::ID datagramId);
 				void onDatagramReceivedLost(Datagram::ID datagramId);
 				void onDataReceived(const uint8_t* data, size_t datasize);
 				void onMessageReady(std::unique_ptr<Messages::Base>&& msg);
+
+				void fillKeepAlive(Datagram& dgram);
+				void handleKeepAlive(const uint8* data, const size_t datasize);
 
 				void fillDatagramHeader(Datagram& dgram, Datagram::Type type);
 				void send(const Datagram& dgram) const;

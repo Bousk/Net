@@ -1,6 +1,8 @@
 #include "UDP/DistantClient.hpp"
 #include "UDP/UDPClient.hpp"
 #include "UDP/Datagram.hpp"
+#include "Serialization/Serializer.hpp"
+#include "Serialization/Deserializer.hpp"
 #include "Messages.hpp"
 #include "Settings.hpp"
 #include "Utils.hpp"
@@ -20,6 +22,7 @@ namespace Bousk
 				: mClient(client)
 				, mAddress(addr)
 				, mClientId(clientid)
+				, mLastKeepAlive(Utils::Now())
 			{}
 			void DistantClient::onConnectionSent()
 			{
@@ -40,6 +43,8 @@ namespace Bousk
 				{
 					mState = State::ConnectionReceived;
 					maintainConnection();
+					// Push incoming connection request to client
+					mClient.onMessageReady(std::make_unique<Messages::IncomingConnection>(mAddress, mClientId));
 				}
 				else if (mState == State::ConnectionSent)
 				{
@@ -62,6 +67,18 @@ namespace Bousk
 					onMessageReady(std::move(pendingMessage));
 				}
 			}
+			void DistantClient::onConnectionLost()
+			{
+				if (isConnected())
+				{
+					mState = State::Disconnecting;
+					mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Lost));
+				}
+			}
+			void DistantClient::connect()
+			{
+				onConnectionSent();
+			}
 			void DistantClient::disconnect()
 			{
 				// To disconnect, stop sending packets
@@ -69,11 +86,11 @@ namespace Bousk
 				// when receiving packets from the other end right after disconnecting locally
 				mState = State::Disconnecting;
 			}
-			void DistantClient::send(std::vector<uint8>&& data, uint32_t canalIndex)
+			void DistantClient::send(std::vector<uint8>&& data, uint32 channelIndex)
 			{
 				// If we're sending data, we're requesting a connection
 				onConnectionSent();
-				mChannelsHandler.queue(std::move(data), canalIndex);
+				mChannelsHandler.queue(std::move(data), channelIndex);
 			}
 			void DistantClient::fillDatagramHeader(Datagram& dgram, Datagram::Type type)
 			{
@@ -93,6 +110,7 @@ namespace Bousk
 			}
 			void DistantClient::processSend(const size_t maxDatagrams /*= 0*/)
 			{
+				const auto now = Utils::Now();
 				// We do send data during connection process in order to keep it available before we accept it
 				if (isConnecting() || isConnected())
 				{
@@ -105,16 +123,48 @@ namespace Bousk
 							fillDatagramHeader(datagram, Datagram::Type::ConnectedData);
 							send(datagram);
 						}
-						else 
+						else
 						{
 							if (loop == 0)
 							{
 								// Nothing to send this time, so send a keep alive to maintain connection
-								fillDatagramHeader(datagram, Datagram::Type::KeepAlive);
+								fillKeepAlive(datagram);
 								send(datagram);
 							}
 							break;
 						}
+					}
+				}
+				if (isDisconnecting() && now > mLastKeepAlive + 2 * GetTimeout())
+				{
+					// After 2 timeouts we mark it disconnected
+					// This leaves enough time to each end to notice and disconnects its distant client
+					mState = State::Disconnected;
+				}
+				else if (isConnected() && now > mLastKeepAlive + GetTimeout())
+				{
+					onConnectionLost();
+				}
+			}
+			void DistantClient::fillKeepAlive(Datagram& dgram)
+			{
+				fillDatagramHeader(dgram, Datagram::Type::KeepAlive);
+				// Do notify the other end if we're supposed to be connected or requesting the connection
+				Serialization::Serializer serializer;
+				serializer.write(mState == State::ConnectionSent || isConnected());
+				memcpy(dgram.data.data(), serializer.buffer(), serializer.bufferSize());
+				dgram.datasize = serializer.bufferSize();
+			}
+			void DistantClient::handleKeepAlive(const uint8* data, const size_t datasize)
+			{
+				maintainConnection();
+				if (mState == State::None || isConnecting())
+				{
+					Serialization::Deserializer deserializer(data, datasize);
+					bool isConnectedKeepAlive = false;
+					if (deserializer.read(isConnectedKeepAlive) && isConnectedKeepAlive)
+					{
+						onConnectionReceived();
 					}
 				}
 			}
@@ -156,7 +206,7 @@ namespace Bousk
 				} break;
 				case Datagram::Type::KeepAlive:
 				{
-					maintainConnection();
+					handleKeepAlive(datagram.data.data(), datagram.datasize);
 				} break;
 				}
 			}
