@@ -31,15 +31,15 @@ int main()
 		{
 			if (msg->is<Bousk::Network::Messages::Connection>())
 			{
-				std::cout << "[" << msg->emitter().toString() << ":" << msg->emitter().port() << "] Connected" << std::endl;
+				std::cout << "[" << msg->emitter().toString() << "] Connected" << std::endl;
 			}
 			else if (msg->is<Bousk::Network::Messages::Disconnection>())
 			{
-				std::cout << "[" << msg->emitter().toString() << ":" << msg->emitter().port() << "] Disconnected" << std::endl;
+				std::cout << "[" << msg->emitter().toString() << "] Disconnected" << std::endl;
 			}
 			else if (msg->is<Bousk::Network::Messages::UserData>())
 			{
-				std::cout << "Data from [" << msg->emitter().toString() << ":" << msg->emitter().port() << "]" << std::endl;
+				std::cout << "Data from [" << msg->emitter().toString() << "]" << std::endl;
 				auto userdata = msg->as<Bousk::Network::Messages::UserData>();
 				server.sendToAll(userdata->data.data(), static_cast<unsigned int>(userdata->data.size()));
 			}
