@@ -176,9 +176,9 @@ namespace Bousk
 			return memcmp(&reinterpret_cast<const sockaddr_in6&>(mStorage).sin6_addr, &reinterpret_cast<const sockaddr_in6&>(other.mStorage).sin6_addr, sizeof(IN6_ADDR)) == 0;
 		}
 
-		int Address::connect(SOCKET sckt) const
+		bool Address::connect(SOCKET sckt) const
 		{
-			return ::connect(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage));
+			return ::connect(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage)) == 0;
 		}
 		bool Address::accept(SOCKET sckt, SOCKET& newClient)
 		{

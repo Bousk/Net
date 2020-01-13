@@ -29,7 +29,7 @@ namespace Bousk
 				static constexpr uint16 DataMaxSize = BufferMaxSize - HeaderSize;
 
 				Header header;
-				std::array<uint8_t, DataMaxSize> data;
+				std::array<uint8, DataMaxSize> data;
 
 				// Not serialized
 				size_t datasize{ 0 };

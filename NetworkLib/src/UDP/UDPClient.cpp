@@ -36,7 +36,7 @@ namespace Bousk
 				if (mSocket == INVALID_SOCKET)
 					return false;
 
-				Address addr = Address::Any(Address::Type::IPv4, port);
+				const Address addr = Address::Any(Address::Type::IPv4, port);
 				if (!addr.bind(mSocket))
 					return false;
 

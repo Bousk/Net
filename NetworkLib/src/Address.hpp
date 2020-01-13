@@ -42,7 +42,8 @@ namespace Bousk
 			bool operator!=(const Address& other) const { return !(*this == other); }
 
 			// Connect the given socket to the internal address
-			int connect(SOCKET sckt) const;
+			// Returns true on success, false otherwise
+			bool connect(SOCKET sckt) const;
 			// Accept an incoming connection on the given socket then update the internal address with the sender one
 			// Returns true if a new client has been accepted and set its socket value to newClient. False otherwise
 			bool accept(SOCKET sckt, SOCKET& newClient);

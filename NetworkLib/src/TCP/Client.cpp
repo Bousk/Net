@@ -37,7 +37,7 @@ namespace Bousk
 				mAddress = address;
 				mFd.fd = sckt;
 				mFd.events = POLLOUT;
-				if (mAddress.connect(sckt) != 0)
+				if (!mAddress.connect(sckt))
 				{
 					int err = Errors::Get();
 					if (err != Errors::INPROGRESS && err != Errors::WOULDBLOCK)
