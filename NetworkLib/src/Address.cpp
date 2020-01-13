@@ -96,15 +96,17 @@ namespace Bousk
 			{
 			case Type::IPv4:
 			{
-				sockaddr_in addr = { 0 };
+				sockaddr_storage storage{ 0 };
+				sockaddr_in& addr = reinterpret_cast<sockaddr_in&>(storage);
 				addr.sin_addr.s_addr = INADDR_ANY;
 				addr.sin_port = htons(port);
 				addr.sin_family = AF_INET;
-				return Address(reinterpret_cast<sockaddr_storage&>(addr));
+				return Address(storage);
 			}
 			case Type::IPv6:
 			{
-				sockaddr_in6 addr = { 0 };
+				sockaddr_storage storage{ 0 };
+				sockaddr_in6& addr = reinterpret_cast<sockaddr_in6&>(storage);
 				addr.sin6_addr = in6addr_any;
 				addr.sin6_port = htons(port);
 				addr.sin6_family = AF_INET6;
@@ -121,11 +123,12 @@ namespace Bousk
 			{
 			case Type::IPv4:
 			{
-				sockaddr_in addr = { 0 };
+				sockaddr_storage storage{ 0 };
+				sockaddr_in& addr = reinterpret_cast<sockaddr_in&>(storage);
 				addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 				addr.sin_port = htons(port);
 				addr.sin_family = AF_INET;
-				return Address(reinterpret_cast<sockaddr_storage&>(addr));
+				return Address(storage);
 			}
 			case Type::IPv6:
 			{
@@ -179,14 +182,15 @@ namespace Bousk
 		}
 		bool Address::accept(SOCKET sckt, SOCKET& newClient)
 		{
-			sockaddr_in addr = { 0 };
+			sockaddr_storage storage{ 0 };
+			sockaddr_in& addr = reinterpret_cast<sockaddr_in&>(storage);
 			socklen_t addrlen = sizeof(addr);
 			SOCKET newClientSocket = ::accept(sckt, reinterpret_cast<sockaddr*>(&addr), &addrlen);
 			if (newClientSocket == INVALID_SOCKET)
 			{
 				return false;
 			}
-			set(reinterpret_cast<sockaddr_storage&>(addr));
+			set(storage);
 			newClient = newClientSocket;
 			return true;
 		}
@@ -200,12 +204,13 @@ namespace Bousk
 		}
 		int Address::recvFrom(SOCKET sckt, uint8* buffer, size_t bufferSize)
 		{
-			sockaddr_in from{ 0 };
+			sockaddr_storage storage{ 0 };
+			sockaddr_in& from = reinterpret_cast<sockaddr_in&>(storage);
 			socklen_t fromlen = sizeof(from);
 			int ret = recvfrom(sckt, reinterpret_cast<char*>(buffer), static_cast<int>(bufferSize), 0, reinterpret_cast<sockaddr*>(&from), &fromlen);
 			if (ret >= 0)
 			{
-				set(reinterpret_cast<sockaddr_storage&>(from));
+				set(storage);
 			}
 			return ret;
 		}
