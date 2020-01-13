@@ -25,6 +25,7 @@ namespace Bousk
 
 			protected:
 				enum class Type {
+					IncomingConnection,
 					Connection,
 					Disconnection,
 					UserData,
@@ -38,6 +39,14 @@ namespace Bousk
 				Address mEmitter;
 				uint64 mEmitterId;
 				Type mType;
+			};
+			class IncomingConnection : public Base
+			{
+				DECLARE_MESSAGE(IncomingConnection);
+			public:
+				IncomingConnection(const Address& emitter, uint64 emitterid)
+					: Base(Type::IncomingConnection, emitter, emitterid)
+				{}
 			};
 			class Connection : public Base
 			{
