@@ -90,3 +90,6 @@ namespace Bousk
 		}
 	}
 }
+
+#include <iosfwd>
+std::ostream& operator<<(std::ostream& out, Bousk::Network::Messages::Disconnection::Reason reason);
