@@ -19,3 +19,9 @@
 NetworkLib/Tests/Projects/vs2017/.vs/NetworkLib_Test/v15/.suo
 NetworkLib/Tests/Projects/vs2019/.vs/NetworkLib_Test/v16/.suo
 NetworkLib/Projects/vs2019/.vs/NetworkLib/v16/.suo
+NetworkLib/Projects/vs2019/obj/Debug/Network/Network.vcxproj.FileListAbsolute.txt
+NetworkLib/Projects/vs2019/obj/Debug/Samples_TCP_Client/Samples_TCP_Client.vcxproj.FileListAbsolute.txt
+NetworkLib/Projects/vs2019/obj/Debug/Samples_TCP_Server/Samples_TCP_Server.vcxproj.FileListAbsolute.txt
+NetworkLib/Projects/vs2019/obj/Debug/Samples_UDP_Connection/Samples_UDP_Connection.vcxproj.FileListAbsolute.txt
+NetworkLib/Projects/vs2019/obj/Debug/Samples_UDP_HelloWorld/Samples_UDP_HelloWorld.vcxproj.FileListAbsolute.txt
+NetworkLib/Projects/vs2019/obj/Debug/Samples_UDP_Timeout/Samples_UDP_Timeout.vcxproj.FileListAbsolute.txt
