@@ -87,13 +87,13 @@ namespace Bousk
 					processedData += channelTotalSize;
 				}
 			}
-			std::vector<std::vector<uint8_t>> ChannelsHandler::process()
+			std::vector<std::vector<uint8_t>> ChannelsHandler::process(bool isConnected)
 			{
 				std::vector<std::vector<uint8_t>> messages;
 				for (auto& channel : mChannels)
 				{
 					std::vector<std::vector<uint8_t>> protocolMessages = channel->process();
-					if (!protocolMessages.empty())
+					if (!protocolMessages.empty() && (channel->isReliable() || isConnected))
 					{
 						messages.reserve(messages.size() + protocolMessages.size());
 						messages.insert(messages.end(), std::make_move_iterator(protocolMessages.begin()), std::make_move_iterator(protocolMessages.end()));

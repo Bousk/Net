@@ -36,6 +36,8 @@ namespace Bousk
 					void onDataReceived(const uint8_t* data, const size_t datasize) override { mDemultiplexer.onDataReceived(data, datasize); }
 					std::vector<std::vector<uint8_t>> process() override { return mDemultiplexer.process(); }
 
+					virtual bool isReliable() const { return true; }
+
 				private:
 					class Multiplexer
 					{

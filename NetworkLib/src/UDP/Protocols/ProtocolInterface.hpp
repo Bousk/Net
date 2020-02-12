@@ -25,6 +25,8 @@ namespace Bousk
 
 					virtual void onDataReceived(const uint8_t* data, size_t datasize) = 0;
 					virtual std::vector<std::vector<uint8_t>> process() = 0;
+
+					virtual bool isReliable() const = 0;
 				};
 			}
 		}

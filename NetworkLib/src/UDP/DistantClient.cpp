@@ -226,7 +226,7 @@ namespace Bousk
 				// If we receive data, the other end is requesting a connection
 				onConnectionReceived();
 				mChannelsHandler.onDataReceived(data, datasize);
-				auto receivedMessages = mChannelsHandler.process();
+				auto receivedMessages = mChannelsHandler.process(isConnected());
 				for (auto&& msg : receivedMessages)
 				{
 					onMessageReady(std::make_unique<Messages::UserData>(mAddress, mClientId, std::move(msg)));

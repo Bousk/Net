@@ -34,7 +34,7 @@ namespace Bousk
 
 				// Demultiplexer
 				void onDataReceived(const uint8_t* data, size_t datasize);
-				std::vector<std::vector<uint8_t>> process();
+				std::vector<std::vector<uint8_t>> process(bool isConnected);
 
 			private:
 				std::vector<std::unique_ptr<Protocols::IProtocol>> mChannels;
