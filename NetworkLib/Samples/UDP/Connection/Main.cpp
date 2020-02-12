@@ -23,6 +23,7 @@ int main()
 	const Bousk::Network::Address client2 = Bousk::Network::Address::Loopback(Bousk::Network::Address::Type::IPv4, 9999);
 
 	const std::vector<std::string> messagesToSend = {"my", "first", "udp", "transfert"};
+	std::mutex coutMutex;
 	// Create a thread per client
 	std::thread t1([&]()
 	{
@@ -30,13 +31,20 @@ int main()
 		client.registerChannel<Bousk::Network::UDP::Protocols::ReliableOrdered>();
 		if (!client.init(client1.port()))
 		{
+			std::scoped_lock lock(coutMutex);
 			std::cout << "Client 1 initialisation error : " << Bousk::Network::Errors::Get();
 			return;
 		}
-		std::cout << "Client 1 initialized on port " << client1.port() << std::endl;
+		{
+			std::scoped_lock lock(coutMutex);
+			std::cout << "Client 1 initialized on port " << client1.port() << std::endl;
+		}
 		// Connect client 1 to client 2
 		client.connect(client2);
-		std::cout << "Client 1 connecting to " << client2.toString() << "..." << std::endl;
+		{
+			std::scoped_lock lock(coutMutex);
+			std::cout << "Client 1 connecting to " << client2.toString() << "..." << std::endl;
+		}
 		std::vector<std::string> receivedMessages;
 		for (bool exit = false; !exit;)
 		{
@@ -44,7 +52,21 @@ int main()
 			auto messages = client.poll();
 			for (auto&& message : messages)
 			{
-				if (message->is<Bousk::Network::Messages::UserData>())
+				if (message->is<Bousk::Network::Messages::Connection>())
+				{
+					if (message->emitter() != client2)
+					{
+						std::scoped_lock lock(coutMutex);
+						std::cout << "Unexpected connection from " << message->emitter().toString() << " (should be from " << client2.toString() << ")" << std::endl;
+						continue;
+					}
+					else
+					{
+						std::scoped_lock lock(coutMutex);
+						std::cout << "Client 2 [" << client2.toString() << "] connected to client 1" << std::endl;
+					}
+				}
+				else if (message->is<Bousk::Network::Messages::UserData>())
 				{
 					const Bousk::Network::Messages::UserData* userdata = message->as<Bousk::Network::Messages::UserData>();
 					Bousk::Serialization::Deserializer deserializer(userdata->data.data(), userdata->data.size());
@@ -57,6 +79,7 @@ int main()
 					receivedMessages.push_back(msg);
 					if (receivedMessages == messagesToSend)
 					{
+						std::scoped_lock lock(coutMutex);
 						std::cout << "Every messages received in order !" << std::endl;
 						std::cout << "Shutting down client 1..." << std::endl;
 						exit = true;
@@ -74,10 +97,14 @@ int main()
 		client.registerChannel<Bousk::Network::UDP::Protocols::ReliableOrdered>();
 		if (!client.init(client2.port()))
 		{
+			std::scoped_lock lock(coutMutex);
 			std::cout << "Client 2 initialisation error : " << Bousk::Network::Errors::Get();
 			return;
 		}
-		std::cout << "Client 2 initialized on port " << client2.port() << std::endl;
+		{
+			std::scoped_lock lock(coutMutex);
+			std::cout << "Client 2 initialized on port " << client2.port() << std::endl;
+		}
 		for (bool connected = false, exit = false; !exit;)
 		{
 			client.receive();
@@ -88,27 +115,38 @@ int main()
 				{
 					if (message->emitter() != client1)
 					{
+						std::scoped_lock lock(coutMutex);
 						std::cout << "Unexpected connection received from " << message->emitter().toString() << " (should be from " << client1.toString() << ")" << std::endl;
 						client.disconnect(message->emitter());
 						continue;
 					}
-					std::cout << "Client 1 connecting [" << client2.toString() << "]... accepting connection" << std::endl;
+					else
+					{
+						std::scoped_lock lock(coutMutex);
+						std::cout << "Client 2 receiving incoming connection from [" << message->emitter().toString() << "] (client 1)... and accepting it" << std::endl;
+					}
 					client.connect(message->emitter());
 				}
 				else if (message->is<Bousk::Network::Messages::Connection>())
 				{
 					if (message->emitter() != client1)
 					{
+						std::scoped_lock lock(coutMutex);
 						std::cout << "Unexpected connection from " << message->emitter().toString() << " (should be from " << client1.toString() << ")" << std::endl;
 						continue;
 					}
-					std::cout << "Client 1 connected [" << client2.toString() << "]" << std::endl;
+					else
+					{
+						std::scoped_lock lock(coutMutex);
+						std::cout << "Client 1 [" << client1.toString() << "] connected to client 2" << std::endl;
+					}
 					// Send messages to client 1, 1 message per packet
 					for (const auto& msg : messagesToSend)
 					{
 						Bousk::Serialization::Serializer serializer;
 						if (!serializer.write(msg))
 						{
+							std::scoped_lock lock(coutMutex);
 							std::cout << "Error serializing msg \"" << msg << "\" !" << std::endl;
 							return;
 						}
@@ -122,6 +160,7 @@ int main()
 					// Wait for client 1 to disconnect
 					if (message->is<Bousk::Network::Messages::Disconnection>())
 					{
+						std::scoped_lock lock(coutMutex);
 						assert(message->emitter() == client1);
 						std::cout << "Disconnection from client 1..." << std::endl;
 						exit = true;
