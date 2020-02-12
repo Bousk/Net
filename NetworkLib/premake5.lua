@@ -77,4 +77,5 @@ else
 	CreateProject("Samples/TCP/Server")
 	CreateProject("Samples/UDP/HelloWorld")
 	CreateProject("Samples/UDP/Connection")
+	CreateProject("Samples/UDP/Timeout")
 end
