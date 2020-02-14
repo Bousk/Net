@@ -34,6 +34,13 @@ namespace Bousk
 					Disconnecting,
 					Disconnected,
 				};
+				enum class DisconnectionReason {
+					None,
+					Refused,
+					ConnectionTimedOut,
+					Disconnected,
+					Lost,
+				};
 			public:
 				DistantClient(Client& client, const Address& addr, uint64 clientid);
 				DistantClient(const DistantClient&) = delete;
@@ -67,7 +74,10 @@ namespace Bousk
 				void onConnectionSent();
 				void onConnectionReceived();
 				void onConnected();
+				void onDisconnectionFromOtherEnd();
 				void onConnectionLost();
+				void onConnectionRefused();
+				void onConnectionTimedOut();
 
 				void onDatagramSentAcked(Datagram::ID datagramId);
 				void onDatagramSentLost(Datagram::ID datagramId);
@@ -89,9 +99,11 @@ namespace Bousk
 				Datagram::ID mNextDatagramIdToSend{ 0 };
 				AckHandler mReceivedAcks;	//!< To detect missing received datagrams and duplicates
 				AckHandler mSentAcks;		//!< Which sent datagrams have been acked to detect loss
+				std::chrono::milliseconds mStartTime; // Connection start time, for connection timeout
 				std::chrono::milliseconds mLastKeepAlive; // Last time this connection has been marked alive, for timeout disconnection
 				static std::chrono::milliseconds sTimeout; // Timeout is same for all clients
 				State mState{ State::None };
+				DisconnectionReason mDisconnectionReason{ DisconnectionReason::None };
 				std::vector<std::unique_ptr<Messages::Base>> mPendingMessages; // Store messages before connection has been accepted
 			};
 			

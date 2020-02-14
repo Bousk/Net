@@ -16,6 +16,7 @@ namespace Bousk
 				enum class Type : uint8 {
 					ConnectedData,
 					KeepAlive,
+					Disconnection,
 				};
 				struct Header
 				{

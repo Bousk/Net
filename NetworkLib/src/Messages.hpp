@@ -55,6 +55,8 @@ namespace Bousk
 				enum class Result {
 					Success,
 					Failed,
+					Refused,
+					TimedOut,
 				};
 				Connection(const Address& emitter, uint64 emitterid, Result r)
 					: Base(Type::Connection, emitter, emitterid)
@@ -92,4 +94,5 @@ namespace Bousk
 }
 
 #include <iosfwd>
+std::ostream& operator<<(std::ostream& out, Bousk::Network::Messages::Connection::Result result);
 std::ostream& operator<<(std::ostream& out, Bousk::Network::Messages::Disconnection::Reason reason);

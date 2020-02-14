@@ -22,6 +22,7 @@ namespace Bousk
 				: mClient(client)
 				, mAddress(addr)
 				, mClientId(clientid)
+				, mStartTime(Utils::Now())
 				, mLastKeepAlive(Utils::Now())
 			{}
 			void DistantClient::onConnectionSent()
@@ -67,13 +68,42 @@ namespace Bousk
 					onMessageReady(std::move(pendingMessage));
 				}
 			}
+			void DistantClient::onDisconnectionFromOtherEnd()
+			{
+				if (isConnecting())
+				{
+					onConnectionRefused();
+				}
+				else if (isConnected())
+				{
+					mState = State::Disconnecting;
+					mDisconnectionReason = DisconnectionReason::Disconnected;
+				}
+			}
 			void DistantClient::onConnectionLost()
 			{
 				if (isConnected())
 				{
+					// Start disconnecting and save the reason to notify later
 					mState = State::Disconnecting;
-					mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Lost));
+					mDisconnectionReason = DisconnectionReason::Lost;
 				}
+			}
+			void DistantClient::onConnectionRefused()
+			{
+				if (mState == State::ConnectionSent)
+				{
+					mDisconnectionReason = DisconnectionReason::Refused;
+				}
+				mState = State::Disconnecting;
+			}
+			void DistantClient::onConnectionTimedOut()
+			{
+				if (mState == State::ConnectionSent)
+				{
+					mDisconnectionReason = DisconnectionReason::ConnectionTimedOut;
+				}
+				mState = State::Disconnecting;
 			}
 			void DistantClient::connect()
 			{
@@ -135,15 +165,47 @@ namespace Bousk
 						}
 					}
 				}
-				if (isDisconnecting() && now > mLastKeepAlive + 2 * GetTimeout())
+				if (isDisconnecting())
 				{
-					// After 2 timeouts we mark it disconnected
-					// This leaves enough time to each end to notice and disconnects its distant client
-					mState = State::Disconnected;
+					if (now > mLastKeepAlive + 2 * GetTimeout())
+					{
+						// After 2 timeouts we mark it disconnected
+						// This leaves enough time to each end to notice and disconnects its distant client
+						mState = State::Disconnected;
+						// Do notify the disconnection, if needed
+						// We notify it as latest as possible so when user received the Disconnection message, he can send a new connection request right away
+						switch (mDisconnectionReason)
+						{
+							case DisconnectionReason::Disconnected:
+								mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Disconnected));
+								break;
+							case DisconnectionReason::Lost:
+								mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Lost));
+								break;
+							case DisconnectionReason::Refused:
+								mClient.onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::Refused));
+								break;
+							case DisconnectionReason::ConnectionTimedOut:
+								mClient.onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::TimedOut));
+								break;
+						}
+					}
+					else if (mDisconnectionReason != DisconnectionReason::None && mDisconnectionReason != DisconnectionReason::Lost)
+					{
+						// Send disconnection datagrams while disconnecting to inform the other end that's a normal termination
+						Datagram datagram;
+						fillDatagramHeader(datagram, Datagram::Type::Disconnection);
+						send(datagram);
+					}
 				}
 				else if (isConnected() && now > mLastKeepAlive + GetTimeout())
 				{
 					onConnectionLost();
+				}
+				else if (isConnecting() && now > mStartTime + GetTimeout())
+				{
+					// Connection hasn't been accepted within timeframe
+					onConnectionTimedOut();
 				}
 			}
 			void DistantClient::fillKeepAlive(Datagram& dgram)
@@ -170,7 +232,6 @@ namespace Bousk
 			}
 			void DistantClient::onDatagramReceived(Datagram&& datagram)
 			{
-				assert(datagram.datasize > 0);
 				const auto datagramid = ntohs(datagram.header.id);
 				//!< Update the received acks tracking
 				mReceivedAcks.update(datagramid, 0, true);
@@ -208,6 +269,10 @@ namespace Bousk
 				{
 					handleKeepAlive(datagram.data.data(), datagram.datasize);
 				} break;
+				case Datagram::Type::Disconnection:
+				{
+					onDisconnectionFromOtherEnd();
+				}
 				}
 			}
 
