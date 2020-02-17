@@ -16,7 +16,7 @@ namespace Bousk
 	{
 		namespace UDP
 		{
-			std::chrono::milliseconds DistantClient::sTimeout = DEFAULT_UDP_TIMEOUT;
+			std::chrono::milliseconds DistantClient::sTimeout = BOUSKNET_DEFAULT_UDP_TIMEOUT;
 
 			DistantClient::DistantClient(Client& client, const Address& addr, uint64 clientid)
 				: mClient(client)
