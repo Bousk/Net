@@ -99,7 +99,7 @@ namespace Bousk
 				Datagram::ID mNextDatagramIdToSend{ 0 };
 				AckHandler mReceivedAcks;	//!< To detect missing received datagrams and duplicates
 				AckHandler mSentAcks;		//!< Which sent datagrams have been acked to detect loss
-				std::chrono::milliseconds mStartTime; // Connection start time, for connection timeout
+				std::chrono::milliseconds mConnectionStartTime; // Connection start time, for connection timeout
 				std::chrono::milliseconds mLastKeepAlive; // Last time this connection has been marked alive, for timeout disconnection
 				static std::chrono::milliseconds sTimeout; // Timeout is same for all clients
 				State mState{ State::None };

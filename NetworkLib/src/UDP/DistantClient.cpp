@@ -22,7 +22,7 @@ namespace Bousk
 				: mClient(client)
 				, mAddress(addr)
 				, mClientId(clientid)
-				, mStartTime(Utils::Now())
+				, mConnectionStartTime(Utils::Now())
 				, mLastKeepAlive(Utils::Now())
 			{}
 			void DistantClient::onConnectionSent()
@@ -202,7 +202,7 @@ namespace Bousk
 				{
 					onConnectionLost();
 				}
-				else if (isConnecting() && now > mStartTime + GetTimeout())
+				else if (isConnecting() && now > mConnectionStartTime + GetTimeout())
 				{
 					// Connection hasn't been accepted within timeframe
 					onConnectionTimedOut();

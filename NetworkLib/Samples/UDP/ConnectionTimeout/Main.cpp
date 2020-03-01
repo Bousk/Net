@@ -112,23 +112,14 @@ int main()
 				}
 				else if (message->is<Bousk::Network::Messages::Connection>())
 				{
-					if (message->emitter() != client1)
-					{
-						std::scoped_lock lock(coutMutex);
-						std::cout << "Unexpected connection from " << message->emitter().toString() << " (should be from " << client1.toString() << ")" << std::endl;
-						continue;
-					}
-					else
-					{
-						std::scoped_lock lock(coutMutex);
-						std::cout << "Client 1 [" << client1.toString() << "] connected to client 2" << std::endl;
-					}
+					std::scoped_lock lock(coutMutex);
+					std::cout << "Unexpected connection from " << message->emitter().toString() << std::endl;
 				}
 				else if (message->is<Bousk::Network::Messages::Disconnection>())
 				{
 					std::scoped_lock lock(coutMutex);
 					assert(message->emitter() == client1);
-					std::cout << "Disconnection from client 1...[" << message->as<Bousk::Network::Messages::Disconnection>()->reason << "]" << std::endl;
+					std::cout << "Disconnection from " << message->emitter().toString() << "...[" << message->as<Bousk::Network::Messages::Disconnection>()->reason << "]" << std::endl;
 					exit = true;
 				}
 			}
