@@ -86,7 +86,9 @@ int main()
 			std::scoped_lock lock(coutMutex);
 			std::cout << "Client 2 initialized on port " << client2.port() << std::endl;
 		}
-		for (bool exit = false; !exit;)
+		std::chrono::milliseconds timeoutStart = std::chrono::milliseconds(0);
+		constexpr auto Timeout = std::chrono::seconds(30); // Much higher than lib one
+		for (bool exit = false; !exit && (timeoutStart == std::chrono::milliseconds(0) || timeoutStart + Timeout > Bousk::Utils::Now());)
 		{
 			client.receive();
 			auto messages = client.poll();
@@ -105,8 +107,29 @@ int main()
 					{
 						std::scoped_lock lock(coutMutex);
 						std::cout << "[Client 2]Receiving incoming connection from client 1 [" << message->emitter().toString() << "] and NOT accepting it..." << std::endl;
-						exit = true;
+						timeoutStart = Bousk::Utils::Now();
 					}
+				}
+				else if (message->is<Bousk::Network::Messages::Connection>())
+				{
+					if (message->emitter() != client1)
+					{
+						std::scoped_lock lock(coutMutex);
+						std::cout << "Unexpected connection from " << message->emitter().toString() << " (should be from " << client1.toString() << ")" << std::endl;
+						continue;
+					}
+					else
+					{
+						std::scoped_lock lock(coutMutex);
+						std::cout << "Client 1 [" << client1.toString() << "] connected to client 2" << std::endl;
+					}
+				}
+				else if (message->is<Bousk::Network::Messages::Disconnection>())
+				{
+					std::scoped_lock lock(coutMutex);
+					assert(message->emitter() == client1);
+					std::cout << "Disconnection from client 1...[" << message->as<Bousk::Network::Messages::Disconnection>()->reason << "]" << std::endl;
+					exit = true;
 				}
 			}
 			client.processSend();
