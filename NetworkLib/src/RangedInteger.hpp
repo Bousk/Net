@@ -3,6 +3,7 @@
 #include <Types.hpp>
 #include <Serialization/Serialization.hpp>
 #include <Serialization/Serializer.hpp>
+#include <Serialization/Deserializer.hpp>
 #include <Utils.hpp>
 
 namespace Bousk
