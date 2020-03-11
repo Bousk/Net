@@ -26,3 +26,5 @@ NetworkLib/Projects/vs2019/obj/Debug/Samples_UDP_Connection/Samples_UDP_Connecti
 NetworkLib/Projects/vs2019/obj/Debug/Samples_UDP_HelloWorld/Samples_UDP_HelloWorld.vcxproj.FileListAbsolute.txt
 NetworkLib/Projects/vs2019/obj/Debug/Samples_UDP_Timeout/Samples_UDP_Timeout.vcxproj.FileListAbsolute.txt
 *.enc
+*.manifest
+*.testlog
