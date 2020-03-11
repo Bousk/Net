@@ -120,8 +120,19 @@ namespace Bousk
 						if (receivedSize >= Datagram::HeaderSize)
 						{
 							datagram.datasize = receivedSize - Datagram::HeaderSize;
-							if (auto client = getClient(from, true))
-								client->onDatagramReceived(std::move(datagram));
+						#if BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
+							if (mSimulator.isEnabled())
+							{
+								// Push the datagram into the simulator
+								mSimulator.push(datagram, from);
+							}
+							else
+						#endif // BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
+							{
+								// Handle the datagram directly
+								if (auto client = getClient(from, true))
+									client->onDatagramReceived(std::move(datagram));
+							}
 						}
 						else
 						{
@@ -139,9 +150,21 @@ namespace Bousk
 								//!< Log that error
 							}
 						}
-						return;
+						break;
 					}
 				}
+				// Poll pending datagrams from the simulator
+			#if BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
+				if (mSimulator.isEnabled())
+				{
+					std::vector<std::pair<Datagram, Address>> datagrams = mSimulator.poll();
+					for (auto& [datagram, from] : datagrams)
+					{
+						if (auto client = getClient(from, true))
+							client->onDatagramReceived(std::move(datagram));
+					}
+				}
+			#endif // BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
 			}
 			std::vector<std::unique_ptr<Messages::Base>> Client::poll()
 			{

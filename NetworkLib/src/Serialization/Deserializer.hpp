@@ -56,9 +56,9 @@ namespace Bousk
 				return false;
 			}
 
-		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+		#if BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED
 			bool read(float32& data);
-		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED
 
 			template<class T>
 			inline bool read(std::vector<T>& data) { return readContainer(data); }

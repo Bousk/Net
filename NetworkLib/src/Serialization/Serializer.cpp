@@ -133,13 +133,13 @@ namespace Bousk
 			return write(rangedData, static_cast<uint64>(0), range);
 		}
 
-	#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+	#if BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED
 		bool Serializer::write(const float32 data)
 		{
 			uint32 conv;
 			Conversion::ToNetwork(data, conv);
 			return writeBits(reinterpret_cast<const uint8*>(&conv), 4, 32);
 		}
-	#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+	#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED
 	}
 }

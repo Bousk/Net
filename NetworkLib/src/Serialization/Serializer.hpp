@@ -47,9 +47,9 @@ namespace Bousk
 				return write(static_cast<T>(value), static_cast<T>(E::Min), static_cast<T>(E::Max));
 			}
 			
-		#ifdef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+		#if BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED
 			bool write(float32 data);
-		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
+		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED
 
 			template<class T>
 			inline bool write(const std::vector<T>& data) { return writeContainer(data); }

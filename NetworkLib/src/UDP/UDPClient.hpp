@@ -2,6 +2,7 @@
 
 #include "Address.hpp"
 #include "DistantClient.hpp"
+#include "Simulator.hpp"
 #include "Sockets.hpp"
 #include "Types.hpp"
 
@@ -57,6 +58,11 @@ namespace Bousk
 
 				template<class T>
 				void registerChannel();
+
+			#if BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
+				Simulator& simulator() { return mSimulator; }
+				const Simulator& simulator() const { return mSimulator; }
+			#endif // BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
 
 				// Initialise socket to send and receive data on the given port
 				bool init(uint16 port);
@@ -127,6 +133,10 @@ namespace Bousk
 				std::mutex mOperationsLock;
 				using OperationsLock = std::lock_guard<std::mutex>;
 				std::vector<Operation> mPendingOperations;
+
+			#if BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
+				Simulator mSimulator;
+			#endif // BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
 			};
 
 			template<class T>
