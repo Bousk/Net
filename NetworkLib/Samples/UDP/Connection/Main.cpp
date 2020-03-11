@@ -29,6 +29,7 @@ int main()
 	{
 		Bousk::Network::UDP::Client client;
 		client.registerChannel<Bousk::Network::UDP::Protocols::ReliableOrdered>();
+		client.simulator().enable();
 		if (!client.init(client1.port()))
 		{
 			std::scoped_lock lock(coutMutex);
@@ -95,6 +96,7 @@ int main()
 	{
 		Bousk::Network::UDP::Client client;
 		client.registerChannel<Bousk::Network::UDP::Protocols::ReliableOrdered>();
+		client.simulator().enable();
 		if (!client.init(client2.port()))
 		{
 			std::scoped_lock lock(coutMutex);
