@@ -64,7 +64,7 @@ namespace Bousk
 				void disconnect();
 
 				void send(std::vector<uint8>&& data, uint32 channelIndex);
-				void processSend(size_t maxDatagrams = 0);
+				void processSend(uint8 maxDatagrams = 0);
 				void onDatagramReceived(Datagram&& datagram);
 
 				const Address& address() const { return mAddress; }

@@ -138,7 +138,7 @@ namespace Bousk
 					// Error
 				}
 			}
-			void DistantClient::processSend(const size_t maxDatagrams /*= 0*/)
+			void DistantClient::processSend(const uint8 maxDatagrams /*= 0*/)
 			{
 				const auto now = Utils::Now();
 				// We do send data during connection process in order to keep it available before we accept it
