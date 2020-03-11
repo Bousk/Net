@@ -16,7 +16,7 @@ namespace Bousk
 		}
 		namespace TCP
 		{
-			using HeaderType = uint16_t;
+			using HeaderType = uint16;
 			static const unsigned int HeaderSize = sizeof(HeaderType);
 			class ClientImpl;
 			class Client
@@ -32,7 +32,7 @@ namespace Bousk
 				bool init(SOCKET&& sckt, const Address& addr);
 				bool connect(const Address& address);
 				void disconnect();
-				bool send(const unsigned char* data, unsigned int len);
+				bool send(const uint8* data, size_t len);
 				std::unique_ptr<Messages::Base> poll();
 
 				uint64 id() const;

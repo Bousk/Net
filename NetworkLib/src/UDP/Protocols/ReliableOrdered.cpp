@@ -11,15 +11,15 @@ namespace Bousk
 		{
 			namespace Protocols
 			{
-				void ReliableOrdered::Multiplexer::queue(std::vector<uint8_t>&& msgData)
+				void ReliableOrdered::Multiplexer::queue(std::vector<uint8>&& msgData)
 				{
 					assert(msgData.size() <= Packet::MaxMessageSize);
 					if (msgData.size() > Packet::DataMaxSize)
 					{
-						size_t queuedSize = 0;
+						uint16 queuedSize = 0;
 						while (queuedSize < msgData.size())
 						{
-							const auto fragmentSize = std::min(Packet::DataMaxSize, static_cast<uint16_t>(msgData.size() - queuedSize));
+							const auto fragmentSize = std::min(Packet::DataMaxSize, static_cast<uint16>(msgData.size() - queuedSize));
 							mQueue.resize(mQueue.size() + 1);
 							Packet& packet = mQueue.back().packet();
 							packet.header.id = mNextId++;
@@ -38,13 +38,13 @@ namespace Bousk
 						Packet& packet = mQueue.back().packet();
 						packet.header.id = mNextId++;
 						packet.header.type = Packet::Type::FullMessage;
-						packet.header.size = static_cast<uint16_t>(msgData.size());
+						packet.header.size = static_cast<uint16>(msgData.size());
 						memcpy(packet.data(), msgData.data(), msgData.size());
 					}
 				}
-				size_t ReliableOrdered::Multiplexer::serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID datagramId)
+				uint16 ReliableOrdered::Multiplexer::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId)
 				{
-					size_t serializedSize = 0;
+					uint16 serializedSize = 0;
 					for (auto& packetHolder : mQueue)
 					{
 						if (!(Utils::SequenceDiff(packetHolder.packet().id(), mFirstAllowedPacket) < Demultiplexer::QueueSize))
@@ -87,10 +87,10 @@ namespace Bousk
 					}
 				}
 
-				void ReliableOrdered::Demultiplexer::onDataReceived(const uint8_t* data, const size_t datasize)
+				void ReliableOrdered::Demultiplexer::onDataReceived(const uint8* data, const uint16 datasize)
 				{
 					//!< Extract packets from buffer
-					size_t processedDataSize = 0;
+					uint16 processedDataSize = 0;
 					while (processedDataSize < datasize)
 					{
 						const Packet* pckt = reinterpret_cast<const Packet*>(data);
@@ -123,11 +123,11 @@ namespace Bousk
 						assert(pendingPacket.id() == pckt->id() && pendingPacket.datasize() == pckt->datasize());
 					}
 				}
-				std::vector<std::vector<uint8_t>> ReliableOrdered::Demultiplexer::process()
+				std::vector<std::vector<uint8>> ReliableOrdered::Demultiplexer::process()
 				{
 					auto ResetPacket = [](Packet& pckt) { pckt.header.size = 0; };
 					auto IsPacketValid = [](const Packet& pckt) { return pckt.header.size != 0; };
-					std::vector<std::vector<uint8_t>> messagesReady;
+					std::vector<std::vector<uint8>> messagesReady;
 
 					Packet::Id expectedPacketId = mLastProcessed + 1;
 					const size_t startIndexOffset = expectedPacketId % mPendingQueue.size();
@@ -141,7 +141,7 @@ namespace Bousk
 						if (packet.type() == Packet::Type::FullMessage)
 						{
 							//!< Full packet, just take it
-							std::vector<uint8_t> msg(packet.data(), packet.data() + packet.datasize());
+							std::vector<uint8> msg(packet.data(), packet.data() + packet.datasize());
 							mLastProcessed = packet.id();
 							ResetPacket(packet);
 							messagesReady.push_back(std::move(msg));
@@ -178,7 +178,7 @@ namespace Bousk
 								break; // Messages are ordered and next one to extract is not full yet
 
 									   // Start the message with first fragment packet, then skip it
-							std::vector<uint8_t> msg(packet.data(), packet.data() + packet.datasize());
+							std::vector<uint8> msg(packet.data(), packet.data() + packet.datasize());
 							++i;
 							++expectedPacketId;
 							// Iterate through remaining packets to try to complete it

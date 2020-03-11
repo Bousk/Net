@@ -1,8 +1,7 @@
 #pragma once
 
-#include <cstdint>
-#include <chrono>
 #include <Types.hpp>
+#include <chrono>
 
 #define UNUSED(x) (void)(x)
 
@@ -12,12 +11,12 @@ namespace Bousk
 	{
 		inline std::chrono::milliseconds Now();
 
-		inline bool IsSequenceNewer(uint16_t sNew, uint16_t sLast);
-		inline uint16_t SequenceDiff(uint16_t sNew, uint16_t sLast);
+		inline bool IsSequenceNewer(uint16 sNew, uint16 sLast);
+		inline uint16 SequenceDiff(uint16 sNew, uint16 sLast);
 
-		inline void SetBit(uint64_t& bitfield, uint8_t n);
-		inline void UnsetBit(uint64_t& bitfield, uint8_t n);
-		inline bool HasBit(uint64_t bitfield, uint8_t n);
+		inline void SetBit(uint64& bitfield, uint8 n);
+		inline void UnsetBit(uint64& bitfield, uint8 n);
+		inline bool HasBit(uint64 bitfield, uint8 n);
 
 		using Bousk::Bit;
 

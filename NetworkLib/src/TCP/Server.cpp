@@ -24,12 +24,12 @@ namespace Bousk
 				bool start(unsigned short _port);
 				void stop();
 				void update();
-				bool sendTo(uint64_t clientid, const unsigned char* data, unsigned int len);
-				bool sendToAll(const unsigned char* data, unsigned int len);
+				bool sendTo(uint64 clientid, const uint8* data, size_t len);
+				bool sendToAll(const uint8* data, size_t len);
 				std::unique_ptr<Messages::Base> poll();
 
 			private:
-				std::map<uint64_t, Client> mClients;
+				std::map<uint64, Client> mClients;
 				std::list<std::unique_ptr<Messages::Base>> mMessages;
 				SOCKET mSocket{ INVALID_SOCKET };
 			};
@@ -119,12 +119,12 @@ namespace Bousk
 						++itClient;
 				}
 			}
-			bool ServerImpl::sendTo(uint64_t clientid, const unsigned char* data, unsigned int len)
+			bool ServerImpl::sendTo(uint64 clientid, const uint8* data, size_t len)
 			{
 				auto itClient = mClients.find(clientid);
 				return itClient != mClients.end() && itClient->second.send(data, len);
 			}
-			bool ServerImpl::sendToAll(const unsigned char* data, unsigned int len)
+			bool ServerImpl::sendToAll(const uint8* data, size_t len)
 			{
 				bool ret = true;
 				for (auto& client : mClients)
@@ -163,8 +163,8 @@ namespace Bousk
 			}
 			void Server::stop() { if (mImpl) mImpl->stop(); }
 			void Server::update() { if (mImpl) mImpl->update(); }
-			bool Server::sendTo(uint64_t clientid, const unsigned char* data, unsigned int len) { return mImpl && mImpl->sendTo(clientid, data, len); }
-			bool Server::sendToAll(const unsigned char* data, unsigned int len) { return mImpl && mImpl->sendToAll(data, len); }
+			bool Server::sendTo(uint64 clientid, const uint8* data, size_t len) { return mImpl && mImpl->sendTo(clientid, data, len); }
+			bool Server::sendToAll(const uint8* data, size_t len) { return mImpl && mImpl->sendToAll(data, len); }
 			std::unique_ptr<Messages::Base> Server::poll() { return mImpl ? mImpl->poll() : nullptr; }
 		}
 	}

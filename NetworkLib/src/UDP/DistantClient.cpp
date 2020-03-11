@@ -130,7 +130,7 @@ namespace Bousk
 				dgram.header.type = type;
 				++mNextDatagramIdToSend;
 			}
-			void DistantClient::send(const Datagram& dgram) const
+			void DistantClient::send(const Datagram& dgram)
 			{
 				int ret = mAddress.sendTo(mClient.mSocket, reinterpret_cast<const char*>(&dgram), dgram.size());
 				if (ret < 0)
@@ -215,9 +215,9 @@ namespace Bousk
 				Serialization::Serializer serializer;
 				serializer.write(mState == State::ConnectionSent || isConnected());
 				memcpy(dgram.data.data(), serializer.buffer(), serializer.bufferSize());
-				dgram.datasize = serializer.bufferSize();
+				dgram.datasize = static_cast<uint16>(serializer.bufferSize());
 			}
-			void DistantClient::handleKeepAlive(const uint8* data, const size_t datasize)
+			void DistantClient::handleKeepAlive(const uint8* data, const uint16 datasize)
 			{
 				maintainConnection();
 				if (mState == State::None || isConnecting())
@@ -239,7 +239,10 @@ namespace Bousk
 				mSentAcks.update(ntohs(datagram.header.ack), datagram.header.previousAcks, true);
 				//!< Ignore duplicate
 				if (!mReceivedAcks.isNewlyAcked(datagramid))
+				{
 					return;
+				}
+
 				//!< Handle loss on reception
 				const auto lostDatagrams = mReceivedAcks.loss();
 				for (const auto receivedLostDatagram : lostDatagrams)
@@ -286,7 +289,7 @@ namespace Bousk
 			}
 			void DistantClient::onDatagramReceivedLost(Datagram::ID)
 			{}
-			void DistantClient::onDataReceived(const uint8_t* data, const size_t datasize)
+			void DistantClient::onDataReceived(const uint8* data, const uint16 datasize)
 			{
 				// If we receive data, the other end is requesting a connection
 				onConnectionReceived();

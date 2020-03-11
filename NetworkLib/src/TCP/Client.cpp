@@ -182,7 +182,7 @@ namespace Bousk
 			public:
 				SendingHandler() = default;
 				void init(SOCKET sckt);
-				bool send(const unsigned char* data, unsigned int datalen);
+				bool send(const uint8* data, size_t datalen);
 				void update();
 				size_t queueSize() const;
 
@@ -192,8 +192,8 @@ namespace Bousk
 				void prepareNextData();
 
 			private:
-				std::list<std::vector<unsigned char>> mQueueingBuffers;
-				std::vector<unsigned char> mSendingBuffer;
+				std::list<std::vector<uint8>> mQueueingBuffers;
+				std::vector<uint8> mSendingBuffer;
 				SOCKET mSocket{ INVALID_SOCKET };
 				State mState{ State::Idle };
 			};
@@ -206,7 +206,7 @@ namespace Bousk
 				}
 				mState = State::Idle;
 			}
-			bool SendingHandler::send(const unsigned char* data, unsigned int datalen)
+			bool SendingHandler::send(const uint8* data, size_t datalen)
 			{
 				if (datalen > std::numeric_limits<HeaderType>::max())
 					return false;
@@ -311,7 +311,7 @@ namespace Bousk
 				// Local client initialisation : connect to a server
 				bool connect(const Address& address);
 				void disconnect();
-				bool send(const unsigned char* data, unsigned int len);
+				bool send(const uint8* data, size_t len);
 				std::unique_ptr<Messages::Base> poll();
 
 				uint64 id() const { return static_cast<uint64>(mSocket); }
@@ -384,7 +384,7 @@ namespace Bousk
 				mSocket = INVALID_SOCKET;
 				mState = State::Disconnected;
 			}
-			bool ClientImpl::send(const unsigned char* data, unsigned int len)
+			bool ClientImpl::send(const uint8* data, size_t len)
 			{
 				return mSendingHandler.send(data, len);
 			}
@@ -462,7 +462,7 @@ namespace Bousk
 				return mImpl && mImpl->connect(address);
 			}
 			void Client::disconnect() { if (mImpl) mImpl->disconnect(); mImpl = nullptr; }
-			bool Client::send(const unsigned char* data, unsigned int len) { return mImpl && mImpl->send(data, len); }
+			bool Client::send(const uint8* data, size_t len) { return mImpl && mImpl->send(data, len); }
 			std::unique_ptr<Messages::Base> Client::poll() { return mImpl ? mImpl->poll() : nullptr; }
 			uint64 Client::id() const { return mImpl ? mImpl->id() : std::numeric_limits<uint64>::max(); }
 			const Address& Client::address() const { static Address empty; return mImpl ? mImpl->destinationAddress() : empty; }

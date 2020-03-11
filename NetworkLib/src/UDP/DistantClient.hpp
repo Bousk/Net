@@ -1,10 +1,10 @@
 #pragma once
 
-#include "UDP/Datagram.hpp"
-#include "UDP/AckHandler.hpp"
-#include "UDP/ChannelsHandler.hpp"
-#include "Address.hpp"
-#include "Sockets.hpp"
+#include <UDP/Datagram.hpp>
+#include <UDP/AckHandler.hpp>
+#include <UDP/ChannelsHandler.hpp>
+#include <Address.hpp>
+#include <Sockets.hpp>
 
 #include <chrono>
 #include <memory>
@@ -82,14 +82,14 @@ namespace Bousk
 				void onDatagramSentAcked(Datagram::ID datagramId);
 				void onDatagramSentLost(Datagram::ID datagramId);
 				void onDatagramReceivedLost(Datagram::ID datagramId);
-				void onDataReceived(const uint8_t* data, size_t datasize);
+				void onDataReceived(const uint8* data, uint16 datasize);
 				void onMessageReady(std::unique_ptr<Messages::Base>&& msg);
 
 				void fillKeepAlive(Datagram& dgram);
-				void handleKeepAlive(const uint8* data, const size_t datasize);
+				void handleKeepAlive(const uint8* data, const uint16 datasize);
 
 				void fillDatagramHeader(Datagram& dgram, Datagram::Type type);
-				void send(const Datagram& dgram) const;
+				void send(const Datagram& dgram);
 
 			private:
 				Client& mClient;

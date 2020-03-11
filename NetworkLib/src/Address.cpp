@@ -35,7 +35,7 @@ namespace Bousk
 			return *this;
 		}
 
-		Address::Address(const std::string& ip, uint16_t port) noexcept
+		Address::Address(const std::string& ip, uint16 port) noexcept
 			: mPort(port)
 		{
 			memset(&mStorage, 0, sizeof(mStorage));

@@ -21,27 +21,27 @@ namespace Bousk
 				assert(channelIndex < mChannels.size());
 				mChannels[channelIndex]->queue(std::move(msgData));
 			}
-			size_t ChannelsHandler::serialize(uint8* buffer, const size_t buffersize, const Datagram::ID datagramId)
+			uint16 ChannelsHandler::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId)
 			{
-				size_t remainingBuffersize = buffersize;
-				for (uint32_t channelId = 0; channelId < mChannels.size(); ++channelId)
+				uint16 remainingBuffersize = buffersize;
+				for (uint32 channelId = 0; channelId < mChannels.size(); ++channelId)
 				{
 					Protocols::IProtocol* protocol = mChannels[channelId].get();
 
-					uint8_t* const channelHeaderStart = buffer;
-					uint8_t* const channelDataStart = buffer + ChannelHeader::Size;
-					const size_t channelAvailableSize = remainingBuffersize - ChannelHeader::Size;
+					uint8* const channelHeaderStart = buffer;
+					uint8* const channelDataStart = buffer + ChannelHeader::Size;
+					const uint16 channelAvailableSize = remainingBuffersize - ChannelHeader::Size;
 
-					const size_t serializedData = protocol->serialize(channelDataStart, channelAvailableSize, datagramId);
+					const uint16 serializedData = protocol->serialize(channelDataStart, channelAvailableSize, datagramId);
 					assert(serializedData <= channelAvailableSize);
 					if (serializedData)
 					{
 						// Data added, let's add the protocol header
 						ChannelHeader* const channelHeader = reinterpret_cast<ChannelHeader*>(channelHeaderStart);
 						channelHeader->channelId = channelId;
-						channelHeader->datasize = static_cast<uint32_t>(serializedData);
+						channelHeader->datasize = static_cast<uint32>(serializedData);
 
-						const size_t channelTotalSize = serializedData + ChannelHeader::Size;
+						const uint16 channelTotalSize = serializedData + ChannelHeader::Size;
 						buffer += channelTotalSize;
 						remainingBuffersize -= channelTotalSize;
 					}
@@ -65,9 +65,9 @@ namespace Bousk
 			}
 
 			// Demultiplexer
-			void ChannelsHandler::onDataReceived(const uint8_t* data, const size_t datasize)
+			void ChannelsHandler::onDataReceived(const uint8* data, const uint16 datasize)
 			{
-				size_t processedData = 0;
+				uint16 processedData = 0;
 				while (processedData < datasize)
 				{
 					const ChannelHeader* channelHeader = reinterpret_cast<const ChannelHeader*>(data);
@@ -82,17 +82,17 @@ namespace Bousk
 						return;
 					}
 					mChannels[channelHeader->channelId]->onDataReceived(data + ChannelHeader::Size, channelHeader->datasize);
-					const size_t channelTotalSize = channelHeader->datasize + ChannelHeader::Size;
+					const uint16 channelTotalSize = channelHeader->datasize + ChannelHeader::Size;
 					data += channelTotalSize;
 					processedData += channelTotalSize;
 				}
 			}
-			std::vector<std::vector<uint8_t>> ChannelsHandler::process(bool isConnected)
+			std::vector<std::vector<uint8>> ChannelsHandler::process(bool isConnected)
 			{
-				std::vector<std::vector<uint8_t>> messages;
+				std::vector<std::vector<uint8>> messages;
 				for (auto& channel : mChannels)
 				{
-					std::vector<std::vector<uint8_t>> protocolMessages = channel->process();
+					std::vector<std::vector<uint8>> protocolMessages = channel->process();
 					if (!protocolMessages.empty() && (channel->isReliable() || isConnected))
 					{
 						messages.reserve(messages.size() + protocolMessages.size());

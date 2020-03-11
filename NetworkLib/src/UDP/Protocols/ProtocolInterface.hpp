@@ -17,14 +17,14 @@ namespace Bousk
 					IProtocol() = default;
 					virtual ~IProtocol() = default;
 
-					virtual void queue(std::vector<uint8_t>&& msgData) = 0;
-					virtual size_t serialize(uint8_t* buffer, size_t buffersize, Datagram::ID datagramId) = 0;
+					virtual void queue(std::vector<uint8>&& msgData) = 0;
+					virtual uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId) = 0;
 
 					virtual void onDatagramAcked(Datagram::ID /*datagramId*/) {}
 					virtual void onDatagramLost(Datagram::ID /*datagramId*/) {}
 
-					virtual void onDataReceived(const uint8_t* data, size_t datasize) = 0;
-					virtual std::vector<std::vector<uint8_t>> process() = 0;
+					virtual void onDataReceived(const uint8* data, uint16 datasize) = 0;
+					virtual std::vector<std::vector<uint8>> process() = 0;
 
 					virtual bool isReliable() const = 0;
 				};

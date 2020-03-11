@@ -27,14 +27,14 @@ namespace Bousk
 
 				// Multiplexer
 				void queue(std::vector<uint8>&& msgData, uint32 channelIndex);
-				size_t serialize(uint8* buffer, size_t buffersize, Datagram::ID datagramId);
+				uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId);
 
 				void onDatagramAcked(Datagram::ID datagramId);
 				void onDatagramLost(Datagram::ID datagramId);
 
 				// Demultiplexer
-				void onDataReceived(const uint8_t* data, size_t datasize);
-				std::vector<std::vector<uint8_t>> process(bool isConnected);
+				void onDataReceived(const uint8* data, uint16 datasize);
+				std::vector<std::vector<uint8>> process(bool isConnected);
 
 			private:
 				std::vector<std::unique_ptr<Protocols::IProtocol>> mChannels;

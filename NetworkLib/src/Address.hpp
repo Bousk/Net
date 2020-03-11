@@ -25,7 +25,7 @@ namespace Bousk
 			Address& operator=(Address&&) noexcept;
 			~Address() = default;
 
-			Address(const std::string& ip, uint16_t port) noexcept;
+			Address(const std::string& ip, uint16 port) noexcept;
 			Address(const sockaddr_storage& addr) noexcept;
 
 			static Address Any(Type type, uint16 port);

@@ -10,15 +10,15 @@ namespace Bousk
 		{
 			namespace Protocols
 			{
-				void UnreliableOrdered::Multiplexer::queue(std::vector<uint8_t>&& msgData)
+				void UnreliableOrdered::Multiplexer::queue(std::vector<uint8>&& msgData)
 				{
 					assert(msgData.size() <= Packet::MaxMessageSize);
 					if (msgData.size() > Packet::DataMaxSize)
 					{
-						size_t queuedSize = 0;
+						uint16 queuedSize = 0;
 						while (queuedSize < msgData.size())
 						{
-							const auto fragmentSize = std::min(Packet::DataMaxSize, static_cast<uint16_t>(msgData.size() - queuedSize));
+							const auto fragmentSize = std::min(Packet::DataMaxSize, static_cast<uint16>(msgData.size() - queuedSize));
 							mQueue.resize(mQueue.size() + 1);
 							Packet& packet = mQueue.back();
 							packet.header.id = mNextId++;
@@ -37,13 +37,13 @@ namespace Bousk
 						Packet& packet = mQueue.back();
 						packet.header.id = mNextId++;
 						packet.header.type = Packet::Type::FullMessage;
-						packet.header.size = static_cast<uint16_t>(msgData.size());
+						packet.header.size = static_cast<uint16>(msgData.size());
 						memcpy(packet.data(), msgData.data(), msgData.size());
 					}
 				}
-				size_t UnreliableOrdered::Multiplexer::serialize(uint8_t* buffer, const size_t buffersize, const Datagram::ID)
+				uint16 UnreliableOrdered::Multiplexer::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID)
 				{
-					size_t serializedSize = 0;
+					uint16 serializedSize = 0;
 					for (auto packetit = mQueue.cbegin(); packetit != mQueue.cend();)
 					{
 						const auto& packet = *packetit;
@@ -59,10 +59,10 @@ namespace Bousk
 					}
 					return serializedSize;
 				}
-				void UnreliableOrdered::Demultiplexer::onDataReceived(const uint8_t* data, const size_t datasize)
+				void UnreliableOrdered::Demultiplexer::onDataReceived(const uint8* data, const uint16 datasize)
 				{
 					//!< Extract packets from buffer
-					size_t processedDataSize = 0;
+					uint16 processedDataSize = 0;
 					while (processedDataSize < datasize)
 					{
 						const Packet* pckt = reinterpret_cast<const Packet*>(data);
@@ -97,9 +97,9 @@ namespace Bousk
 						}
 					}
 				}
-				std::vector<std::vector<uint8_t>> UnreliableOrdered::Demultiplexer::process()
+				std::vector<std::vector<uint8>> UnreliableOrdered::Demultiplexer::process()
 				{
-					std::vector<std::vector<uint8_t>> messagesReady;
+					std::vector<std::vector<uint8>> messagesReady;
 
 					auto itPacket = mPendingQueue.cbegin();
 					auto itEnd = mPendingQueue.cend();
@@ -110,7 +110,7 @@ namespace Bousk
 						if (itPacket->type() == Packet::Type::FullMessage)
 						{
 							//!< Full packet, just take it
-							std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
+							std::vector<uint8> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
 							messagesReady.push_back(std::move(msg));
 							newestProcessedPacket = itPacket;
 							++itPacket;
@@ -118,9 +118,9 @@ namespace Bousk
 						else if (itPacket->type() == Packet::Type::FirstFragment)
 						{
 							//!< Check if the message is ready (fully received)
-							std::vector<uint8_t> msg = [&]()
+							std::vector<uint8> msg = [&]()
 							{
-								std::vector<uint8_t> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
+								std::vector<uint8> msg(itPacket->data(), itPacket->data() + itPacket->datasize());
 								auto expectedPacketId = itPacket->id();
 								++itPacket;
 								++expectedPacketId;

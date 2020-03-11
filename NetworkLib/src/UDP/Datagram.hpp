@@ -33,9 +33,9 @@ namespace Bousk
 				std::array<uint8, DataMaxSize> data;
 
 				// Not serialized
-				size_t datasize{ 0 };
+				uint16 datasize{ 0 };
 				//!< Datagram full size : Header + data
-				size_t size() const { return HeaderSize + datasize; }
+				uint16 size() const { return HeaderSize + datasize; }
 			};
 		}
 	}

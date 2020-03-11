@@ -116,7 +116,7 @@ namespace Bousk
 					int ret = from.recvFrom(mSocket, reinterpret_cast<uint8*>(&datagram), Datagram::BufferMaxSize);
 					if (ret > 0)
 					{
-						const size_t receivedSize = static_cast<size_t>(ret);
+						const uint16 receivedSize = static_cast<uint16>(ret);
 						if (receivedSize >= Datagram::HeaderSize)
 						{
 							datagram.datasize = receivedSize - Datagram::HeaderSize;

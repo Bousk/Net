@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Types.hpp>
 #include <memory>
 
 namespace Bousk
@@ -25,8 +26,8 @@ namespace Bousk
 				bool start(unsigned short _port);
 				void stop();
 				void update();
-				bool sendTo(uint64_t clientid, const unsigned char* data, unsigned int len);
-				bool sendToAll(const unsigned char* data, unsigned int len);
+				bool sendTo(uint64 clientid, const uint8* data, size_t len);
+				bool sendToAll(const uint8* data, size_t len);
 				std::unique_ptr<Messages::Base> poll();
 
 			private:

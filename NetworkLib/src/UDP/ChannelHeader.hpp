@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <Types.hpp>
 
 namespace Bousk
 {
@@ -10,10 +10,10 @@ namespace Bousk
 		{
 			struct ChannelHeader
 			{
-				static constexpr size_t Size = sizeof(uint32_t) + sizeof(uint32_t);
+				static constexpr uint8 Size = sizeof(uint32) + sizeof(uint16);
 
-				uint32_t channelId;
-				uint32_t datasize;
+				uint32 channelId;
+				uint16 datasize;
 			};
 		}
 	}
