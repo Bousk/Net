@@ -82,9 +82,15 @@ int main()
 					{
 						std::scoped_lock lock(coutMutex);
 						std::cout << "Every messages received in order !" << std::endl;
-						std::cout << "Shutting down client 1..." << std::endl;
-						exit = true;
+						std::cout << "Disconnecting client 2..." << std::endl;
+						client.disconnect(client2);
 					}
+				}
+				else if (message->is<Bousk::Network::Messages::Disconnection>())
+				{
+					assert(message->emitter() == client2);
+					std::cout << "Shutting down client 1..." << std::endl;
+					exit = true;
 				}
 			}
 			client.processSend();
@@ -164,7 +170,7 @@ int main()
 					{
 						std::scoped_lock lock(coutMutex);
 						assert(message->emitter() == client1);
-						std::cout << "Disconnection from client 1..." << std::endl;
+						std::cout << "Disconnection from client 1... [" << message->as<Bousk::Network::Messages::Disconnection>()->reason << "]" << std::endl;
 						exit = true;
 					}
 				}
