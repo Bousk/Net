@@ -39,6 +39,7 @@ namespace Bousk
 					Refused,
 					ConnectionTimedOut,
 					Disconnected,
+					DisconnectedFromOtherEnd,
 					Lost,
 				};
 			public:

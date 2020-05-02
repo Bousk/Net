@@ -77,7 +77,7 @@ namespace Bousk
 				else if (isConnected())
 				{
 					mState = State::Disconnecting;
-					mDisconnectionReason = DisconnectionReason::Disconnected;
+					mDisconnectionReason = DisconnectionReason::DisconnectedFromOtherEnd;
 				}
 			}
 			void DistantClient::onConnectionLost()
@@ -114,6 +114,7 @@ namespace Bousk
 				// To disconnect, stop sending packets
 				// We switch to a disconnecting state to prevent a reconnection from happening
 				// when receiving packets from the other end right after disconnecting locally
+				mDisconnectionReason = DisconnectionReason::Disconnected;
 				mState = State::Disconnecting;
 			}
 			void DistantClient::send(std::vector<uint8>&& data, uint32 channelIndex)
@@ -177,6 +178,7 @@ namespace Bousk
 						switch (mDisconnectionReason)
 						{
 							case DisconnectionReason::Disconnected:
+							case DisconnectionReason::DisconnectedFromOtherEnd:
 								mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Disconnected));
 								break;
 							case DisconnectionReason::Lost:
