@@ -1,5 +1,7 @@
 #include "UDP/Protocols/UnreliableOrdered.hpp"
 #include "Utils.hpp"
+
+#include <algorithm>
 #include <cassert>
 
 namespace Bousk

@@ -1,7 +1,9 @@
 #include <Serialization/Convert.hpp>
 
 #ifdef _WIN32
-	#define NOMINMAX
+    #ifndef NOMINMAX
+        #define NOMINMAX
+	#endif
 	#include <WinSock2.h>
 #else
 	#include <arpa/inet.h>
@@ -33,7 +35,7 @@ namespace Bousk
 					| static_cast<uint8>((in >> 0) & 0xFF)
 					;
 			}
-			
+
 			void ToNetwork(const uint16 in, uint8 out[2])
 			{
 				out[0] = static_cast<uint8>((in >> 8) & 0xFF);

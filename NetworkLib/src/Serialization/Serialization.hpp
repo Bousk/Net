@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Types.hpp>
-
 namespace Bousk
 {
 	namespace Serialization

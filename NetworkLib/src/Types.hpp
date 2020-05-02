@@ -1,9 +1,12 @@
 #pragma once
 
-#define NOMINMAX
-#include <cstdint>
+#ifndef NOMINMAX
+    #define NOMINMAX
+#endif
 #include <cassert>
+#include <cstdint>
 #include <limits>
+#include <type_traits>
 
 namespace Bousk
 {
@@ -55,24 +58,24 @@ namespace Bousk
 	};
 
 	template<uint8 BASE, uint8 EXPONENT>
+	struct InternalPow
+    {
+        static constexpr uint32 Value = Return<uint32, BASE * InternalPow<BASE, EXPONENT - 1>::Value>::Value;
+    };
+	template<uint8 BASE>
+    struct InternalPow<BASE, 1>
+    {
+        static constexpr uint32 Value = BASE;
+    };
+	template<uint8 BASE>
+    struct InternalPow<BASE, 0>
+    {
+        static constexpr uint32 Value = 1;
+    };
+	template<uint8 BASE, uint8 EXPONENT>
 	struct Pow
 	{
-		template<uint8 EXP>
-		struct InternalPow
-		{
-			static constexpr uint32 Value = Return<uint32, BASE * InternalPow<EXP - 1>::Value>::Value;
-		};
-		template<>
-		struct InternalPow<1>
-		{
-			static constexpr uint32 Value = BASE;
-		};
-		template<>
-		struct InternalPow<0>
-		{
-			static constexpr uint32 Value = 1;
-		};
-		static constexpr uint32 Value = InternalPow<EXPONENT>::Value;
+		static constexpr uint32 Value = InternalPow<BASE, EXPONENT>::Value;
 	};
 
 	template<char...> struct ToInt;

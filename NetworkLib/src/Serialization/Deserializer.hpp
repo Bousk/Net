@@ -31,7 +31,7 @@ namespace Bousk
 			inline bool read(uint16& data) { return read(data, std::numeric_limits<uint16>::min(), std::numeric_limits<uint16>::max()); }
 			inline bool read(uint32& data) { return read(data, std::numeric_limits<uint32>::min(), std::numeric_limits<uint32>::max()); }
 			inline bool read(uint64& data) { return read(data, std::numeric_limits<uint64>::min(), std::numeric_limits<uint64>::max()); }
-			
+
 			bool read(int8& data, int8 minValue, int8 maxValue);
 			bool read(int16& data, int16 minValue, int16 maxValue);
 			bool read(int32& data, int32 minValue, int32 maxValue);
@@ -46,7 +46,7 @@ namespace Bousk
 			template<class E>
 			typename std::enable_if<std::is_enum<E>::value, bool>::type read(E& data)
 			{
-				using T = std::underlying_type<E>::type;
+				using T = typename std::underlying_type<E>::type;
 				T temp{};
 				if (read(temp, static_cast<T>(E::Min), static_cast<T>(E::Max)))
 				{

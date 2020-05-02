@@ -3,7 +3,7 @@ function CreateNetworkLib(baseLibFolder)
 	project "Network"
 		kind "StaticLib"
 		language "C++"
-		cppdialect "c++17"
+		cppdialect "C++17"
 		-- architecture "x64"
 		targetdir ( baseLibFolder .. "builds/%{cfg.buildcfg}" )
 		filter "toolset:codeblocks"

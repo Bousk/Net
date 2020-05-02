@@ -28,7 +28,7 @@ namespace Bousk
 			inline bool write(uint16 data) { return write(data, std::numeric_limits<uint16>::min(), std::numeric_limits<uint16>::max()); }
 			inline bool write(uint32 data) { return write(data, std::numeric_limits<uint32>::min(), std::numeric_limits<uint32>::max()); }
 			inline bool write(uint64 data) { return write(data, std::numeric_limits<uint64>::min(), std::numeric_limits<uint64>::max()); }
-			
+
 			bool write(int8 data, int8 minValue, int8 maxValue);
 			bool write(int16 data, int16 minValue, int16 maxValue);
 			bool write(int32 data, int32 minValue, int32 maxValue);
@@ -43,10 +43,10 @@ namespace Bousk
 			template<class E>
 			typename std::enable_if<std::is_enum<E>::value, bool>::type write(E value)
 			{
-				using T = std::underlying_type<E>::type;
+				using T = typename std::underlying_type<E>::type;
 				return write(static_cast<T>(value), static_cast<T>(E::Min), static_cast<T>(E::Max));
 			}
-			
+
 		#if BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED
 			bool write(float32 data);
 		#endif // BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED

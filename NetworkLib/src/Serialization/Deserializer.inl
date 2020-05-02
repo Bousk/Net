@@ -14,7 +14,7 @@ namespace Bousk
 			container.reserve(nbElements);
 			for (uint8 i = 0; i < nbElements; ++i)
 			{
-				CONTAINER::value_type element;
+				typename CONTAINER::value_type element;
 				if (!read(element))
 					return false;
 				container.push_back(element);
