@@ -17,7 +17,7 @@ function CreateProject(path)
 	project(prettypath)
 		kind "ConsoleApp"
 		language "C++"
-		cppdialect "c++17"
+		cppdialect "C++17"
 		-- architecture "x64"
 		targetdir (path .. "/%{cfg.buildcfg}")
 		files { path.."/*.hpp", path.."/*.cpp", path.."/*.inl" }
@@ -79,4 +79,5 @@ else
 	CreateProject("Samples/UDP/Connection")
 	CreateProject("Samples/UDP/Timeout")
 	CreateProject("Samples/UDP/ConnectionTimeout")
+	CreateProject("Samples/Games/TicTacToe")
 end

@@ -77,6 +77,7 @@ namespace Bousk
 				void disconnect(const Address& addr);
 				// Can be called anytime from any thread
 				void sendTo(const Address& target, std::vector<uint8>&& data, uint32 channelIndex);
+				void sendTo(const Address& target, const uint8* data, size_t dataSize, uint32 channelIndex) { sendTo(target, std::vector<uint8>(data, data + dataSize), channelIndex); }
 
 				// This performs operations on existing clients. Must not be called while calling receive
 				void processSend();
