@@ -27,11 +27,6 @@ int main(int argc, char* argv[])
 
 	main_p2p();
 
-	
-	Bousk::Network::UDP::Client client;
-	client.registerChannel<Bousk::Network::UDP::Protocols::ReliableOrdered>();
-
-
 	Bousk::Network::Release();
 	return 0;
 }
