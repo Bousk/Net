@@ -25,7 +25,7 @@ namespace Bousk
 			/*
 			Client is the main entry point to send and receive data from a given UDP port.
 			
-			To use a UDP client, create a Client instance then call init(port) and register channels onto it.
+			To use a UDP client, create a Client instance, register channels onto it then call init(port).
 			
 			An application loop should do the following
 			- frame start -

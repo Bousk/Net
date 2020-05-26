@@ -56,16 +56,19 @@ namespace Bousk
 			}
 			void Client::connect(const Address& addr)
 			{
+				assert(addr.isValid());
 				OperationsLock lock(mOperationsLock);
 				mPendingOperations.push_back(Operation::Connect(addr));
 			}
 			void Client::disconnect(const Address& addr)
 			{
+				assert(addr.isValid());
 				OperationsLock lock(mOperationsLock);
 				mPendingOperations.push_back(Operation::Disconnect(addr));
 			}
 			void Client::sendTo(const Address& target, std::vector<uint8>&& data, const uint32 channelIndex)
 			{
+				assert(target.isValid());
 				OperationsLock lock(mOperationsLock);
 				mPendingOperations.push_back(Operation::SendTo(target, std::move(data), channelIndex));
 			}
