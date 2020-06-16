@@ -53,6 +53,15 @@ namespace Bousk
 				if (mSocket != INVALID_SOCKET)
 					CloseSocket(mSocket);
 				mSocket = INVALID_SOCKET;
+				{
+					OperationsLock lock(mOperationsLock);
+					mPendingOperations.clear();
+				}
+				{
+					MessagesLock lock(mMessagesLock);
+					mMessages.clear();
+				}
+				mClients.clear();
 			}
 			void Client::connect(const Address& addr)
 			{
