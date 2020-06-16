@@ -40,11 +40,19 @@ namespace Bousk
 
 			inline bool write(bool data) { return write(data ? BoolTrue : BoolFalse, static_cast<uint8>(0), static_cast<uint8>(1)); }
 
+			// To use if your enum has Min & Max entries
 			template<class E>
 			typename std::enable_if<std::is_enum<E>::value, bool>::type write(E value)
 			{
 				using T = typename std::underlying_type<E>::type;
-				return write(static_cast<T>(value), static_cast<T>(E::Min), static_cast<T>(E::Max));
+				return write(value, E::Min, E::Max);
+			}
+			// Use this one to use custom min & max enum values
+			template<class E>
+			typename std::enable_if<std::is_enum<E>::value, bool>::type write(E value, E min, E max)
+			{
+				using T = typename std::underlying_type<E>::type;
+				return write(static_cast<T>(value), static_cast<T>(min), static_cast<T>(max));
 			}
 
 		#if BOUSKNET_ALLOW_FLOAT32_SERIALIZATION == BOUSKNET_SETTINGS_ENABLED

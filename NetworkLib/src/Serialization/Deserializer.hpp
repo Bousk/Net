@@ -43,12 +43,19 @@ namespace Bousk
 
 			bool read(bool& data);
 
+			// To use if your enum has Min & Max entries
 			template<class E>
 			typename std::enable_if<std::is_enum<E>::value, bool>::type read(E& data)
 			{
+				return read(data, E::Min, E::Max);
+			}
+			// Use this one to use custom min & max enum values
+			template<class E>
+			typename std::enable_if<std::is_enum<E>::value, bool>::type read(E& data, E min, E max)
+			{
 				using T = typename std::underlying_type<E>::type;
-				T temp{};
-				if (read(temp, static_cast<T>(E::Min), static_cast<T>(E::Max)))
+				T temp;
+				if (read(temp, static_cast<T>(min), static_cast<T>(max)))
 				{
 					data = static_cast<E>(temp);
 					return true;
