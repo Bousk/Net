@@ -1,13 +1,6 @@
 #include <Serialization/Convert.hpp>
 
-#ifdef _WIN32
-    #ifndef NOMINMAX
-        #define NOMINMAX
-	#endif
-	#include <WinSock2.h>
-#else
-	#include <arpa/inet.h>
-#endif
+#include <Sockets.hpp>
 
 namespace Bousk
 {
