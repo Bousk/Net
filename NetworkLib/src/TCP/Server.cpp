@@ -1,13 +1,8 @@
-#include "Server.hpp"
+#include <TCP/Server.hpp>
 
-#include "Sockets.hpp"
-#include "TCP/Client.hpp"
-#include "Messages.hpp"
+#include <Messages.hpp>
 
-#include <map>
-#include <list>
 #include <cassert>
-#include <cstring>
 
 namespace Bousk
 {
@@ -15,30 +10,14 @@ namespace Bousk
 	{
 		namespace TCP
 		{
-			class ServerImpl
-			{
-			public:
-				ServerImpl() = default;
-				~ServerImpl();
-
-				bool start(unsigned short _port);
-				void stop();
-				void update();
-				bool sendTo(uint64 clientid, const uint8* data, size_t len);
-				bool sendToAll(const uint8* data, size_t len);
-				std::unique_ptr<Messages::Base> poll();
-
-			private:
-				std::map<uint64, Client> mClients;
-				std::list<std::unique_ptr<Messages::Base>> mMessages;
-				SOCKET mSocket{ INVALID_SOCKET };
-			};
-			ServerImpl::~ServerImpl()
+			Server::Server()
+			{}
+			Server::~Server()
 			{
 				stop();
 			}
 
-			bool ServerImpl::start(unsigned short _port)
+			bool Server::start(unsigned short _port)
 			{
 				assert(mSocket == INVALID_SOCKET);
 				if (mSocket != INVALID_SOCKET)
@@ -66,7 +45,7 @@ namespace Bousk
 				}
 				return true;
 			}
-			void ServerImpl::stop()
+			void Server::stop()
 			{
 				for (auto& client : mClients)
 					client.second.disconnect();
@@ -75,7 +54,7 @@ namespace Bousk
 					CloseSocket(mSocket);
 				mSocket = INVALID_SOCKET;
 			}
-			void ServerImpl::update()
+			void Server::update()
 			{
 				if (mSocket == INVALID_SOCKET)
 					return;
@@ -119,19 +98,27 @@ namespace Bousk
 						++itClient;
 				}
 			}
-			bool ServerImpl::sendTo(uint64 clientid, const uint8* data, size_t len)
+			void Server::accept(uint64 clientid)
+			{
+				;
+			}
+			void Server::refuse(uint64 clientid)
+			{
+				;
+			}
+			bool Server::sendTo(uint64 clientid, const uint8* data, size_t len)
 			{
 				auto itClient = mClients.find(clientid);
 				return itClient != mClients.end() && itClient->second.send(data, len);
 			}
-			bool ServerImpl::sendToAll(const uint8* data, size_t len)
+			bool Server::sendToAll(const uint8* data, size_t len)
 			{
 				bool ret = true;
 				for (auto& client : mClients)
 					ret &= client.second.send(data, len);
 				return ret;
 			}
-			std::unique_ptr<Messages::Base> ServerImpl::poll()
+			std::unique_ptr<Messages::Base> Server::poll()
 			{
 				if (mMessages.empty())
 					return nullptr;
@@ -140,32 +127,6 @@ namespace Bousk
 				mMessages.pop_front();
 				return msg;
 			}
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			Server::Server() {}
-			Server::~Server() {}
-			Server::Server(Server&& other)
-				: mImpl(std::move(other.mImpl))
-			{}
-			Server& Server::operator=(Server&& other)
-			{
-				mImpl = std::move(other.mImpl);
-				return *this;
-			}
-			bool Server::start(unsigned short _port)
-			{
-				if (!mImpl)
-					mImpl = std::make_unique<ServerImpl>();
-				return mImpl && mImpl->start(_port);
-			}
-			void Server::stop() { if (mImpl) mImpl->stop(); }
-			void Server::update() { if (mImpl) mImpl->update(); }
-			bool Server::sendTo(uint64 clientid, const uint8* data, size_t len) { return mImpl && mImpl->sendTo(clientid, data, len); }
-			bool Server::sendToAll(const uint8* data, size_t len) { return mImpl && mImpl->sendToAll(data, len); }
-			std::unique_ptr<Messages::Base> Server::poll() { return mImpl ? mImpl->poll() : nullptr; }
 		}
 	}
 }

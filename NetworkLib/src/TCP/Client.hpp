@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Sockets.hpp"
-#include "Types.hpp"
+#include <Address.hpp>
+#include <Sockets.hpp>
+#include <Types.hpp>
 
 #include <string>
 #include <memory>
@@ -18,15 +19,19 @@ namespace Bousk
 		{
 			using HeaderType = uint16;
 			static const unsigned int HeaderSize = sizeof(HeaderType);
-			class ClientImpl;
+
+			class ConnectionHandler;
+			class ReceptionHandler;
+			class SendingHandler;
+
 			class Client
 			{
 			public:
 				Client();
 				Client(const Client&) = delete;
 				Client& operator=(const Client&) = delete;
-				Client(Client&&);
-				Client& operator=(Client&&);
+				Client(Client&&) noexcept;
+				Client& operator=(Client&&) noexcept;
 				~Client();
 
 				bool init(SOCKET&& sckt, const Address& addr);
@@ -35,11 +40,25 @@ namespace Bousk
 				bool send(const uint8* data, size_t len);
 				std::unique_ptr<Messages::Base> poll();
 
-				uint64 id() const;
-				const Address& address() const;
+				inline uint64 id() const { return static_cast<uint64>(mSocket); }
+				inline const Address& address() const { return mAddress; }
 
 			private:
-				std::unique_ptr<ClientImpl> mImpl;
+				void onConnected(const Address& addr);
+
+			private:
+				enum class State {
+					Connecting,
+					Connected,
+					Disconnected,
+				};
+
+				std::unique_ptr<ConnectionHandler> mConnectionHandler;
+				std::unique_ptr<SendingHandler> mSendingHandler;
+				std::unique_ptr<ReceptionHandler> mReceivingHandler;
+				Address mAddress;
+				SOCKET mSocket{ INVALID_SOCKET };
+				State mState{ State::Disconnected };
 			};
 		}
 	}

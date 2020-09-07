@@ -1,16 +1,13 @@
-#include "TCP/Client.hpp"
+#include <TCP/Client.hpp>
 
-#include "Sockets.hpp"
-#include "Address.hpp"
-#include "Messages.hpp"
-#include "Errors.hpp"
+#include <Errors.hpp>
+#include <Messages.hpp>
 
-#include <vector>
-#include <list>
 #include <cassert>
-#include <numeric>
-#include <cstring>
 #include <limits>
+#include <list>
+#include <numeric>
+#include <vector>
 
 namespace Bousk
 {
@@ -96,7 +93,7 @@ namespace Bousk
 				unsigned int mReceived{ 0 };
 				SOCKET mSckt{ INVALID_SOCKET };
 				Address mAddress;
-				State mState;
+				State mState{ State::Header };
 			};
 			void ReceptionHandler::init(SOCKET sckt, const Address& addr)
 			{
@@ -294,45 +291,36 @@ namespace Bousk
 			////////////////////////////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////////////////////////////
-			class ClientImpl
+			Client::Client()
 			{
-				enum class State {
-					Connecting,
-					Connected,
-					Disconnected,
-				};
-
-			public:
-				ClientImpl() = default;
-				~ClientImpl();
-
-				// Distant client initialisation : client on a server
-				bool init(SOCKET&& sckt, const Address& addr);
-				// Local client initialisation : connect to a server
-				bool connect(const Address& address);
-				void disconnect();
-				bool send(const uint8* data, size_t len);
-				std::unique_ptr<Messages::Base> poll();
-
-				uint64 id() const { return static_cast<uint64>(mSocket); }
-				const Address& destinationAddress() const { return mAddress; }
-
-			private:
-				void onConnected(const Address& addr);
-
-			private:
-				ConnectionHandler mConnectionHandler;
-				SendingHandler mSendingHandler;
-				ReceptionHandler mReceivingHandler;
-				Address mAddress;
-				SOCKET mSocket{ INVALID_SOCKET };
-				State mState{ State::Disconnected };
-			};
-			ClientImpl::~ClientImpl()
+				mConnectionHandler = std::make_unique<ConnectionHandler>();
+				mSendingHandler = std::make_unique<SendingHandler>();
+				mReceivingHandler = std::make_unique<ReceptionHandler>();
+			}
+			Client::Client(Client&& src) noexcept
+			{
+				std::swap(mConnectionHandler, src.mConnectionHandler);
+				std::swap(mSendingHandler, src.mSendingHandler);
+				std::swap(mReceivingHandler, src.mReceivingHandler);
+				std::swap(mAddress, src.mAddress);
+				std::swap(mSocket, src.mSocket);
+				std::swap(mState, src.mState);
+			}
+			Client& Client::operator=(Client&& src) noexcept
+			{
+				std::swap(mConnectionHandler, src.mConnectionHandler);
+				std::swap(mSendingHandler, src.mSendingHandler);
+				std::swap(mReceivingHandler, src.mReceivingHandler);
+				std::swap(mAddress, src.mAddress);
+				std::swap(mSocket, src.mSocket);
+				std::swap(mState, src.mState);
+				return *this;
+			}
+			Client::~Client()
 			{
 				disconnect();
 			}
-			bool ClientImpl::init(SOCKET&& sckt, const Address& addr)
+			bool Client::init(SOCKET&& sckt, const Address& addr)
 			{
 				assert(sckt != INVALID_SOCKET);
 				if (sckt == INVALID_SOCKET)
@@ -352,7 +340,7 @@ namespace Bousk
 				onConnected(addr);
 				return true;
 			}
-			bool ClientImpl::connect(const Address& address)
+			bool Client::connect(const Address& address)
 			{
 				assert(mState == State::Disconnected);
 				assert(mSocket == INVALID_SOCKET);
@@ -368,14 +356,14 @@ namespace Bousk
 					disconnect();
 					return false;
 				}
-				if (mConnectionHandler.connect(mSocket, address))
+				if (mConnectionHandler->connect(mSocket, address))
 				{
 					mState = State::Connecting;
 					return true;
 				}
 				return false;
 			}
-			void ClientImpl::disconnect()
+			void Client::disconnect()
 			{
 				if (mSocket != INVALID_SOCKET)
 				{
@@ -384,22 +372,22 @@ namespace Bousk
 				mSocket = INVALID_SOCKET;
 				mState = State::Disconnected;
 			}
-			bool ClientImpl::send(const uint8* data, size_t len)
+			bool Client::send(const uint8* data, size_t len)
 			{
-				return mSendingHandler.send(data, len);
+				return mSendingHandler->send(data, len);
 			}
-			std::unique_ptr<Messages::Base> ClientImpl::poll()
+			std::unique_ptr<Messages::Base> Client::poll()
 			{
 				switch (mState)
 				{
 				case State::Connecting:
 				{
-					auto msg = mConnectionHandler.poll();
+					auto msg = mConnectionHandler->poll();
 					if (msg)
 					{
 						if (msg->result == Messages::Connection::Result::Success)
 						{
-							onConnected(mConnectionHandler.connectedAddress());
+							onConnected(mConnectionHandler->connectedAddress());
 						}
 						else
 						{
@@ -410,8 +398,8 @@ namespace Bousk
 				} break;
 				case State::Connected:
 				{
-					mSendingHandler.update();
-					auto msg = mReceivingHandler.recv();
+					mSendingHandler->update();
+					auto msg = mReceivingHandler->recv();
 					if (msg)
 					{
 						if (msg->is<Messages::Disconnection>())
@@ -427,45 +415,13 @@ namespace Bousk
 				}
 				return nullptr;
 			}
-			void ClientImpl::onConnected(const Address& addr)
+			void Client::onConnected(const Address& addr)
 			{
 				mAddress = addr;
-				mSendingHandler.init(mSocket);
-				mReceivingHandler.init(mSocket, mAddress);
+				mSendingHandler->init(mSocket);
+				mReceivingHandler->init(mSocket, mAddress);
 				mState = State::Connected;
 			}
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			////////////////////////////////////////////////////////////////////////////////////
-			Client::Client() {}
-			Client::~Client() {}
-			Client::Client(Client&& other)
-				: mImpl(std::move(other.mImpl))
-			{}
-			Client& Client::operator=(Client&& other)
-			{
-				mImpl = std::move(other.mImpl);
-				return *this;
-			}
-			bool Client::init(SOCKET&& sckt, const Address& addr)
-			{
-				if (!mImpl)
-					mImpl = std::make_unique<ClientImpl>();
-				return mImpl && mImpl->init(std::move(sckt), addr);
-			}
-			bool Client::connect(const Address& address)
-			{
-				if (!mImpl)
-					mImpl = std::make_unique<ClientImpl>();
-				return mImpl && mImpl->connect(address);
-			}
-			void Client::disconnect() { if (mImpl) mImpl->disconnect(); mImpl = nullptr; }
-			bool Client::send(const uint8* data, size_t len) { return mImpl && mImpl->send(data, len); }
-			std::unique_ptr<Messages::Base> Client::poll() { return mImpl ? mImpl->poll() : nullptr; }
-			uint64 Client::id() const { return mImpl ? mImpl->id() : std::numeric_limits<uint64>::max(); }
-			const Address& Client::address() const { static Address empty; return mImpl ? mImpl->destinationAddress() : empty; }
 		}
 	}
 }
