@@ -8,6 +8,7 @@
 #include <UDP/UDPClient.hpp>
 #include <UDP/Protocols/ReliableOrdered.hpp>
 
+#include <cstdio>
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -62,7 +63,7 @@ bool askPlay(TicTacToe::Net::Play& play)
 	std::string line;
 	std::getline(std::cin, line);
 	int x, y;
-	if (std::sscanf(line.c_str(), "%d %d", &x, &y) == 2)
+	if (sscanf_s(line.c_str(), "%d %d", &x, &y) == 2)
 	{
 		if (play.x.IsWithinRange(x) && play.y.IsWithinRange(y))
 		{

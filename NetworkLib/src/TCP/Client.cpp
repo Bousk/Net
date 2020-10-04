@@ -15,8 +15,60 @@ namespace Bousk
 	{
 		namespace TCP
 		{
+			// Helper class to receive buffer of a given size.
+			class SimpleReceiver
+			{
+			public:
+				SimpleReceiver() = default;
+				void init(SOCKET sckt)
+				{
+					mSckt = sckt;
+				}
+				// Returns false if the connection became invalid.
+				// Returns true while the connection remains. Set buffer with the received data once the size received matches the expected one.
+				bool recv(unsigned int expectedSize, std::vector<unsigned char>& buffer)
+				{
+					if (mBuffer.size() != expectedSize)
+						mBuffer.resize(expectedSize);
+
+					unsigned char* const recvBufferStart = mBuffer.data() + mReceived;
+					const size_t missingBufferLength = mBuffer.size() - mReceived;
+					mLastRcv = ::recv(mSckt, reinterpret_cast<char*>(recvBufferStart), static_cast<int>(missingBufferLength), 0);
+					if (mLastRcv > 1)
+					{
+						mReceived += mLastRcv;
+						if (mReceived == mBuffer.size())
+						{
+							buffer = std::move(mBuffer);
+							mReceived = 0;
+						}
+						return true;
+					}
+					else if (mLastRcv < 0)
+					{
+						const int error = Errors::Get();
+						if (error == Errors::WOULDBLOCK || error == Errors::AGAIN)
+						{
+							return true;
+						}
+					}
+					return false;
+				}
+				int lastRecv() const { return mLastRcv; }
+
+			private:
+				std::vector<unsigned char> mBuffer;
+				unsigned int mReceived{ 0 };
+				int mLastRcv{ 0 };
+				SOCKET mSckt{ INVALID_SOCKET };
+			};
+
 			class ConnectionHandler
 			{
+				enum class State {
+					Connecting,
+					WaitingConfirmation,
+				};
 			public:
 				ConnectionHandler() = default;
 				bool connect(SOCKET sckt, const Address& address);
@@ -24,13 +76,16 @@ namespace Bousk
 				const Address& connectedAddress() const { return mAddress; }
 
 			private:
+				SimpleReceiver mReceiver;
 				pollfd mFd{ 0 };
 				Address mAddress;
+				State mState{ State::Connecting };
 			};
 			bool ConnectionHandler::connect(SOCKET sckt, const Address& address)
 			{
 				assert(sckt != INVALID_SOCKET);
 				assert(address.isValid());
+				mReceiver.init(sckt);
 				mAddress = address;
 				mFd.fd = sckt;
 				mFd.events = POLLOUT;
@@ -44,22 +99,44 @@ namespace Bousk
 			}
 			std::unique_ptr<Messages::Connection> ConnectionHandler::poll()
 			{
-				int res = ::poll(&mFd, 1, 0);
-				if (res < 0)
-					return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
-				else if (res > 0)
+				if (mState == State::Connecting)
 				{
-					if (mFd.revents & POLLOUT)
-					{
-						return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Success);
-					}
-					else if (mFd.revents & (POLLHUP | POLLNVAL))
-					{
+					// Poll the socket for the async connect result
+					const int res = ::poll(&mFd, 1, 0);
+					if (res < 0)
 						return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
-					}
-					else if (mFd.revents & POLLERR)
+					else if (res > 0)
 					{
-						return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
+						if (mFd.revents & POLLOUT)
+						{
+							mState = State::WaitingConfirmation;
+						}
+						else if (mFd.revents & (POLLHUP | POLLNVAL))
+						{
+							return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
+						}
+						else if (mFd.revents & POLLERR)
+						{
+							return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
+						}
+					}
+				}
+				else if (mState == State::WaitingConfirmation)
+				{
+					// Receive 00 from the host to accept (dummy packet with no data)
+					std::vector<unsigned char> buffer;
+					if (!mReceiver.recv(HeaderSize, buffer))
+					{
+						return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Refused);
+					}
+					if (!buffer.empty())
+					{
+						HeaderType data;
+						memcpy(&data, buffer.data(), sizeof(HeaderType));
+						if (data == 0)
+							return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Success);
+						else
+							return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Failed);
 					}
 				}
 				//!< still in progress
@@ -82,17 +159,14 @@ namespace Bousk
 				std::unique_ptr<Messages::Base> recv();
 
 			private:
-				inline char* missingDataStartBuffer() { return reinterpret_cast<char*>(mBuffer.data() + mReceived); }
-				inline int missingDataLength() const { return static_cast<int>(mBuffer.size() - mReceived); }
 				void startHeaderReception();
-				void startDataReception();
-				void startReception(unsigned int expectedDataLength, State newState);
+				void startDataReception(unsigned short expectedDataSize);
 
 			private:
-				std::vector<unsigned char> mBuffer;
-				unsigned int mReceived{ 0 };
+				SimpleReceiver mReceiver;
 				SOCKET mSckt{ INVALID_SOCKET };
 				Address mAddress;
+				unsigned short mExpectedSize{ 0 };
 				State mState{ State::Header };
 			};
 			void ReceptionHandler::init(SOCKET sckt, const Address& addr)
@@ -100,68 +174,55 @@ namespace Bousk
 				assert(sckt != INVALID_SOCKET);
 				mSckt = sckt;
 				mAddress = addr;
+				mReceiver.init(mSckt);
 				startHeaderReception();
 			}
 			void ReceptionHandler::startHeaderReception()
 			{
-				startReception(HeaderSize, State::Header);
+				mExpectedSize = HeaderSize;
+				mState = State::Header;
 			}
-			void ReceptionHandler::startDataReception()
+			void ReceptionHandler::startDataReception(unsigned short expectedDataSize)
 			{
-				assert(mBuffer.size() == sizeof(HeaderType));
-				HeaderType networkExpectedDataLength;
-				memcpy(&networkExpectedDataLength, mBuffer.data(), sizeof(networkExpectedDataLength));
-				const auto expectedDataLength = ntohs(networkExpectedDataLength);
-				startReception(expectedDataLength, State::Data);
-			}
-			void ReceptionHandler::startReception(unsigned int expectedDataLength, State newState)
-			{
-				mReceived = 0;
-				mBuffer.clear();
-				mBuffer.resize(expectedDataLength, 0);
-				mState = newState;
+				mExpectedSize = expectedDataSize;
+				mState = State::Data;
 			}
 			std::unique_ptr<Messages::Base> ReceptionHandler::recv()
 			{
 				assert(mSckt != INVALID_SOCKET);
-				int ret = ::recv(mSckt, missingDataStartBuffer(), missingDataLength(), 0);
-				if (ret > 0)
+				std::vector<unsigned char> buffer;
+				if (!mReceiver.recv(mExpectedSize, buffer))
 				{
-					mReceived += ret;
-					if (mReceived == mBuffer.size())
+					if (mReceiver.lastRecv() == 0)
 					{
-						if (mState == State::Data)
-						{
-							std::unique_ptr<Messages::Base> msg = std::make_unique<Messages::UserData>(mAddress, static_cast<uint64>(mSckt), std::move(mBuffer));
-							startHeaderReception();
-							return msg;
-						}
-						else
-						{
-							startDataReception();
-							//!< if any data are already available they will then be returned
-							return recv();
-						}
-					}
-					return nullptr;
-				}
-				else if (ret == 0)
-				{
-					//!< connection ended properly
-					return std::make_unique<Messages::Disconnection>(mAddress, static_cast<uint64>(mSckt), Messages::Disconnection::Reason::Disconnected);
-				}
-				else // ret < 0
-				{
-					//!< error handling
-					int error = Errors::Get();
-					if (error == Errors::WOULDBLOCK || error == Errors::AGAIN)
-					{
-						return nullptr;
+						//!< connection ended properly
+						return std::make_unique<Messages::Disconnection>(mAddress, static_cast<uint64>(mSckt), Messages::Disconnection::Reason::Disconnected);
 					}
 					else
 					{
 						return std::make_unique<Messages::Disconnection>(mAddress, static_cast<uint64>(mSckt), Messages::Disconnection::Reason::Lost);
 					}
+				}
+				if (buffer.empty())
+				{
+					// Buffer not fully received yet
+					return nullptr;
+				}
+
+				// Buffer is fully received and ready to process
+				if (mState == State::Data)
+				{
+					std::unique_ptr<Messages::Base> msg = std::make_unique<Messages::UserData>(mAddress, static_cast<uint64>(mSckt), std::move(buffer));
+					startHeaderReception();
+					return msg;
+				}
+				else
+				{
+					HeaderType data;
+					memcpy(&data, buffer.data(), sizeof(HeaderType));
+					startDataReception(ntohs(data));
+					//!< if any data are already available they will then be returned
+					return recv();
 				}
 			}
 			////////////////////////////////////////////////////////////////////////////////////
@@ -178,7 +239,7 @@ namespace Bousk
 				};
 			public:
 				SendingHandler() = default;
-				void init(SOCKET sckt);
+				void init(SOCKET sckt, bool sendConfirmation);
 				bool send(const uint8* data, size_t datalen);
 				void update();
 				size_t queueSize() const;
@@ -194,7 +255,7 @@ namespace Bousk
 				SOCKET mSocket{ INVALID_SOCKET };
 				State mState{ State::Idle };
 			};
-			void SendingHandler::init(SOCKET sckt)
+			void SendingHandler::init(SOCKET sckt, bool sendConfirmation)
 			{
 				mSocket = sckt;
 				if (mState == State::Header || mState == State::Data)
@@ -202,6 +263,11 @@ namespace Bousk
 					mSendingBuffer.clear();
 				}
 				mState = State::Idle;
+				if (sendConfirmation)
+				{
+					// Send a dummy message just to notify the other end that the connection has been accepted in case no data have been queued yet.
+					mQueueingBuffers.emplace_front();
+				}
 			}
 			bool SendingHandler::send(const uint8* data, size_t datalen)
 			{
@@ -305,6 +371,7 @@ namespace Bousk
 				std::swap(mAddress, src.mAddress);
 				std::swap(mSocket, src.mSocket);
 				std::swap(mState, src.mState);
+				std::swap(mIsServerClient, src.mIsServerClient);
 			}
 			Client& Client::operator=(Client&& src) noexcept
 			{
@@ -314,6 +381,7 @@ namespace Bousk
 				std::swap(mAddress, src.mAddress);
 				std::swap(mSocket, src.mSocket);
 				std::swap(mState, src.mState);
+				std::swap(mIsServerClient, src.mIsServerClient);
 				return *this;
 			}
 			Client::~Client()
@@ -337,7 +405,8 @@ namespace Bousk
 					disconnect();
 					return false;
 				}
-				onConnected(addr);
+				mIsServerClient = true;
+				onWaitingConnectionToBeAccepted(addr);
 				return true;
 			}
 			bool Client::connect(const Address& address)
@@ -363,6 +432,13 @@ namespace Bousk
 				}
 				return false;
 			}
+			void Client::accept()
+			{
+				assert(mState == State::WaitingConnectionToBeAccepted);
+				assert(mSocket != INVALID_SOCKET);
+
+				onConnectionConfirmed();
+			}
 			void Client::disconnect()
 			{
 				if (mSocket != INVALID_SOCKET)
@@ -382,32 +458,39 @@ namespace Bousk
 				{
 				case State::Connecting:
 				{
-					auto msg = mConnectionHandler->poll();
-					if (msg)
+					if (auto msg = mConnectionHandler->poll())
 					{
 						if (msg->result == Messages::Connection::Result::Success)
 						{
-							onConnected(mConnectionHandler->connectedAddress());
+							mAddress = mConnectionHandler->connectedAddress();
+							onConnectionConfirmed();
+							return msg;
 						}
 						else
 						{
 							disconnect();
+							return msg;
 						}
 					}
-					return msg;
+				} break;
+				case State::WaitingConnectionToBeAccepted:
+				{
+					// This state is for pure server-clients only. Waiting for the server to accept the client.
+					// This state is never used on a client.
+					// On the server, this state is switched when calling accept.
+					assert(mIsServerClient);
 				} break;
 				case State::Connected:
 				{
 					mSendingHandler->update();
-					auto msg = mReceivingHandler->recv();
-					if (msg)
+					if (auto msg = mReceivingHandler->recv())
 					{
 						if (msg->is<Messages::Disconnection>())
 						{
 							disconnect();
 						}
+						return msg;
 					}
-					return msg;
 				} break;
 				case State::Disconnected:
 				{
@@ -415,10 +498,14 @@ namespace Bousk
 				}
 				return nullptr;
 			}
-			void Client::onConnected(const Address& addr)
+			void Client::onWaitingConnectionToBeAccepted(const Address& addr)
 			{
 				mAddress = addr;
-				mSendingHandler->init(mSocket);
+				mState = State::WaitingConnectionToBeAccepted;
+			}
+			void Client::onConnectionConfirmed()
+			{
+				mSendingHandler->init(mSocket, mIsServerClient);
 				mReceivingHandler->init(mSocket, mAddress);
 				mState = State::Connected;
 			}

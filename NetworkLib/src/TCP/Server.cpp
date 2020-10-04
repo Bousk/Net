@@ -69,7 +69,7 @@ namespace Bousk
 					Client newClient;
 					if (newClient.init(std::move(newClientSocket), addr))
 					{
-						auto message = std::make_unique<Messages::Connection>(newClient.address(), newClient.id(), Messages::Connection::Result::Success);
+						auto message = std::make_unique<Messages::IncomingConnection>(newClient.address(), newClient.id());
 						mMessages.push_back(std::move(message));
 						mClients[newClient.id()] = std::move(newClient);
 					}
@@ -100,11 +100,12 @@ namespace Bousk
 			}
 			void Server::accept(uint64 clientid)
 			{
-				;
+				if (auto itClient = mClients.find(clientid); itClient != mClients.end())
+					itClient->second.accept();
 			}
 			void Server::refuse(uint64 clientid)
 			{
-				;
+				mClients.erase(clientid);
 			}
 			bool Server::sendTo(uint64 clientid, const uint8* data, size_t len)
 			{

@@ -29,7 +29,7 @@ int main()
 	}
 	else
 	{
-		while (1)
+		for (bool run = true; run; )
 		{
 			while (auto msg = client.poll())
 			{
@@ -46,12 +46,14 @@ int main()
 						if (!client.send(reinterpret_cast<const unsigned char*>(phrase.c_str()), static_cast<unsigned int>(phrase.length())))
 						{
 							std::cout << "Send error : " << Bousk::Network::Errors::Get() << std::endl;
+							run = false;
 							break;
 						}
 					}
 					else
 					{
 						std::cout << "Connection failed : " << static_cast<int>(connection->result) << std::endl;
+						run = false;
 						break;
 					}
 				}
@@ -66,6 +68,7 @@ int main()
 					if (!client.send(reinterpret_cast<const unsigned char*>(phrase.c_str()), static_cast<unsigned int>(phrase.length())))
 					{
 						std::cout << "Send error : " << Bousk::Network::Errors::Get() << std::endl;
+						run = false;
 						break;
 					}
 				}
@@ -73,6 +76,7 @@ int main()
 				{
 					auto disconnection = msg->as<Bousk::Network::Messages::Disconnection>();
 					std::cout << "Disconnected : " << static_cast<int>(disconnection->reason) << std::endl;
+					run = false;
 					break;
 				}
 			}

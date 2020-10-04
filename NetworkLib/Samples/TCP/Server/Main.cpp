@@ -29,7 +29,13 @@ int main()
 		server.update();
 		while (auto msg = server.poll())
 		{
-			if (msg->is<Bousk::Network::Messages::Connection>())
+			if (msg->is<Bousk::Network::Messages::IncomingConnection>())
+			{
+				std::cout << "[" << msg->emitter().toString() << "] Incoming connection..." << std::endl;
+				std::cout << "[" << msg->emitter().toString() << "] Accepting connection..." << std::endl;
+				server.accept(msg->emmiterId());
+			}
+			else if (msg->is<Bousk::Network::Messages::Connection>())
 			{
 				std::cout << "[" << msg->emitter().toString() << "] Connected" << std::endl;
 			}

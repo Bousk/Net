@@ -18,7 +18,7 @@ namespace Bousk
 		namespace TCP
 		{
 			using HeaderType = uint16;
-			static const unsigned int HeaderSize = sizeof(HeaderType);
+			static constexpr unsigned int HeaderSize = sizeof(HeaderType);
 
 			class ConnectionHandler;
 			class ReceptionHandler;
@@ -34,8 +34,10 @@ namespace Bousk
 				Client& operator=(Client&&) noexcept;
 				~Client();
 
+				// Init client with data from the server
 				bool init(SOCKET&& sckt, const Address& addr);
 				bool connect(const Address& address);
+				void accept();
 				void disconnect();
 				bool send(const uint8* data, size_t len);
 				std::unique_ptr<Messages::Base> poll();
@@ -44,11 +46,13 @@ namespace Bousk
 				inline const Address& address() const { return mAddress; }
 
 			private:
-				void onConnected(const Address& addr);
+				void onWaitingConnectionToBeAccepted(const Address& addr);
+				void onConnectionConfirmed();
 
 			private:
 				enum class State {
 					Connecting,
+					WaitingConnectionToBeAccepted,
 					Connected,
 					Disconnected,
 				};
@@ -59,6 +63,8 @@ namespace Bousk
 				Address mAddress;
 				SOCKET mSocket{ INVALID_SOCKET };
 				State mState{ State::Disconnected };
+				// When this is true, this client is a client representation on a server. Used on server only.
+				bool mIsServerClient{ false };
 			};
 		}
 	}
