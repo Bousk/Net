@@ -27,7 +27,8 @@ int main()
 	while(1)
 	{
 		server.update();
-		while (auto msg = server.poll())
+		auto messages = server.poll();
+		for (auto&& msg : messages)
 		{
 			if (msg->is<Bousk::Network::Messages::IncomingConnection>())
 			{
@@ -45,7 +46,9 @@ int main()
 			}
 			else if (msg->is<Bousk::Network::Messages::UserData>())
 			{
-				std::cout << "Data from [" << msg->emitter().toString() << "]" << std::endl;
+				const Bousk::Network::Messages::UserData* msgData = msg->as<Bousk::Network::Messages::UserData>();
+				const std::string dataStr(reinterpret_cast<const char*>(msgData->data.data()), msgData->data.size());
+				std::cout << "Data from [" << msg->emitter().toString() << "]" << dataStr << std::endl;
 				auto userdata = msg->as<Bousk::Network::Messages::UserData>();
 				server.sendToAll(userdata->data.data(), static_cast<unsigned int>(userdata->data.size()));
 			}

@@ -2,6 +2,7 @@
 
 #include <Errors.hpp>
 #include <Messages.hpp>
+#include <Serialization/Convert.hpp>
 
 #include <cassert>
 #include <limits>
@@ -22,6 +23,7 @@ namespace Bousk
 				SimpleReceiver() = default;
 				void init(SOCKET sckt)
 				{
+					assert(sckt != INVALID_SOCKET);
 					mSckt = sckt;
 				}
 				// Returns false if the connection became invalid.
@@ -91,7 +93,7 @@ namespace Bousk
 				mFd.events = POLLOUT;
 				if (!mAddress.connect(sckt))
 				{
-					int err = Errors::Get();
+					const int err = Errors::Get();
 					if (err != Errors::INPROGRESS && err != Errors::WOULDBLOCK)
 						return false;
 				}
@@ -132,7 +134,7 @@ namespace Bousk
 					if (!buffer.empty())
 					{
 						HeaderType data;
-						memcpy(&data, buffer.data(), sizeof(HeaderType));
+						memcpy(&data, buffer.data(), HeaderSize);
 						if (data == 0)
 							return std::make_unique<Messages::Connection>(mAddress, mFd.fd, Messages::Connection::Result::Success);
 						else
@@ -160,13 +162,13 @@ namespace Bousk
 
 			private:
 				void startHeaderReception();
-				void startDataReception(unsigned short expectedDataSize);
+				void startDataReception(HeaderType expectedDataSize);
 
 			private:
 				SimpleReceiver mReceiver;
 				SOCKET mSckt{ INVALID_SOCKET };
 				Address mAddress;
-				unsigned short mExpectedSize{ 0 };
+				HeaderType mExpectedSize{ 0 };
 				State mState{ State::Header };
 			};
 			void ReceptionHandler::init(SOCKET sckt, const Address& addr)
@@ -182,7 +184,7 @@ namespace Bousk
 				mExpectedSize = HeaderSize;
 				mState = State::Header;
 			}
-			void ReceptionHandler::startDataReception(unsigned short expectedDataSize)
+			void ReceptionHandler::startDataReception(HeaderType expectedDataSize)
 			{
 				mExpectedSize = expectedDataSize;
 				mState = State::Data;
@@ -218,9 +220,12 @@ namespace Bousk
 				}
 				else
 				{
-					HeaderType data;
-					memcpy(&data, buffer.data(), sizeof(HeaderType));
-					startDataReception(ntohs(data));
+					// Extract data size from the header
+					HeaderType header;
+					memcpy(&header, buffer.data(), HeaderSize);
+					HeaderType expectedDataSize;
+					Serialization::Conversion::ToLocal(header, expectedDataSize);
+					startDataReception(expectedDataSize);
 					//!< if any data are already available they will then be returned
 					return recv();
 				}
@@ -257,6 +262,7 @@ namespace Bousk
 			};
 			void SendingHandler::init(SOCKET sckt, bool sendConfirmation)
 			{
+				assert(sckt != INVALID_SOCKET);
 				mSocket = sckt;
 				if (mState == State::Header || mState == State::Data)
 				{
@@ -265,12 +271,15 @@ namespace Bousk
 				mState = State::Idle;
 				if (sendConfirmation)
 				{
-					// Send a dummy message just to notify the other end that the connection has been accepted in case no data have been queued yet.
+					// Send a dummy message just to notify the other end that the connection has been accepted.
+					// In case no data has been queued to be sent and could be a welcome message later.
 					mQueueingBuffers.emplace_front();
 				}
 			}
 			bool SendingHandler::send(const uint8* data, size_t datalen)
 			{
+				assert(data && datalen);
+				assert(datalen <= std::numeric_limits<HeaderType>::max());
 				if (datalen > std::numeric_limits<HeaderType>::max())
 					return false;
 				mQueueingBuffers.emplace_back(data, data + datalen);
@@ -278,7 +287,6 @@ namespace Bousk
 			}
 			void SendingHandler::update()
 			{
-				assert(mSocket != INVALID_SOCKET);
 				if (mState == State::Idle && !mQueueingBuffers.empty())
 				{
 					prepareNextHeader();
@@ -308,7 +316,7 @@ namespace Bousk
 					return true;
 
 				//!< send remaining data from last send
-				int sent = ::send(mSocket, reinterpret_cast<char*>(mSendingBuffer.data()), static_cast<int>(mSendingBuffer.size()), 0);
+				const int sent = ::send(mSocket, reinterpret_cast<char*>(mSendingBuffer.data()), static_cast<int>(mSendingBuffer.size()), 0);
 				if (sent > 0)
 				{
 					if (sent == mSendingBuffer.size())
@@ -329,11 +337,12 @@ namespace Bousk
 			void SendingHandler::prepareNextHeader()
 			{
 				assert(!mQueueingBuffers.empty());
-				const auto header = static_cast<HeaderType>(mQueueingBuffers.front().size());
-				const auto networkHeader = htons(header);
+				const HeaderType header = static_cast<HeaderType>(mQueueingBuffers.front().size());
+				HeaderType networkHeader;
+				Serialization::Conversion::ToNetwork(header, networkHeader);
 				mSendingBuffer.clear();
 				mSendingBuffer.resize(HeaderSize);
-				memcpy(mSendingBuffer.data(), &networkHeader, sizeof(HeaderType));
+				memcpy(mSendingBuffer.data(), &networkHeader, HeaderSize);
 				mState = State::Header;
 			}
 			void SendingHandler::prepareNextData()
@@ -413,6 +422,7 @@ namespace Bousk
 			{
 				assert(mState == State::Disconnected);
 				assert(mSocket == INVALID_SOCKET);
+				assert(address.isValid());
 				if (mSocket != INVALID_SOCKET)
 					disconnect();
 				mSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -458,6 +468,7 @@ namespace Bousk
 				{
 				case State::Connecting:
 				{
+					assert(!mIsServerClient);
 					if (auto msg = mConnectionHandler->poll())
 					{
 						if (msg->result == Messages::Connection::Result::Success)

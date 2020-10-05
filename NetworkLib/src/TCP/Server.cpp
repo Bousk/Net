@@ -70,12 +70,15 @@ namespace Bousk
 					if (newClient.init(std::move(newClientSocket), addr))
 					{
 						auto message = std::make_unique<Messages::IncomingConnection>(newClient.address(), newClient.id());
-						mMessages.push_back(std::move(message));
+						{
+							MessagesLock lock(mMessagesLock);
+							mMessages.push_back(std::move(message));
+						}
 						mClients[newClient.id()] = std::move(newClient);
 					}
 				}
 
-				//!< update connected clients
+				//!< update clients
 				//!< receives up to 1 message per client
 				//!< remove disconnected clients
 				for (auto itClient = mClients.begin(); itClient != mClients.end(); )
@@ -92,7 +95,10 @@ namespace Bousk
 						{
 							++itClient;
 						}
-						mMessages.push_back(std::move(msg));
+						{
+							MessagesLock lock(mMessagesLock);
+							mMessages.push_back(std::move(msg));
+						}
 					}
 					else
 						++itClient;
@@ -119,14 +125,10 @@ namespace Bousk
 					ret &= client.second.send(data, len);
 				return ret;
 			}
-			std::unique_ptr<Messages::Base> Server::poll()
+			std::vector<std::unique_ptr<Messages::Base>> Server::poll()
 			{
-				if (mMessages.empty())
-					return nullptr;
-
-				auto msg = std::move(mMessages.front());
-				mMessages.pop_front();
-				return msg;
+				MessagesLock lock(mMessagesLock);
+				return std::move(mMessages);
 			}
 		}
 	}
