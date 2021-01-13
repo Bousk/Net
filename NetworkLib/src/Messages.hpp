@@ -27,6 +27,8 @@ namespace Bousk
 				enum class Type {
 					IncomingConnection,
 					Connection,
+					ConnectionInterrupted,
+					ConnectionResumed,
 					Disconnection,
 					UserData,
 				};
@@ -64,6 +66,30 @@ namespace Bousk
 				{}
 				Result result;
 			};
+		#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+			class ConnectionInterrupted : public Base
+			{
+				DECLARE_MESSAGE(ConnectionInterrupted);
+			public:
+				ConnectionInterrupted(const Address& emitter, uint64 emitterid, bool isDirect)
+					: Base(Type::ConnectionInterrupted, emitter, emitterid)
+					, isDirectInterruption(isDirect)
+				{}
+				// True if the emitter is directly interrupted to us. False if the emitter forwarded an interruption on his side.
+				bool isDirectInterruption;
+			};
+			class ConnectionResumed : public Base
+			{
+				DECLARE_MESSAGE(ConnectionResumed);
+			public:
+				ConnectionResumed(const Address& emitter, uint64 emitterid, bool networkResume)
+					: Base(Type::ConnectionResumed, emitter, emitterid)
+					, isNetworkResumed(networkResume)
+				{}
+				// True if the network is now completely resumed. False if network is not yet resumed due to another client being interrupted.
+				bool isNetworkResumed;
+			};
+		#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			class Disconnection : public Base
 			{
 				DECLARE_MESSAGE(Disconnection);
