@@ -18,6 +18,8 @@ int main()
 	//for (size_t i = 0; i < 4; ++i)
 	//	printf("%p : 0x%02x\n", ptr + i, *(ptr + i));
 
+	CHECK(Bousk::Network::Start());
+
 	Utils_Test::Test();
 	AckHandler_Test::Test();
 	UnreliableOrdered_Test::Test();
@@ -25,5 +27,7 @@ int main()
 	ReliableOrdered_Test::Test();
 	Serialization_Test::Test();
 	Types_Test::Test();
+
+	Bousk::Network::Release();
 	return 0;
 }
