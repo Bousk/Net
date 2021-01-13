@@ -72,7 +72,7 @@ namespace Bousk
 				void processSend(uint8 maxDatagrams = 0);
 				void onDatagramReceived(Datagram&& datagram);
 
-				const Address& address() const { return mAddress; }
+				inline const Address& address() const { return mAddress; }
 
 			private:
 				void maintainConnection(bool distantNetworkInterrupted = false);

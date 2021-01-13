@@ -62,6 +62,7 @@ namespace Bousk
 					mMessages.clear();
 				}
 				mClients.clear();
+				mInterruptedClients.clear();
 			}
 			void Client::connect(const Address& addr)
 			{
@@ -116,11 +117,26 @@ namespace Bousk
 					client->processSend();
 
 				// Remove disconnected clients
-				mClients.erase(
-					std::remove_if(mClients.begin(), mClients.end(), [](const std::unique_ptr<DistantClient>& client) { return client->isDisconnected(); })
-					, mClients.end()
-				);
+				const auto clientsToRemove = std::remove_if(mClients.begin(), mClients.end(), [](const std::unique_ptr<DistantClient>& client) { return client->isDisconnected(); });
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				// Don't forget to remove the interrupted ones if they are
+				for (auto clientToRemove = clientsToRemove; clientToRemove != mClients.end(); ++clientToRemove)
+				{
+					mInterruptedClients.erase(clientToRemove->get());
+				}
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				mClients.erase(clientsToRemove, mClients.end());
 			}
+		#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+			void Client::onClientInterrupted(const DistantClient* client)
+			{
+				mInterruptedClients.insert(client);
+			}
+			void Client::onClientResumed(const DistantClient* client)
+			{
+				mInterruptedClients.erase(client);
+			}
+		#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			void Client::receive()
 			{
 				for (;;)
