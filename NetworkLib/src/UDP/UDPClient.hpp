@@ -10,7 +10,6 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <unordered_set>
 #include <vector>
 
 namespace Bousk
@@ -87,14 +86,6 @@ namespace Bousk
 				// Extract ready messages. Can be called anytime from any thread but each message is unique and polled only once
 				std::vector<std::unique_ptr<Messages::Base>> poll();
 
-			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
-				inline void enableNetworkInterruption() { setNetworkInterruptionEnabled(true); }
-				inline void disableNetworkInterruption() { setNetworkInterruptionEnabled(false); }
-				inline void setNetworkInterruptionEnabled(bool enabled) { mNetworkInterruptionAllowed = enabled; }
-				inline bool isNetworkInterruptionAllowed() const { return mNetworkInterruptionAllowed; }
-				inline bool isNetworkInterrupted() const { return !mInterruptedClients.empty(); }
-			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
-
 			private:
 				DistantClient* getClient(const Address& clientAddr, bool create = false);
 				void setupChannels(DistantClient& client);
@@ -147,15 +138,6 @@ namespace Bousk
 			#if BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
 				Simulator mSimulator;
 			#endif // BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
-			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
-				bool mNetworkInterruptionAllowed{ true };
-				void onClientInterrupted(const DistantClient* client);
-				void onClientResumed(const DistantClient* client);
-				// Returns whether this client is the sole responsible for the network interruption
-				bool isInterruptionCulprit(const DistantClient* client) const { return mInterruptedClients.size() == 1 && *(mInterruptedClients.begin()) == client; }
-				std::unordered_set<const DistantClient*> mDirectlyInterruptedClients;
-				std::unordered_set<const DistantClient*> mForwardedInterruptedClients;
-			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			};
 
 			template<class T>
