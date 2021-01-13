@@ -53,9 +53,13 @@ namespace Bousk
 					onConnected();
 				}
 			}
-			void DistantClient::maintainConnection()
+			void DistantClient::maintainConnection(bool distantNetworkInterrupted /*= false*/)
 			{
 				mLastKeepAlive = Utils::Now();
+				if (distantNetworkInterrupted)
+					onConnectionInterruptedForwarded();
+				else
+					onConnectionResumed();
 			}
 			void DistantClient::onConnected()
 			{
@@ -82,12 +86,9 @@ namespace Bousk
 			}
 			void DistantClient::onConnectionLost()
 			{
-				if (isConnected())
-				{
-					// Start disconnecting and save the reason to notify later
-					mState = State::Disconnecting;
-					mDisconnectionReason = DisconnectionReason::Lost;
-				}
+				// Start disconnecting and save the reason to notify later
+				mState = State::Disconnecting;
+				mDisconnectionReason = DisconnectionReason::Lost;
 			}
 			void DistantClient::onConnectionRefused()
 			{
@@ -104,6 +105,59 @@ namespace Bousk
 					mDisconnectionReason = DisconnectionReason::ConnectionTimedOut;
 				}
 				mState = State::Disconnecting;
+			}
+			void DistantClient::onConnectionInterrupted()
+			{
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				if (mClient.isNetworkInterruptionAllowed())
+				{
+					if (!mInterrupted)
+					{
+						mInterrupted = true;
+						mClient.onClientInterrupted(this);
+						onMessageReady(std::make_unique<Messages::ConnectionInterrupted>(mAddress, mClientId, true));
+					}
+				}
+				else
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				{
+					if (isConnected())
+					{
+						onConnectionLost();
+					}
+				}
+			}
+			void DistantClient::onConnectionInterruptedForwarded()
+			{
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				if (mClient.isNetworkInterruptionAllowed())
+				{
+					if (!mDistantInterrupted)
+					{
+						// If we were interrupted, we must have received something to know the distant interruption
+						if (mInterrupted)
+						{
+							mInterrupted = false;
+							onMessageReady(std::make_unique<Messages::ConnectionResumed>(mAddress, mClientId, false));
+						}
+						mDistantInterrupted = true;
+						mClient.onClientInterrupted(this);
+						onMessageReady(std::make_unique<Messages::ConnectionInterrupted>(mAddress, mClientId, false));
+					}
+				}
+				#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+			}
+			void DistantClient::onConnectionResumed()
+			{
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				if (mInterrupted || mDistantInterrupted)
+				{
+					mInterrupted = false;
+					mDistantInterrupted = false;
+					mClient.onClientResumed(this);
+					onMessageReady(std::make_unique<Messages::ConnectionResumed>(mAddress, mClientId, !mClient.isNetworkInterrupted()));
+				}
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void DistantClient::connect()
 			{
@@ -162,6 +216,7 @@ namespace Bousk
 								fillKeepAlive(datagram);
 								send(datagram);
 							}
+							// Everything has been sent. Exit the sending loop.
 							break;
 						}
 					}
@@ -202,11 +257,11 @@ namespace Bousk
 				}
 				else if (isConnected() && now > mLastKeepAlive + GetTimeout())
 				{
-					onConnectionLost();
+					onConnectionInterrupted();
 				}
 				else if (isConnecting() && now > mConnectionStartTime + GetTimeout())
 				{
-					// Connection hasn't been accepted within timeframe
+					// Connection hasn't been accepted within timeframe : drop it, we don't keep an interrupted connection before it's been accepted
 					onConnectionTimedOut();
 				}
 			}
@@ -216,21 +271,35 @@ namespace Bousk
 				// Do notify the other end if we're supposed to be connected or requesting the connection
 				Serialization::Serializer serializer;
 				serializer.write(mState == State::ConnectionSent || isConnected());
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				// If the connection is interrupted with that client, check whether another client is also interrupting it or not
+				// If this client is the only one causing the interruption, don't send him an interruption flag so he doesn't interrupt himself when resuming on his side
+				const bool isNetworkInterrupted = mClient.isNetworkInterrupted();
+				const bool isNetworkInterruptedByMe = mClient.isInterruptionCulprit(this);
+				serializer.write(isNetworkInterrupted && !isNetworkInterruptedByMe);
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				memcpy(dgram.data.data(), serializer.buffer(), serializer.bufferSize());
 				dgram.datasize = static_cast<uint16>(serializer.bufferSize());
 			}
 			void DistantClient::handleKeepAlive(const uint8* data, const uint16 datasize)
 			{
-				maintainConnection();
-				if (mState == State::None || isConnecting())
+				Serialization::Deserializer deserializer(data, datasize);
+				bool isConnectedKeepAlive = false;
+				if (deserializer.read(isConnectedKeepAlive) && isConnectedKeepAlive)
 				{
-					Serialization::Deserializer deserializer(data, datasize);
-					bool isConnectedKeepAlive = false;
-					if (deserializer.read(isConnectedKeepAlive) && isConnectedKeepAlive)
+					if (mState == State::None || isConnecting())
 					{
 						onConnectionReceived();
 					}
 				}
+
+				bool isNetworkInterruptedOnTheOtherEnd = false;
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				// Retrieve whether the other side has its connection interrupted and we should locally interrupt it too
+				deserializer.read(isNetworkInterruptedOnTheOtherEnd);
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				// Always consider the connection OK when a keep alive is received, but do keep in mind the network may be interrupted because it's interrupted on the other end.
+				maintainConnection(isNetworkInterruptedOnTheOtherEnd);
 			}
 			void DistantClient::onDatagramReceived(Datagram&& datagram)
 			{
@@ -277,7 +346,7 @@ namespace Bousk
 				case Datagram::Type::Disconnection:
 				{
 					onDisconnectionFromOtherEnd();
-				}
+				} break;
 				}
 			}
 
