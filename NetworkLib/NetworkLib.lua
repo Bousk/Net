@@ -1,11 +1,11 @@
-function CreateNetworkLib(baseLibFolder)
+function CreateNetworkLib(baseLibFolder, outputFolder)
 	print("network lib : " .. baseLibFolder)
 	project "Network"
 		kind "StaticLib"
 		language "C++"
 		cppdialect "C++17"
 		-- architecture "x64"
-		targetdir ( baseLibFolder .. "builds/%{cfg.buildcfg}" )
+		targetdir(outputFolder)
 		filter "toolset:codeblocks"
 			targetprefix "lib"
 		filter {}
