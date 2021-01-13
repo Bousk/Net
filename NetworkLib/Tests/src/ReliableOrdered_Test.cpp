@@ -26,7 +26,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 
 		const Bousk::Network::UDP::Datagram::ID sentDatagramId = datagramId;
 		std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-		const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), datagramId++);
+		const size_t serializedData = mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 		CHECK(serializedData == Bousk::Network::UDP::Packet::HeaderSize + arr.size());
 		const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
 		CHECK(packet->datasize() == arr.size());
@@ -57,7 +57,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 		for (;;)
 		{
 			std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-			const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), datagramId++);
+			const size_t serializedData = mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 			if (serializedData == 0)
 				break;
 			const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
@@ -87,7 +87,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 
 		{
 			std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-			const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), datagramId++);
+			const size_t serializedData = mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 			CHECK(serializedData == Bousk::Network::UDP::Packet::HeaderSize + arr.size());
 			const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
 			CHECK(packet->datasize() == arr.size());
@@ -99,7 +99,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 		//!<The packet hasn't been lost yet, we should have nothing to serialize
 		{
 			std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-			const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), datagramId++);
+			const size_t serializedData = mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 			CHECK(serializedData == 0);
 		}
 		CHECK(mux.mQueue.size() == 1);
@@ -110,7 +110,7 @@ void ReliableOrdered_Multiplexer_Test::Test()
 		{
 			//!< Resend
 			std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-			const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), datagramId++);
+			const size_t serializedData = mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 			CHECK(serializedData == Bousk::Network::UDP::Packet::HeaderSize + arr.size());
 			const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
 			CHECK(packet->datasize() == arr.size());
@@ -138,11 +138,11 @@ void ReliableOrdered_Multiplexer_Test::Test()
 
 		const auto datagram1 = datagramId;
 		std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-		mux.serialize(buffer.data(), buffer.size(), datagramId++);
+		mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 		const auto datagram2 = datagramId;
-		mux.serialize(buffer.data(), buffer.size(), datagramId++);
+		mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 		const auto datagram3 = datagramId;
-		mux.serialize(buffer.data(), buffer.size(), datagramId++);
+		mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), datagramId++);
 		CHECK(mux.mFirstAllowedPacket == 5);
 		mux.onDatagramAcked(datagram3);
 		CHECK(mux.mFirstAllowedPacket == 5);
