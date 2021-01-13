@@ -14,6 +14,8 @@
 // Allow use of network simulator
 #define BOUSKNET_ALLOW_NETWORK_SIMULATOR BOUSKNET_SETTINGS_ENABLED
 
+// Allow debugging network applications : when a client times out, consider its connection interrupted rather than disconnected so he can come back and resume it
+#define BOUSKNET_ALLOW_NETWORK_INTERRUPTION BOUSKNET_SETTINGS_ENABLED
 
 // Default value for unset settings
 #ifndef BOUSKNET_ALLOW_FLOAT32_SERIALIZATION
@@ -27,3 +29,7 @@
 #ifndef BOUSKNET_ALLOW_NETWORK_SIMULATOR
 	#define BOUSKNET_ALLOW_NETWORK_SIMULATOR BOUSKNET_SETTINGS_DISABLED
 #endif // BOUSKNET_ALLOW_NETWORK_SIMULATOR
+
+#ifndef BOUSKNET_ALLOW_NETWORK_INTERRUPTION
+	#define BOUSKNET_ALLOW_NETWORK_INTERRUPTION BOUSKNET_SETTINGS_DISABLED
+#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION
