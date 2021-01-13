@@ -57,6 +57,10 @@ namespace Bousk
 				inline bool isConnected() const { return mState == State::Connected; }
 				inline bool isDisconnecting() const { return mState == State::Disconnecting; }
 				inline bool isDisconnected() const { return mState == State::Disconnected; }
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				inline bool isInterrupted() const { return mInterrupted; }
+				inline bool hasInterruptedClients() const { return mDistantInterrupted; }
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 
 				template<class T>
 				void registerChannel();
@@ -71,11 +75,16 @@ namespace Bousk
 				const Address& address() const { return mAddress; }
 
 			private:
-				void maintainConnection();
+				void maintainConnection(bool distantNetworkInterrupted = false);
 				void onConnectionSent();
 				void onConnectionReceived();
 				void onConnected();
 				void onDisconnectionFromOtherEnd();
+				// Called when this client has its connection interrupted with us.
+				void onConnectionInterrupted();
+				// Called when this client reports having a connection interruption with one if its clients.
+				void onConnectionInterruptedForwarded();
+				void onConnectionResumed();
 				void onConnectionLost();
 				void onConnectionRefused();
 				void onConnectionTimedOut();
@@ -104,6 +113,10 @@ namespace Bousk
 				std::chrono::milliseconds mLastKeepAlive; // Last time this connection has been marked alive, for timeout disconnection
 				static std::chrono::milliseconds sTimeout; // Timeout is same for all clients
 				State mState{ State::None };
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				bool mInterrupted{ false }; // Whether the connectivity is interrupted with this client (this client stopped sending us data)
+				bool mDistantInterrupted{ false }; // Whether this client has its connectivity interrupted with one of its clients
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				DisconnectionReason mDisconnectionReason{ DisconnectionReason::None };
 				std::vector<std::unique_ptr<Messages::Base>> mPendingMessages; // Store messages before connection has been accepted
 			};
