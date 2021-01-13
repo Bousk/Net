@@ -38,4 +38,4 @@ workspace "NetworkLib_Test"
 	cppdialect "c++17"
 	location("./Projects/" .. _ACTION)
 CreateNetworkLib_Test("../")
-CreateNetworkLib("../")
+CreateNetworkLib("../", "../tmp/builds/files/" .. _ACTION .. "/%{cfg.buildcfg}")

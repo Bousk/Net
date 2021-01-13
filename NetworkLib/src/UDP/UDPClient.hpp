@@ -98,7 +98,7 @@ namespace Bousk
 				std::vector<std::unique_ptr<DistantClient>> mClients;
 				uint64 mClientIdsGenerator{ 0 };
 				std::mutex mMessagesLock;
-				using MessagesLock = std::lock_guard<std::mutex>;
+				using MessagesLock = std::lock_guard<decltype(mMessagesLock)>;
 				std::vector<std::unique_ptr<Messages::Base>> mMessages;
 
 				std::vector<std::function<void(DistantClient&)>> mRegisteredChannels;
@@ -132,7 +132,7 @@ namespace Bousk
 					uint32 mChannel{ 0 };
 				};
 				std::mutex mOperationsLock;
-				using OperationsLock = std::lock_guard<std::mutex>;
+				using OperationsLock = std::lock_guard<decltype(mOperationsLock)>;
 				std::vector<Operation> mPendingOperations;
 
 			#if BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED

@@ -22,7 +22,7 @@ void Multiplexer_Test::Test()
 		CHECK(mux.mNextId == 1);
 
 		std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-		const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), 0);
+		const size_t serializedData = mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), 0);
 		CHECK(serializedData == Bousk::Network::UDP::Packet::HeaderSize + arr.size());
 		const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
 		CHECK(packet->datasize() == arr.size());
@@ -45,7 +45,7 @@ void Multiplexer_Test::Test()
 		for (; !mux.mQueue.empty(); )
 		{
 			std::array<uint8_t, Bousk::Network::UDP::Packet::PacketMaxSize> buffer;
-			const size_t serializedData = mux.serialize(buffer.data(), buffer.size(), 0);
+			const size_t serializedData = mux.serialize(buffer.data(), static_cast<Bousk::uint16>(buffer.size()), 0);
 			const Bousk::Network::UDP::Packet* packet = reinterpret_cast<const Bousk::Network::UDP::Packet*>(buffer.data());
 			CHECK(memcmp(packet->data(), datacopy.data() + totalDataSize, packet->datasize()) == 0);
 			totalDataSize += serializedData - Bousk::Network::UDP::Packet::HeaderSize;

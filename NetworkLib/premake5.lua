@@ -9,7 +9,7 @@ workspace "NetworkLib"
 		systemversion "10.0.15063.0"
 	filter {}
 		
-CreateNetworkLib("./")
+CreateNetworkLib("./", "./tmp/builds/files/" .. _ACTION .. "/%{cfg.buildcfg}")
 
 function CreateProject(path)
 	local prettypath = buildPathName(path)

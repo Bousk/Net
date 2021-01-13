@@ -1,11 +1,13 @@
-#include "Utils_Test.hpp"
 #include "AckHandler_Test.hpp"
 #include "DistantClient_Test.hpp"
-#include "UnreliableOrdered_Test.hpp"
 #include "ReliableOrdered_Test.hpp"
 #include "Serialization_Test.hpp"
 #include "Types_Test.hpp"
+#include "Tester.hpp"
+#include "UnreliableOrdered_Test.hpp"
+#include "Utils_Test.hpp"
 
+#include <Sockets.hpp>
 #include <Types.hpp>
 
 int main()
