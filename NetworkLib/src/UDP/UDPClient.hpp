@@ -153,8 +153,7 @@ namespace Bousk
 				void onClientResumed(const DistantClient* client);
 				// Returns whether this client is the sole responsible for the network interruption
 				bool isInterruptionCulprit(const DistantClient* client) const { return mInterruptedClients.size() == 1 && *(mInterruptedClients.begin()) == client; }
-				std::unordered_set<const DistantClient*> mDirectlyInterruptedClients;
-				std::unordered_set<const DistantClient*> mForwardedInterruptedClients;
+				std::unordered_set<const DistantClient*> mInterruptedClients;
 			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			};
 
