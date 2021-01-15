@@ -199,6 +199,13 @@ namespace Bousk
 				// We do send data during connection process in order to keep it available before we accept it
 				if (isConnecting() || isConnected())
 				{
+					if (mClient.isNetworkInterrupted())
+					{
+						// Since the network is interrupted, send a keep alive to let the client know that
+						Datagram datagram;
+						fillKeepAlive(datagram);
+						send(datagram);
+					}
 					for (size_t loop = 0; maxDatagrams == 0 || loop < maxDatagrams; ++loop)
 					{
 						Datagram datagram;
@@ -210,7 +217,7 @@ namespace Bousk
 						}
 						else
 						{
-							if (loop == 0)
+							if (loop == 0 && !mClient.isNetworkInterrupted())
 							{
 								// Nothing to send this time, so send a keep alive to maintain connection
 								fillKeepAlive(datagram);
