@@ -202,7 +202,7 @@ namespace Bousk
 					for (size_t loop = 0; maxDatagrams == 0 || loop < maxDatagrams; ++loop)
 					{
 						Datagram datagram;
-						datagram.datasize = mChannelsHandler.serialize(datagram.data.data(), Datagram::DataMaxSize, mNextDatagramIdToSend);
+						datagram.datasize = mChannelsHandler.serialize(datagram.data.data(), Datagram::DataMaxSize, mNextDatagramIdToSend, mClient.isNetworkInterrupted());
 						if (datagram.datasize > 0)
 						{
 							fillDatagramHeader(datagram, Datagram::Type::ConnectedData);

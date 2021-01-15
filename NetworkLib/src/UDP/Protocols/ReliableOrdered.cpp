@@ -42,8 +42,12 @@ namespace Bousk
 						memcpy(packet.data(), msgData.data(), msgData.size());
 					}
 				}
-				uint16 ReliableOrdered::Multiplexer::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId)
+				uint16 ReliableOrdered::Multiplexer::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId, const bool connectionInterrupted)
 				{
+					// Don't send reliable data if the connection is interrupted
+					if (connectionInterrupted)
+						return 0;
+
 					uint16 serializedSize = 0;
 					for (auto& packetHolder : mQueue)
 					{

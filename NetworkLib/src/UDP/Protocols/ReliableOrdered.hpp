@@ -28,7 +28,7 @@ namespace Bousk
 					~ReliableOrdered() override = default;
 
 					void queue(std::vector<uint8>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }
-					uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
+					uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId, const bool connectionInterrupted) override { return mMultiplexer.serialize(buffer, buffersize, datagramId, connectionInterrupted); }
 
 					void onDatagramAcked(const Datagram::ID datagramId) override { mMultiplexer.onDatagramAcked(datagramId); }
 					void onDatagramLost(const Datagram::ID datagramId) override { mMultiplexer.onDatagramLost(datagramId); }
@@ -47,7 +47,7 @@ namespace Bousk
 						~Multiplexer() = default;
 
 						void queue(std::vector<uint8>&& msgData);
-						uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId);
+						uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId, bool connectionInterrupted);
 
 						void onDatagramAcked(const Datagram::ID datagramId);
 						void onDatagramLost(const Datagram::ID datagramId);

@@ -27,7 +27,7 @@ namespace Bousk
 
 				// Multiplexer
 				void queue(std::vector<uint8>&& msgData, uint32 channelIndex);
-				uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId);
+				uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId, bool connectionInterrupted);
 
 				void onDatagramAcked(Datagram::ID datagramId);
 				void onDatagramLost(Datagram::ID datagramId);
