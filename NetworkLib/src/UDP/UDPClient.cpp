@@ -26,7 +26,7 @@ namespace Bousk
 			{}
 			Client::~Client()
 			{
-				Release();
+				release();
 			}
 
 			bool Client::init(const uint16 port)
