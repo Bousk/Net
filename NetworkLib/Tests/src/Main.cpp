@@ -1,4 +1,5 @@
 #include "AckHandler_Test.hpp"
+#include "ConnectionInterruption_Test.hpp"
 #include "DistantClient_Test.hpp"
 #include "ReliableOrdered_Test.hpp"
 #include "Serialization_Test.hpp"
@@ -27,6 +28,7 @@ int main()
 	ReliableOrdered_Test::Test();
 	Serialization_Test::Test();
 	Types_Test::Test();
+	ConnectionInterruption_Test::Test();
 
 	Bousk::Network::Release();
 	return 0;
