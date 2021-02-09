@@ -119,10 +119,11 @@ namespace Bousk
 				// Remove disconnected clients
 				const auto clientsToRemove = std::remove_if(mClients.begin(), mClients.end(), [](const std::unique_ptr<DistantClient>& client) { return client->isDisconnected(); });
 			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
-				// Don't forget to remove the interrupted ones if they are
+				// Make sure no interrupted clients have been removed : interrupted clients should resume before disconnecting
 				for (auto clientToRemove = clientsToRemove; clientToRemove != mClients.end(); ++clientToRemove)
 				{
-					mInterruptedClients.erase(clientToRemove->get());
+					const size_t erased = mInterruptedClients.erase(clientToRemove->get());
+					assert(erased == 0);
 				}
 			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				mClients.erase(clientsToRemove, mClients.end());
@@ -135,6 +136,10 @@ namespace Bousk
 			void Client::onClientResumed(const DistantClient* client)
 			{
 				mInterruptedClients.erase(client);
+			}
+			bool Client::isInterruptionCulprit(const DistantClient* client) const
+			{
+				return mInterruptedClients.size() == 1 && *(mInterruptedClients.begin()) == client;
 			}
 		#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			void Client::receive()

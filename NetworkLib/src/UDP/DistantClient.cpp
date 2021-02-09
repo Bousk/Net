@@ -234,25 +234,30 @@ namespace Bousk
 					{
 						// After 2 timeouts we mark it disconnected
 						// This leaves enough time to each end to notice and disconnects its distant client
-						mState = State::Disconnected;
+					#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						// Resume it right before disconnection for the app to receive the corresponding messages
+						if (isInterrupted())
+							onConnectionResumed();
+					#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 						// Do notify the disconnection, if needed
 						// We notify it as latest as possible so when user received the Disconnection message, he can send a new connection request right away
 						switch (mDisconnectionReason)
 						{
 							case DisconnectionReason::Disconnected:
 							case DisconnectionReason::DisconnectedFromOtherEnd:
-								mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Disconnected));
+								onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Disconnected));
 								break;
 							case DisconnectionReason::Lost:
-								mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Lost));
+								onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Lost));
 								break;
 							case DisconnectionReason::Refused:
-								mClient.onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::Refused));
+								onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::Refused));
 								break;
 							case DisconnectionReason::ConnectionTimedOut:
-								mClient.onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::TimedOut));
+								onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::TimedOut));
 								break;
 						}
+						mState = State::Disconnected;
 					}
 					else if (mDisconnectionReason != DisconnectionReason::None && mDisconnectionReason != DisconnectionReason::Lost)
 					{
@@ -380,13 +385,13 @@ namespace Bousk
 			}
 			void DistantClient::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{
-				if (isConnected())
-				{
-					mClient.onMessageReady(std::move(msg));
-				}
-				else if (isConnecting())
+				if (isConnecting())
 				{
 					mPendingMessages.push_back(std::move(msg));
+				}
+				else if (isConnected() || isDisconnecting())
+				{
+					mClient.onMessageReady(std::move(msg));
 				}
 			}
 		}

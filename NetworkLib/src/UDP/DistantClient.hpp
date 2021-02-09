@@ -73,6 +73,7 @@ namespace Bousk
 				void onDatagramReceived(Datagram&& datagram);
 
 				inline const Address& address() const { return mAddress; }
+				inline uint64 id() const { return mClientId; }
 
 			private:
 				void maintainConnection(bool distantNetworkInterrupted = false);
