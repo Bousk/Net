@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Address.hpp>
+#include <Settings.hpp>
 #include <Sockets.hpp>
 #include <UDP/AckHandler.hpp>
 #include <UDP/ChannelsHandler.hpp>
@@ -76,16 +77,22 @@ namespace Bousk
 				inline uint64 id() const { return mClientId; }
 
 			private:
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				void maintainConnection(bool distantNetworkInterrupted = false);
+			#else
+				void maintainConnection();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				void onConnectionSent();
 				void onConnectionReceived();
 				void onConnected();
 				void onDisconnectionFromOtherEnd();
 				// Called when this client has its connection interrupted with us.
 				void onConnectionInterrupted();
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				// Called when this client reports having a connection interruption with one if its clients.
 				void onConnectionInterruptedForwarded();
 				void onConnectionResumed();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				void onConnectionLost();
 				void onConnectionRefused();
 				void onConnectionTimedOut();

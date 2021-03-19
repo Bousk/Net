@@ -62,7 +62,9 @@ namespace Bousk
 					mMessages.clear();
 				}
 				mClients.clear();
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				mInterruptedClients.clear();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void Client::connect(const Address& addr)
 			{

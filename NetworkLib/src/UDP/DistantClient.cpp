@@ -53,13 +53,19 @@ namespace Bousk
 					onConnected();
 				}
 			}
+		#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			void DistantClient::maintainConnection(bool distantNetworkInterrupted /*= false*/)
+		#else
+			void DistantClient::maintainConnection()
+		#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			{
 				mLastKeepAlive = Utils::Now();
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				if (distantNetworkInterrupted)
 					onConnectionInterruptedForwarded();
 				else
 					onConnectionResumed();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void DistantClient::onConnected()
 			{
@@ -127,9 +133,9 @@ namespace Bousk
 					}
 				}
 			}
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			void DistantClient::onConnectionInterruptedForwarded()
 			{
-			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				if (mClient.isNetworkInterruptionAllowed())
 				{
 					if (!mDistantInterrupted)
@@ -145,11 +151,9 @@ namespace Bousk
 						onMessageReady(std::make_unique<Messages::ConnectionInterrupted>(mAddress, mClientId, false));
 					}
 				}
-				#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void DistantClient::onConnectionResumed()
 			{
-			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				if (mInterrupted || mDistantInterrupted)
 				{
 					mInterrupted = false;
@@ -157,8 +161,8 @@ namespace Bousk
 					mClient.onClientResumed(this);
 					onMessageReady(std::make_unique<Messages::ConnectionResumed>(mAddress, mClientId, !mClient.isNetworkInterrupted()));
 				}
-			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			void DistantClient::connect()
 			{
 				onConnectionSent();
@@ -199,6 +203,7 @@ namespace Bousk
 				// We do send data during connection process in order to keep it available before we accept it
 				if (isConnecting() || isConnected())
 				{
+				#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 					if (mClient.isNetworkInterrupted())
 					{
 						// Since the network is interrupted, send a keep alive to let the client know that
@@ -206,10 +211,15 @@ namespace Bousk
 						fillKeepAlive(datagram);
 						send(datagram);
 					}
+				#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 					for (size_t loop = 0; maxDatagrams == 0 || loop < maxDatagrams; ++loop)
 					{
 						Datagram datagram;
-						datagram.datasize = mChannelsHandler.serialize(datagram.data.data(), Datagram::DataMaxSize, mNextDatagramIdToSend, mClient.isNetworkInterrupted());
+						datagram.datasize = mChannelsHandler.serialize(datagram.data.data(), Datagram::DataMaxSize, mNextDatagramIdToSend
+						#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+							, mClient.isNetworkInterrupted()
+						#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						);
 						if (datagram.datasize > 0)
 						{
 							fillDatagramHeader(datagram, Datagram::Type::ConnectedData);
@@ -217,7 +227,12 @@ namespace Bousk
 						}
 						else
 						{
-							if (loop == 0 && !mClient.isNetworkInterrupted())
+							const bool sendKeepAlive = (loop == 0)
+							#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+								&& !mClient.isNetworkInterrupted()
+							#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+								;
+							if (sendKeepAlive)
 							{
 								// Nothing to send this time, so send a keep alive to maintain connection
 								fillKeepAlive(datagram);
@@ -305,13 +320,15 @@ namespace Bousk
 					}
 				}
 
-				bool isNetworkInterruptedOnTheOtherEnd = false;
 			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				bool isNetworkInterruptedOnTheOtherEnd = false;
 				// Retrieve whether the other side has its connection interrupted and we should locally interrupt it too
 				deserializer.read(isNetworkInterruptedOnTheOtherEnd);
-			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				// Always consider the connection OK when a keep alive is received, but do keep in mind the network may be interrupted because it's interrupted on the other end.
 				maintainConnection(isNetworkInterruptedOnTheOtherEnd);
+			#else
+				maintainConnection();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void DistantClient::onDatagramReceived(Datagram&& datagram)
 			{

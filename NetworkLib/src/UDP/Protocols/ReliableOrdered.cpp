@@ -42,11 +42,17 @@ namespace Bousk
 						memcpy(packet.data(), msgData.data(), msgData.size());
 					}
 				}
-				uint16 ReliableOrdered::Multiplexer::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId, const bool connectionInterrupted)
+				uint16 ReliableOrdered::Multiplexer::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId
+				#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					, const bool connectionInterrupted
+				#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				)
 				{
+				#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 					// Don't send reliable data if the connection is interrupted
 					if (connectionInterrupted)
 						return 0;
+				#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 
 					uint16 serializedSize = 0;
 					for (auto& packetHolder : mQueue)
