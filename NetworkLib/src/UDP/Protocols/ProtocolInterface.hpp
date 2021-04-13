@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Settings.hpp>
 #include <UDP/Datagram.hpp>
 #include <vector>
 
@@ -18,7 +19,11 @@ namespace Bousk
 					virtual ~IProtocol() = default;
 
 					virtual void queue(std::vector<uint8>&& msgData) = 0;
-					virtual uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId) = 0;
+					virtual uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId
+					#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						, bool connectionInterrupted
+					#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					) = 0;
 
 					virtual void onDatagramAcked(Datagram::ID /*datagramId*/) {}
 					virtual void onDatagramLost(Datagram::ID /*datagramId*/) {}

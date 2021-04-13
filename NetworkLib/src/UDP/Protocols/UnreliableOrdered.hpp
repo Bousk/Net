@@ -26,7 +26,11 @@ namespace Bousk
 					~UnreliableOrdered() override = default;
 
 					void queue(std::vector<uint8>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }
-					uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
+					uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId
+					#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						, bool /*connectionInterrupted*/
+					#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
 
 					void onDataReceived(const uint8* data, uint16 datasize) override { mDemultiplexer.onDataReceived(data, datasize); }
 					std::vector<std::vector<uint8>> process() override { return mDemultiplexer.process(); }

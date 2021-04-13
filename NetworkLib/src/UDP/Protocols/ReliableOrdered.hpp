@@ -28,7 +28,15 @@ namespace Bousk
 					~ReliableOrdered() override = default;
 
 					void queue(std::vector<uint8>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }
-					uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId) override { return mMultiplexer.serialize(buffer, buffersize, datagramId); }
+					uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId
+					#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						, const bool connectionInterrupted
+					#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					) override { return mMultiplexer.serialize(buffer, buffersize, datagramId
+					#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						, connectionInterrupted
+					#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					); }
 
 					void onDatagramAcked(const Datagram::ID datagramId) override { mMultiplexer.onDatagramAcked(datagramId); }
 					void onDatagramLost(const Datagram::ID datagramId) override { mMultiplexer.onDatagramLost(datagramId); }
@@ -47,7 +55,11 @@ namespace Bousk
 						~Multiplexer() = default;
 
 						void queue(std::vector<uint8>&& msgData);
-						uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId);
+						uint16 serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId
+						#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+							, bool connectionInterrupted
+						#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						);
 
 						void onDatagramAcked(const Datagram::ID datagramId);
 						void onDatagramLost(const Datagram::ID datagramId);

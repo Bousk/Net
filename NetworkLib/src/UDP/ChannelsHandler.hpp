@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Settings.hpp>
 #include <UDP/Datagram.hpp>
 
 #include <memory>
@@ -27,7 +28,11 @@ namespace Bousk
 
 				// Multiplexer
 				void queue(std::vector<uint8>&& msgData, uint32 channelIndex);
-				uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId);
+				uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId
+				#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					, bool connectionInterrupted
+				#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				);
 
 				void onDatagramAcked(Datagram::ID datagramId);
 				void onDatagramLost(Datagram::ID datagramId);

@@ -21,7 +21,11 @@ namespace Bousk
 				assert(channelIndex < mChannels.size());
 				mChannels[channelIndex]->queue(std::move(msgData));
 			}
-			uint16 ChannelsHandler::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId)
+			uint16 ChannelsHandler::serialize(uint8* buffer, const uint16 buffersize, const Datagram::ID datagramId
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				, const bool connectionInterrupted
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+			)
 			{
 				uint16 remainingBuffersize = buffersize;
 				for (uint32 channelId = 0; channelId < mChannels.size(); ++channelId)
@@ -32,7 +36,11 @@ namespace Bousk
 					uint8* const channelDataStart = buffer + ChannelHeader::Size;
 					const uint16 channelAvailableSize = remainingBuffersize - ChannelHeader::Size;
 
-					const uint16 serializedData = protocol->serialize(channelDataStart, channelAvailableSize, datagramId);
+					const uint16 serializedData = protocol->serialize(channelDataStart, channelAvailableSize, datagramId
+					#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						, connectionInterrupted
+					#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					);
 					assert(serializedData <= channelAvailableSize);
 					if (serializedData)
 					{
@@ -93,6 +101,7 @@ namespace Bousk
 				for (auto& channel : mChannels)
 				{
 					std::vector<std::vector<uint8>> protocolMessages = channel->process();
+					// If we're not connected, ignore and discard unreliable messages
 					if (!protocolMessages.empty() && (channel->isReliable() || isConnected))
 					{
 						messages.reserve(messages.size() + protocolMessages.size());

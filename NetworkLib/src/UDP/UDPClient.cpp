@@ -26,7 +26,7 @@ namespace Bousk
 			{}
 			Client::~Client()
 			{
-				Release();
+				release();
 			}
 
 			bool Client::init(const uint16 port)
@@ -62,6 +62,9 @@ namespace Bousk
 					mMessages.clear();
 				}
 				mClients.clear();
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				mInterruptedClients.clear();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void Client::connect(const Address& addr)
 			{
@@ -116,11 +119,31 @@ namespace Bousk
 					client->processSend();
 
 				// Remove disconnected clients
-				mClients.erase(
-					std::remove_if(mClients.begin(), mClients.end(), [](const std::unique_ptr<DistantClient>& client) { return client->isDisconnected(); })
-					, mClients.end()
-				);
+				const auto clientsToRemove = std::remove_if(mClients.begin(), mClients.end(), [](const std::unique_ptr<DistantClient>& client) { return client->isDisconnected(); });
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				// Make sure no interrupted clients have been removed : interrupted clients should resume before disconnecting
+				for (auto clientToRemove = clientsToRemove; clientToRemove != mClients.end(); ++clientToRemove)
+				{
+					const size_t erased = mInterruptedClients.erase(clientToRemove->get());
+					assert(erased == 0);
+				}
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				mClients.erase(clientsToRemove, mClients.end());
 			}
+		#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+			void Client::onClientInterrupted(const DistantClient* client)
+			{
+				mInterruptedClients.insert(client);
+			}
+			void Client::onClientResumed(const DistantClient* client)
+			{
+				mInterruptedClients.erase(client);
+			}
+			bool Client::isInterruptionCulprit(const DistantClient* client) const
+			{
+				return mInterruptedClients.size() == 1 && *(mInterruptedClients.begin()) == client;
+			}
+		#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			void Client::receive()
 			{
 				for (;;)

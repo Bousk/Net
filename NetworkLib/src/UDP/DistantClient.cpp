@@ -53,9 +53,19 @@ namespace Bousk
 					onConnected();
 				}
 			}
+		#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+			void DistantClient::maintainConnection(bool distantNetworkInterrupted /*= false*/)
+		#else
 			void DistantClient::maintainConnection()
+		#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			{
 				mLastKeepAlive = Utils::Now();
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				if (distantNetworkInterrupted)
+					onConnectionInterruptedForwarded();
+				else
+					onConnectionResumed();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void DistantClient::onConnected()
 			{
@@ -82,12 +92,9 @@ namespace Bousk
 			}
 			void DistantClient::onConnectionLost()
 			{
-				if (isConnected())
-				{
-					// Start disconnecting and save the reason to notify later
-					mState = State::Disconnecting;
-					mDisconnectionReason = DisconnectionReason::Lost;
-				}
+				// Start disconnecting and save the reason to notify later
+				mState = State::Disconnecting;
+				mDisconnectionReason = DisconnectionReason::Lost;
 			}
 			void DistantClient::onConnectionRefused()
 			{
@@ -105,6 +112,57 @@ namespace Bousk
 				}
 				mState = State::Disconnecting;
 			}
+			void DistantClient::onConnectionInterrupted()
+			{
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				if (mClient.isNetworkInterruptionAllowed())
+				{
+					if (!mInterrupted)
+					{
+						mInterrupted = true;
+						mClient.onClientInterrupted(this);
+						onMessageReady(std::make_unique<Messages::ConnectionInterrupted>(mAddress, mClientId, true));
+					}
+				}
+				else
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				{
+					if (isConnected())
+					{
+						onConnectionLost();
+					}
+				}
+			}
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+			void DistantClient::onConnectionInterruptedForwarded()
+			{
+				if (mClient.isNetworkInterruptionAllowed())
+				{
+					if (!mDistantInterrupted)
+					{
+						// If we were interrupted, we must have received something to know the distant interruption
+						if (mInterrupted)
+						{
+							mInterrupted = false;
+							onMessageReady(std::make_unique<Messages::ConnectionResumed>(mAddress, mClientId, false));
+						}
+						mDistantInterrupted = true;
+						mClient.onClientInterrupted(this);
+						onMessageReady(std::make_unique<Messages::ConnectionInterrupted>(mAddress, mClientId, false));
+					}
+				}
+			}
+			void DistantClient::onConnectionResumed()
+			{
+				if (mInterrupted || mDistantInterrupted)
+				{
+					mInterrupted = false;
+					mDistantInterrupted = false;
+					mClient.onClientResumed(this);
+					onMessageReady(std::make_unique<Messages::ConnectionResumed>(mAddress, mClientId, !mClient.isNetworkInterrupted()));
+				}
+			}
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			void DistantClient::connect()
 			{
 				onConnectionSent();
@@ -145,10 +203,23 @@ namespace Bousk
 				// We do send data during connection process in order to keep it available before we accept it
 				if (isConnecting() || isConnected())
 				{
+				#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+					if (mClient.isNetworkInterrupted())
+					{
+						// Since the network is interrupted, send a keep alive to let the client know that
+						Datagram datagram;
+						fillKeepAlive(datagram);
+						send(datagram);
+					}
+				#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 					for (size_t loop = 0; maxDatagrams == 0 || loop < maxDatagrams; ++loop)
 					{
 						Datagram datagram;
-						datagram.datasize = mChannelsHandler.serialize(datagram.data.data(), Datagram::DataMaxSize, mNextDatagramIdToSend);
+						datagram.datasize = mChannelsHandler.serialize(datagram.data.data(), Datagram::DataMaxSize, mNextDatagramIdToSend
+						#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+							, mClient.isNetworkInterrupted()
+						#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						);
 						if (datagram.datasize > 0)
 						{
 							fillDatagramHeader(datagram, Datagram::Type::ConnectedData);
@@ -156,12 +227,18 @@ namespace Bousk
 						}
 						else
 						{
-							if (loop == 0)
+							const bool sendKeepAlive = (loop == 0)
+							#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+								&& !mClient.isNetworkInterrupted()
+							#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+								;
+							if (sendKeepAlive)
 							{
 								// Nothing to send this time, so send a keep alive to maintain connection
 								fillKeepAlive(datagram);
 								send(datagram);
 							}
+							// Everything has been sent. Exit the sending loop.
 							break;
 						}
 					}
@@ -172,25 +249,30 @@ namespace Bousk
 					{
 						// After 2 timeouts we mark it disconnected
 						// This leaves enough time to each end to notice and disconnects its distant client
-						mState = State::Disconnected;
+					#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+						// Resume it right before disconnection for the app to receive the corresponding messages
+						if (isInterrupted())
+							onConnectionResumed();
+					#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 						// Do notify the disconnection, if needed
 						// We notify it as latest as possible so when user received the Disconnection message, he can send a new connection request right away
 						switch (mDisconnectionReason)
 						{
 							case DisconnectionReason::Disconnected:
 							case DisconnectionReason::DisconnectedFromOtherEnd:
-								mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Disconnected));
+								onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Disconnected));
 								break;
 							case DisconnectionReason::Lost:
-								mClient.onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Lost));
+								onMessageReady(std::make_unique<Messages::Disconnection>(mAddress, mClientId, Messages::Disconnection::Reason::Lost));
 								break;
 							case DisconnectionReason::Refused:
-								mClient.onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::Refused));
+								onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::Refused));
 								break;
 							case DisconnectionReason::ConnectionTimedOut:
-								mClient.onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::TimedOut));
+								onMessageReady(std::make_unique<Messages::Connection>(mAddress, mClientId, Messages::Connection::Result::TimedOut));
 								break;
 						}
+						mState = State::Disconnected;
 					}
 					else if (mDisconnectionReason != DisconnectionReason::None && mDisconnectionReason != DisconnectionReason::Lost)
 					{
@@ -202,11 +284,11 @@ namespace Bousk
 				}
 				else if (isConnected() && now > mLastKeepAlive + GetTimeout())
 				{
-					onConnectionLost();
+					onConnectionInterrupted();
 				}
 				else if (isConnecting() && now > mConnectionStartTime + GetTimeout())
 				{
-					// Connection hasn't been accepted within timeframe
+					// Connection hasn't been accepted within timeframe : drop it, we don't keep an interrupted connection before it's been accepted
 					onConnectionTimedOut();
 				}
 			}
@@ -216,21 +298,37 @@ namespace Bousk
 				// Do notify the other end if we're supposed to be connected or requesting the connection
 				Serialization::Serializer serializer;
 				serializer.write(mState == State::ConnectionSent || isConnected());
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				// If the connection is interrupted with that client, check whether another client is also interrupting it or not
+				// If this client is the only one causing the interruption, don't send him an interruption flag so he doesn't interrupt himself when resuming on his side
+				const bool isNetworkInterrupted = mClient.isNetworkInterrupted();
+				const bool isNetworkInterruptedByMe = mClient.isInterruptionCulprit(this);
+				serializer.write(isNetworkInterrupted && !isNetworkInterruptedByMe);
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 				memcpy(dgram.data.data(), serializer.buffer(), serializer.bufferSize());
 				dgram.datasize = static_cast<uint16>(serializer.bufferSize());
 			}
 			void DistantClient::handleKeepAlive(const uint8* data, const uint16 datasize)
 			{
-				maintainConnection();
-				if (mState == State::None || isConnecting())
+				Serialization::Deserializer deserializer(data, datasize);
+				bool isConnectedKeepAlive = false;
+				if (deserializer.read(isConnectedKeepAlive) && isConnectedKeepAlive)
 				{
-					Serialization::Deserializer deserializer(data, datasize);
-					bool isConnectedKeepAlive = false;
-					if (deserializer.read(isConnectedKeepAlive) && isConnectedKeepAlive)
+					if (mState == State::None || isConnecting())
 					{
 						onConnectionReceived();
 					}
 				}
+
+			#if BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
+				bool isNetworkInterruptedOnTheOtherEnd = false;
+				// Retrieve whether the other side has its connection interrupted and we should locally interrupt it too
+				deserializer.read(isNetworkInterruptedOnTheOtherEnd);
+				// Always consider the connection OK when a keep alive is received, but do keep in mind the network may be interrupted because it's interrupted on the other end.
+				maintainConnection(isNetworkInterruptedOnTheOtherEnd);
+			#else
+				maintainConnection();
+			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 			}
 			void DistantClient::onDatagramReceived(Datagram&& datagram)
 			{
@@ -277,7 +375,7 @@ namespace Bousk
 				case Datagram::Type::Disconnection:
 				{
 					onDisconnectionFromOtherEnd();
-				}
+				} break;
 				}
 			}
 
@@ -304,13 +402,13 @@ namespace Bousk
 			}
 			void DistantClient::onMessageReady(std::unique_ptr<Messages::Base>&& msg)
 			{
-				if (isConnected())
-				{
-					mClient.onMessageReady(std::move(msg));
-				}
-				else if (isConnecting())
+				if (isConnecting())
 				{
 					mPendingMessages.push_back(std::move(msg));
+				}
+				else if (isConnected() || isDisconnecting())
+				{
+					mClient.onMessageReady(std::move(msg));
 				}
 			}
 		}

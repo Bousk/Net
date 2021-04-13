@@ -43,7 +43,7 @@ void DistantClient_Test::Test()
 
 	auto QueueDatagram = [&]() {
 		distantClient.send(std::vector<uint8_t>(TestString, TestString + TestStringLength), 0);
-		datagram.datasize = distantClient.mChannelsHandler.serialize(datagram.data.data(), Bousk::Network::UDP::Datagram::DataMaxSize, distantClient.mNextDatagramIdToSend);
+		datagram.datasize = distantClient.mChannelsHandler.serialize(datagram.data.data(), Bousk::Network::UDP::Datagram::DataMaxSize, distantClient.mNextDatagramIdToSend, false);
 		distantClient.fillDatagramHeader(datagram, Bousk::Network::UDP::Datagram::Type::ConnectedData);
 	};
 
