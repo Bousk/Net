@@ -20,3 +20,4 @@ This README would normally document whatever steps are necessary to get your app
 ### Who do I talk to? ###
 
 * Contact Bousk via private message or post your issue directly in the Réseau forum (French only) https://www.developpez.net/forums/f900/c-cpp/c/reseau/
+* You can open Issues on Github directly too
