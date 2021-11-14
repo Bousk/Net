@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <numeric>
+#include <optional>
 #include <vector>
 
 namespace Bousk
@@ -108,11 +109,13 @@ namespace Bousk
 			{
 				DECLARE_MESSAGE(UserData);
 			public:
-				UserData(const Address& emitter, uint64 emitterid, std::vector<unsigned char>&& d)
+				UserData(const Address& emitter, uint64 emitterid, std::vector<unsigned char>&& d, std::optional<uint8> chan)
 					: Base(Type::UserData, emitter, emitterid)
 					, data(std::move(d))
+					, channelId(chan)
 				{}
 				std::vector<unsigned char> data;
+				std::optional<uint8> channelId;
 			};
 			#undef DECLARE_MESSAGE
 		}

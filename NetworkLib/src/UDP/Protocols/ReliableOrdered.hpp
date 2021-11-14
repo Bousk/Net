@@ -24,7 +24,7 @@ namespace Bousk
 					friend class ReliableOrdered_Multiplexer_Test;
 					friend class ReliableOrdered_Demultiplexer_Test;
 				public:
-					ReliableOrdered() = default;
+					using IProtocol::IProtocol;
 					~ReliableOrdered() override = default;
 
 					void queue(std::vector<uint8>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }

@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <vector>
 
 class DistantClient_Test;
@@ -64,7 +65,7 @@ namespace Bousk
 			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 
 				template<class T>
-				void registerChannel();
+				void registerChannel(std::optional<uint8> channelId);
 
 				void connect();
 				void disconnect();
@@ -130,9 +131,9 @@ namespace Bousk
 			};
 			
 			template<class T>
-			void DistantClient::registerChannel()
+			void DistantClient::registerChannel(std::optional<uint8> channelId)
 			{
-				mChannelsHandler.registerChannel<T>();
+				mChannelsHandler.registerChannel<T>(channelId);
 			}
 		}
 	}

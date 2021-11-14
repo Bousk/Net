@@ -4,6 +4,8 @@
 #include <UDP/Datagram.hpp>
 
 #include <memory>
+#include <optional>
+#include <tuple>
 #include <vector>
 
 namespace Bousk
@@ -24,7 +26,7 @@ namespace Bousk
 				~ChannelsHandler();
 
 				template<class T>
-				void registerChannel();
+				void registerChannel(std::optional<uint8> channelId);
 
 				// Multiplexer
 				void queue(std::vector<uint8>&& msgData, uint32 channelIndex);
@@ -39,16 +41,16 @@ namespace Bousk
 
 				// Demultiplexer
 				void onDataReceived(const uint8* data, uint16 datasize);
-				std::vector<std::vector<uint8>> process(bool isConnected);
+				std::vector<std::tuple<std::optional<uint8>, std::vector<uint8>>> process(bool isConnected);
 
 			private:
 				std::vector<std::unique_ptr<Protocols::IProtocol>> mChannels;
 			};
 
 			template<class T>
-			void ChannelsHandler::registerChannel()
+			void ChannelsHandler::registerChannel(std::optional<uint8> channelId)
 			{
-				mChannels.push_back(std::make_unique<T>());
+				mChannels.push_back(std::make_unique<T>(channelId));
 			}
 		}
 	}

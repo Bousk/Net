@@ -395,9 +395,9 @@ namespace Bousk
 				onConnectionReceived();
 				mChannelsHandler.onDataReceived(data, datasize);
 				auto receivedMessages = mChannelsHandler.process(isConnected());
-				for (auto&& msg : receivedMessages)
+				for (auto&& [channelId, msg] : receivedMessages)
 				{
-					onMessageReady(std::make_unique<Messages::UserData>(mAddress, mClientId, std::move(msg)));
+					onMessageReady(std::make_unique<Messages::UserData>(mAddress, mClientId, std::move(msg), channelId));
 				}
 			}
 			void DistantClient::onMessageReady(std::unique_ptr<Messages::Base>&& msg)

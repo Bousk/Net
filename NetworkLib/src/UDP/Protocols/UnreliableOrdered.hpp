@@ -22,7 +22,7 @@ namespace Bousk
 					friend class Multiplexer_Test;
 					friend class Demultiplexer_Test;
 				public:
-					UnreliableOrdered() = default;
+					using IProtocol::IProtocol;
 					~UnreliableOrdered() override = default;
 
 					void queue(std::vector<uint8>&& msgData) override { mMultiplexer.queue(std::move(msgData)); }

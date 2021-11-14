@@ -2,6 +2,8 @@
 
 #include <Settings.hpp>
 #include <UDP/Datagram.hpp>
+
+#include <optional>
 #include <vector>
 
 namespace Bousk
@@ -15,8 +17,12 @@ namespace Bousk
 				class IProtocol
 				{
 				public:
-					IProtocol() = default;
+					IProtocol(std::optional<uint8> channelId)
+						: mChannelId(channelId)
+					{}
 					virtual ~IProtocol() = default;
+
+					const std::optional<uint8>& channelId() const { return mChannelId; }
 
 					virtual void queue(std::vector<uint8>&& msgData) = 0;
 					virtual uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId
@@ -32,6 +38,9 @@ namespace Bousk
 					virtual std::vector<std::vector<uint8>> process() = 0;
 
 					virtual bool isReliable() const = 0;
+
+				private:
+					std::optional<uint8> mChannelId;
 				};
 			}
 		}
