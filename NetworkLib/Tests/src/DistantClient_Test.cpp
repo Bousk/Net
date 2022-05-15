@@ -22,7 +22,7 @@ void DistantClient_Test::Test()
 	Bousk::Network::UDP::Client client; //!< We need a client to test DistantClient
 	Bousk::Network::Address localAddress = Bousk::Network::Address::Loopback(Bousk::Network::Address::Type::IPv4, 8888); //!< Pretend we're a loopback distant client
 	Bousk::Network::UDP::DistantClient distantClient(client, localAddress, 0);
-	distantClient.registerChannel<Bousk::Network::UDP::Protocols::UnreliableOrdered>(std::nullopt);
+	distantClient.registerChannel<Bousk::Network::UDP::Protocols::UnreliableOrdered>();
 	distantClient.onConnected();
 	// Consume connection message
 	{

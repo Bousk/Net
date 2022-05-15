@@ -214,7 +214,7 @@ namespace Bousk
 				// Buffer is fully received and ready to process
 				if (mState == State::Data)
 				{
-					std::unique_ptr<Messages::Base> msg = std::make_unique<Messages::UserData>(mAddress, static_cast<uint64>(mSckt), std::move(buffer), std::nullopt);
+					std::unique_ptr<Messages::Base> msg = std::make_unique<Messages::UserData>(mAddress, static_cast<uint64>(mSckt), std::move(buffer), TCPChannelId);
 					startHeaderReception();
 					return msg;
 				}

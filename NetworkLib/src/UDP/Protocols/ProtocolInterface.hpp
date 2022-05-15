@@ -17,12 +17,12 @@ namespace Bousk
 				class IProtocol
 				{
 				public:
-					IProtocol(std::optional<uint8> channelId)
+					IProtocol(uint8 channelId)
 						: mChannelId(channelId)
 					{}
 					virtual ~IProtocol() = default;
 
-					const std::optional<uint8>& channelId() const { return mChannelId; }
+					uint8 channelId() const { return mChannelId; }
 
 					virtual void queue(std::vector<uint8>&& msgData) = 0;
 					virtual uint16 serialize(uint8* buffer, uint16 buffersize, Datagram::ID datagramId
@@ -40,7 +40,7 @@ namespace Bousk
 					virtual bool isReliable() const = 0;
 
 				private:
-					std::optional<uint8> mChannelId;
+					uint8 mChannelId;
 				};
 			}
 		}

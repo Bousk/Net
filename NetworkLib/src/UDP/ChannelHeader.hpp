@@ -12,7 +12,7 @@ namespace Bousk
 			{
 				static constexpr uint8 Size = sizeof(uint32) + sizeof(uint16);
 
-				uint32 channelId;
+				uint32 channelIndex;
 				uint16 datasize;
 			};
 		}

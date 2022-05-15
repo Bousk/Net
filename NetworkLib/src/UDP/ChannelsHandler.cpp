@@ -28,9 +28,9 @@ namespace Bousk
 			)
 			{
 				uint16 remainingBuffersize = buffersize;
-				for (uint32 channelId = 0; channelId < mChannels.size(); ++channelId)
+				for (uint32 channelIndex = 0; channelIndex < mChannels.size(); ++channelIndex)
 				{
-					Protocols::IProtocol* protocol = mChannels[channelId].get();
+					Protocols::IProtocol* protocol = mChannels[channelIndex].get();
 
 					uint8* const channelHeaderStart = buffer;
 					uint8* const channelDataStart = buffer + ChannelHeader::Size;
@@ -46,7 +46,7 @@ namespace Bousk
 					{
 						// Data added, let's add the protocol header
 						ChannelHeader* const channelHeader = reinterpret_cast<ChannelHeader*>(channelHeaderStart);
-						channelHeader->channelId = channelId;
+						channelHeader->channelIndex = channelIndex;
 						channelHeader->datasize = static_cast<uint32>(serializedData);
 
 						const uint16 channelTotalSize = serializedData + ChannelHeader::Size;
@@ -84,20 +84,20 @@ namespace Bousk
 						// Malformed buffer
 						return;
 					}
-					if (channelHeader->channelId >= mChannels.size())
+					if (channelHeader->channelIndex >= mChannels.size())
 					{
 						// Channel id requested doesn't exist
 						return;
 					}
-					mChannels[channelHeader->channelId]->onDataReceived(data + ChannelHeader::Size, channelHeader->datasize);
+					mChannels[channelHeader->channelIndex]->onDataReceived(data + ChannelHeader::Size, channelHeader->datasize);
 					const uint16 channelTotalSize = channelHeader->datasize + ChannelHeader::Size;
 					data += channelTotalSize;
 					processedData += channelTotalSize;
 				}
 			}
-			std::vector<std::tuple<std::optional<uint8>, std::vector<uint8>>> ChannelsHandler::process(bool isConnected)
+			std::vector<std::tuple<uint8, std::vector<uint8>>> ChannelsHandler::process(bool isConnected)
 			{
-				std::vector<std::tuple<std::optional<uint8>, std::vector<uint8>>> messages;
+				std::vector<std::tuple<uint8, std::vector<uint8>>> messages;
 				for (auto& channel : mChannels)
 				{
 					std::vector<std::vector<uint8>> protocolMessages = channel->process();

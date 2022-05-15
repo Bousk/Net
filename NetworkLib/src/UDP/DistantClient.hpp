@@ -65,7 +65,7 @@ namespace Bousk
 			#endif // BOUSKNET_ALLOW_NETWORK_INTERRUPTION == BOUSKNET_SETTINGS_ENABLED
 
 				template<class T>
-				void registerChannel(std::optional<uint8> channelId);
+				void registerChannel(uint8 channelId = 0);
 
 				void connect();
 				void disconnect();
@@ -131,7 +131,7 @@ namespace Bousk
 			};
 			
 			template<class T>
-			void DistantClient::registerChannel(std::optional<uint8> channelId)
+			void DistantClient::registerChannel(uint8 channelId /* = 0 */)
 			{
 				mChannelsHandler.registerChannel<T>(channelId);
 			}

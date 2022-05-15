@@ -17,6 +17,8 @@ namespace Bousk
 		}
 		namespace TCP
 		{
+			constexpr uint8 TCPChannelId = 0;
+
 			using HeaderType = uint16;
 			static constexpr unsigned int HeaderSize = sizeof(HeaderType);
 

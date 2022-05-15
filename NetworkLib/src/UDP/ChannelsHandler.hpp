@@ -26,7 +26,7 @@ namespace Bousk
 				~ChannelsHandler();
 
 				template<class T>
-				void registerChannel(std::optional<uint8> channelId);
+				void registerChannel(uint8 channelId);
 
 				// Multiplexer
 				void queue(std::vector<uint8>&& msgData, uint32 channelIndex);
@@ -41,14 +41,14 @@ namespace Bousk
 
 				// Demultiplexer
 				void onDataReceived(const uint8* data, uint16 datasize);
-				std::vector<std::tuple<std::optional<uint8>, std::vector<uint8>>> process(bool isConnected);
+				std::vector<std::tuple<uint8/*ChannelId*/, std::vector<uint8>>> process(bool isConnected);
 
 			private:
 				std::vector<std::unique_ptr<Protocols::IProtocol>> mChannels;
 			};
 
 			template<class T>
-			void ChannelsHandler::registerChannel(std::optional<uint8> channelId)
+			void ChannelsHandler::registerChannel(uint8 channelId)
 			{
 				mChannels.push_back(std::make_unique<T>(channelId));
 			}

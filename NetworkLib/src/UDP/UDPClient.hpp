@@ -59,7 +59,7 @@ namespace Bousk
 				~Client();
 
 				template<class T>
-				void registerChannel(std::optional<uint8> channelId = std::nullopt);
+				void registerChannel(uint8 channelId = 0);
 
 			#if BOUSKNET_ALLOW_NETWORK_SIMULATOR == BOUSKNET_SETTINGS_ENABLED
 				Simulator& simulator() { return mSimulator; }
@@ -112,8 +112,8 @@ namespace Bousk
 				std::vector<std::unique_ptr<Messages::Base>> mMessages;
 
 				struct ChannelRegistration {
-					std::optional<uint8> channelId;
 					std::function<void(DistantClient&)> creator;
+					uint8 channelId;
 				};
 				std::vector<ChannelRegistration> mRegisteredChannels;
 
@@ -163,11 +163,11 @@ namespace Bousk
 			};
 
 			template<class T>
-			void Client::registerChannel(std::optional<uint8> channelId /*= std::nullopt*/)
+			void Client::registerChannel(uint8 channelId /*= 0*/)
 			{
 				assert(mSocket == INVALID_SOCKET); // Don't add channels after being initialized !!!
-				assert(!channelId.has_value() || std::find_if(mRegisteredChannels.begin(), mRegisteredChannels.end(), [&](const ChannelRegistration& registration) { return registration.channelId == channelId.value(); }) == mRegisteredChannels.end());
-				mRegisteredChannels.push_back({ channelId, [channelId](DistantClient& distantClient) { distantClient.registerChannel<T>(channelId); } });
+				assert(std::find_if(mRegisteredChannels.begin(), mRegisteredChannels.end(), [&](const ChannelRegistration& registration) { return registration.channelId == channelId; }) == mRegisteredChannels.end());
+				mRegisteredChannels.push_back({ [channelId](DistantClient& distantClient) { distantClient.registerChannel<T>(channelId); }, channelId });
 			}
 		}
 	}

@@ -109,13 +109,13 @@ namespace Bousk
 			{
 				DECLARE_MESSAGE(UserData);
 			public:
-				UserData(const Address& emitter, uint64 emitterid, std::vector<unsigned char>&& d, std::optional<uint8> chan)
+				UserData(const Address& emitter, uint64 emitterid, std::vector<unsigned char>&& d, uint8 chanId)
 					: Base(Type::UserData, emitter, emitterid)
 					, data(std::move(d))
-					, channelId(chan)
+					, channelId(chanId)
 				{}
 				std::vector<unsigned char> data;
-				std::optional<uint8> channelId;
+				uint8 channelId;
 			};
 			#undef DECLARE_MESSAGE
 		}
