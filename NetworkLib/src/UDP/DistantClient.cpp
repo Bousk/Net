@@ -174,6 +174,7 @@ namespace Bousk
 				// when receiving packets from the other end right after disconnecting locally
 				mDisconnectionReason = DisconnectionReason::Disconnected;
 				mState = State::Disconnecting;
+				mLastKeepAlive = Utils::Now();
 			}
 			void DistantClient::send(std::vector<uint8>&& data, uint32 channelIndex)
 			{
