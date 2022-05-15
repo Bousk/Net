@@ -12,7 +12,7 @@ namespace Bousk
 		class Address
 		{
 		public:
-			enum class Type {
+			enum class Type : uint8 {
 				None,
 				IPv4,
 				IPv6,
@@ -40,6 +40,7 @@ namespace Bousk
 
 			bool operator==(const Address& other) const;
 			bool operator!=(const Address& other) const { return !(*this == other); }
+			bool operator<(const Address& other) const;
 
 			// Connect the given socket to the internal address
 			// Returns true on success, false otherwise

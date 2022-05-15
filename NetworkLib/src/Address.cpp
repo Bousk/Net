@@ -176,6 +176,22 @@ namespace Bousk
 			return memcmp(&reinterpret_cast<const sockaddr_in6&>(mStorage).sin6_addr, &reinterpret_cast<const sockaddr_in6&>(other.mStorage).sin6_addr, sizeof(IN6_ADDR)) == 0;
 		}
 
+		bool Address::operator<(const Address& other) const
+		{
+			if (mType != other.mType)
+				return mType < other.mType;
+			if (mType == Type::None)
+				return false;
+			if (mPort != other.mPort)
+				return mPort < other.mPort;
+			if (mType == Type::IPv4)
+			{
+				return memcmp(&mStorage, &(other.mStorage), sizeof(mStorage)) < 0;
+			}
+			// IpV6
+			return memcmp(&reinterpret_cast<const sockaddr_in6&>(mStorage).sin6_addr, &reinterpret_cast<const sockaddr_in6&>(other.mStorage).sin6_addr, sizeof(IN6_ADDR)) < 0;
+		}
+
 		bool Address::connect(SOCKET sckt) const
 		{
 			return ::connect(sckt, reinterpret_cast<const sockaddr*>(&mStorage), sizeof(mStorage)) == 0;
